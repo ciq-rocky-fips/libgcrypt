@@ -614,6 +614,14 @@ AC_ARG_WITH(fips-module-version,
 AC_DEFINE_UNQUOTED(FIPS_MODULE_VERSION, "$fips_module_version",
                    [Define FIPS module version for certification])
 
+# Implementation of the --disable-brainpool switch.
+AC_MSG_CHECKING([whether we want to disable the use of brainpool curves])
+AC_ARG_ENABLE(brainpool,
+              AS_HELP_STRING([--disable-brainpool],
+                             [Disable the brainpool curves]),
+              use_brainpool="$enableval",use_brainpool=yes)
+AC_MSG_RESULT($use_brainpool)
+
 # Implementation of the --disable-jent-support switch.
 AC_MSG_CHECKING([whether jitter entropy support is requested])
 AC_ARG_ENABLE(jent-support,
@@ -2466,6 +2474,10 @@ if test x"$ppccryptosupport" = xyes ; then
   AC_DEFINE(ENABLE_PPC_CRYPTO_SUPPORT,1,
             [Enable support for POWER 8 (PowerISA 2.07) crypto extension.])
 fi
+if test x"$use_brainpool" = xyes ; then
+  AC_DEFINE(ENABLE_BRAINPOOL, 1,
+            [Enable support for the brainpool curves.])
+fi
 if test x"$jentsupport" = xyes ; then
   AC_DEFINE(ENABLE_JENT_SUPPORT, 1,
             [Enable support for the jitter entropy collector.])
@@ -3296,6 +3308,7 @@ GCRY_MSG_WRAP([Enabled digest algorithms:],[$enabled_digests])
 GCRY_MSG_WRAP([Enabled kdf algorithms:   ],[$enabled_kdfs])
 GCRY_MSG_WRAP([Enabled pubkey algorithms:],[$enabled_pubkey_ciphers])
 GCRY_MSG_SHOW([Random number generator:  ],[$random])
+GCRY_MSG_SHOW([Enabled Brainpool curves: ],[$use_brainpool])
 GCRY_MSG_SHOW([Try using jitter entropy: ],[$jentsupport])
 GCRY_MSG_SHOW([Using linux capabilities: ],[$use_capabilities])
 GCRY_MSG_SHOW([FIPS module version:      ],[$fips_module_version])

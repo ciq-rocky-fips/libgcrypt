@@ -33,7 +33,11 @@
 #include "t-common.h"
 
 /* Number of curves defined in ../cipher/ecc-curves.c */
-#define N_CURVES 27
+#ifdef ENABLE_BRAINPOOL
+# define N_CURVES 27
+#else
+# define N_CURVES 20
+#endif
 
 /* A real world sample public key.  */
 static char const sample_key_1[] =
@@ -52,6 +56,7 @@ static char const sample_key_1[] =
 static char const sample_key_1_curve[] = "NIST P-256";
 static unsigned int sample_key_1_nbits = 256;
 
+#ifdef ENABLE_BRAINPOOL
 /* A made up sample public key.  */
 static char const sample_key_2[] =
 "(public-key\n"
@@ -68,6 +73,7 @@ static char const sample_key_2[] =
 "  ))";
 static char const sample_key_2_curve[] = "brainpoolP160r1";
 static unsigned int sample_key_2_nbits = 160;
+#endif /* ENABLE_BRAINPOOL */
 
 static int in_fips_mode;
 
@@ -113,6 +119,7 @@ check_matching (void)
 
   gcry_sexp_release (key);
 
+#ifdef ENABLE_BRAINPOOL
   if (!in_fips_mode)
     {
       err = gcry_sexp_new (&key, sample_key_2, 0, 1);
@@ -130,6 +137,7 @@ check_matching (void)
 
       gcry_sexp_release (key);
     }
+#endif /* ENABLE_BRAINPOOL */
 }
 
 #define TEST_ERROR_EXPECTED (1 << 0)
@@ -185,20 +193,26 @@ check_get_params (void)
        { GCRY_PK_ECC, "1.3.132.0.35" },
        { GCRY_PK_ECC, "nistp521"   },
 
-       { GCRY_PK_ECC, "brainpoolP160r1",       TEST_NOFIPS },
-       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.1",  TEST_NOFIPS },
-       { GCRY_PK_ECC, "brainpoolP192r1",       TEST_NOFIPS },
-       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.3",  TEST_NOFIPS },
-       { GCRY_PK_ECC, "brainpoolP224r1",       TEST_NOFIPS },
-       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.5",  TEST_NOFIPS },
-       { GCRY_PK_ECC, "brainpoolP256r1",       TEST_NOFIPS },
-       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.7",  TEST_NOFIPS },
-       { GCRY_PK_ECC, "brainpoolP320r1",       TEST_NOFIPS },
-       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.9",  TEST_NOFIPS },
-       { GCRY_PK_ECC, "brainpoolP384r1",       TEST_NOFIPS },
-       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.11", TEST_NOFIPS },
-       { GCRY_PK_ECC, "brainpoolP512r1",       TEST_NOFIPS },
-       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.13", TEST_NOFIPS },
+#ifdef ENABLE_BRAINPOOL
+# define BRAINPOOL_FLAGS TEST_NOFIPS
+#else
+# define BRAINPOOL_FLAGS TEST_ERROR_EXPECTED
+#endif /* ENABLE_BRAINPOOL */
+       { GCRY_PK_ECC, "brainpoolP160r1",       BRAINPOOL_FLAGS },
+       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.1",  BRAINPOOL_FLAGS },
+       { GCRY_PK_ECC, "brainpoolP192r1",       BRAINPOOL_FLAGS },
+       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.3",  BRAINPOOL_FLAGS },
+       { GCRY_PK_ECC, "brainpoolP224r1",       BRAINPOOL_FLAGS },
+       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.5",  BRAINPOOL_FLAGS },
+       { GCRY_PK_ECC, "brainpoolP256r1",       BRAINPOOL_FLAGS },
+       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.7",  BRAINPOOL_FLAGS },
+       { GCRY_PK_ECC, "brainpoolP320r1",       BRAINPOOL_FLAGS },
+       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.9",  BRAINPOOL_FLAGS },
+       { GCRY_PK_ECC, "brainpoolP384r1",       BRAINPOOL_FLAGS },
+       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.11", BRAINPOOL_FLAGS },
+       { GCRY_PK_ECC, "brainpoolP512r1",       BRAINPOOL_FLAGS },
+       { GCRY_PK_ECC, "1.3.36.3.3.2.8.1.1.13", BRAINPOOL_FLAGS },
+#undef BRAINPOOL_ERROR_EXPECTED
 
        { GCRY_PK_ECC, "GOST2001-test", TEST_NOFIPS },
        { GCRY_PK_ECC, "1.2.643.2.2.35.0", TEST_NOFIPS },
@@ -282,6 +296,7 @@ check_get_params (void)
 
   gcry_sexp_release (param);
 
+#ifdef ENABLE_BRAINPOOL
   if (!in_fips_mode)
     {
       param = gcry_pk_get_param (GCRY_PK_ECDSA, sample_key_2_curve);
@@ -297,6 +312,7 @@ check_get_params (void)
 
       gcry_sexp_release (param);
     }
+#endif /* ENABLE_BRAINPOOL */
 
   /* Some simple tests */
   for (idx=0; idx < DIM (tv); idx++)
