@@ -22,6 +22,7 @@
 
 GCRYPT_1.6 {
   global:
+    gcry_FIPS_version;
     gcry_check_version; gcry_control;
     gcry_set_allocation_handler; gcry_set_fatalerror_handler;
     gcry_set_gettext_handler; gcry_set_log_handler;

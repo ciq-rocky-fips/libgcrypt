@@ -378,6 +378,203 @@ generate (DSA_secret_key *sk, unsigned int nbits, unsigned int qbits,
    parameters are specified in DOMAIN, DERIVEPARMS may not be given
    and NBITS and QBITS must match the specified domain parameters.  */
 static gpg_err_code_t
+generate_fips186_woG (DSA_secret_key *sk, unsigned int nbits, unsigned int qbits,
+                  gcry_sexp_t deriveparms, int use_fips186_2,
+                  dsa_domain_t *domain,
+                  int *r_counter, void **r_seed, size_t *r_seedlen,
+                  gcry_mpi_t *r_h)
+{
+  gpg_err_code_t ec;
+  struct {
+    gcry_sexp_t sexp;
+    const void *seed;
+    size_t seedlen;
+  } initial_seed = { NULL, NULL, 0 };
+  gcry_mpi_t prime_q = NULL;
+  gcry_mpi_t prime_p = NULL;
+  gcry_mpi_t value_g = NULL; /* The generator. */
+  gcry_mpi_t value_y = NULL; /* g^x mod p */
+  gcry_mpi_t value_x = NULL; /* The secret exponent. */
+  gcry_mpi_t value_h = NULL; /* Helper.  */
+  gcry_mpi_t value_e = NULL; /* Helper.  */
+  gcry_mpi_t value_c = NULL; /* helper for x */
+  gcry_mpi_t value_qm2 = NULL; /* q - 2 */
+
+  /* Preset return values.  */
+  *r_counter = 0;
+  *r_seed = NULL;
+  *r_seedlen = 0;
+  *r_h = NULL;
+
+  /* Derive QBITS from NBITS if requested  */
+  if (!qbits)
+    {
+      if (nbits == 1024)
+        qbits = 160;
+      else if (nbits == 2048)
+        qbits = 224;
+      else if (nbits == 3072)
+        qbits = 256;
+    }
+
+  /* Check that QBITS and NBITS match the standard.  Note that FIPS
+     186-3 uses N for QBITS and L for NBITS.  */
+  if (nbits == 1024 && qbits == 160 && use_fips186_2)
+    ; /* Allowed in FIPS 186-2 mode.  */
+  else if (nbits == 2048 && qbits == 224)
+    ;
+  else if (nbits == 2048 && qbits == 256)
+    ;
+  else if (nbits == 3072 && qbits == 256)
+    ;
+  else
+    return GPG_ERR_INV_VALUE;
+
+  ec = dsa_check_keysize (nbits);
+  if (ec)
+    return ec;
+
+  if (domain->p && domain->q)
+    {
+      /* Domain parameters are given; use them.  */
+      prime_p = mpi_copy (domain->p);
+      prime_q = mpi_copy (domain->q);      
+      gcry_assert (mpi_get_nbits (prime_p) == nbits);
+      gcry_assert (mpi_get_nbits (prime_q) == qbits);
+      gcry_assert (!deriveparms);
+      ec = 0;
+    }
+  else
+    {
+      /* Generate new domain parameters.  */
+
+      /* Get an initial seed value.  */
+      if (deriveparms)
+        {
+          initial_seed.sexp = sexp_find_token (deriveparms, "seed", 0);
+          if (initial_seed.sexp)
+            initial_seed.seed = sexp_nth_data (initial_seed.sexp, 1,
+                                               &initial_seed.seedlen);
+        }
+
+      if (use_fips186_2)
+        ec = _gcry_generate_fips186_2_prime (nbits, qbits,
+                                             initial_seed.seed,
+                                             initial_seed.seedlen,
+                                             &prime_q, &prime_p,
+                                             r_counter,
+                                             r_seed, r_seedlen);
+      else
+        ec = _gcry_generate_fips186_3_prime (nbits, qbits,
+                                             initial_seed.seed,
+                                             initial_seed.seedlen,
+                                             &prime_q, &prime_p,
+                                             r_counter,
+                                             r_seed, r_seedlen, NULL);
+      sexp_release (initial_seed.sexp);
+      if (ec)
+        goto leave;
+
+      /* Find a generator g (h and e are helpers).
+       *    e = (p-1)/q
+       */
+      value_e = mpi_alloc_like (prime_p);
+      mpi_sub_ui (value_e, prime_p, 1);
+      mpi_fdiv_q (value_e, value_e, prime_q );
+      value_g = mpi_alloc_like (prime_p);
+      value_h = mpi_alloc_set_ui (1);
+      do
+        {
+          mpi_add_ui (value_h, value_h, 1);
+          /* g = h^e mod p */
+          mpi_powm (value_g, value_h, value_e, prime_p);
+        }
+      while (!mpi_cmp_ui (value_g, 1));  /* Continue until g != 1.  */
+    }
+
+  value_c = mpi_snew (qbits);
+  value_x = mpi_snew (qbits);
+  value_qm2 = mpi_snew (qbits);
+  mpi_sub_ui (value_qm2, prime_q, 2);
+
+  /* FIPS 186-4 B.1.2 steps 4-6 */
+  do
+    {
+      if( DBG_CIPHER )
+        progress('.');
+      _gcry_mpi_randomize (value_c, qbits, GCRY_VERY_STRONG_RANDOM);
+      mpi_clear_highbit (value_c, qbits+1);
+    }
+  while (!(mpi_cmp_ui (value_c, 0) > 0 && mpi_cmp (value_c, value_qm2) < 0));
+  /* while (mpi_cmp (value_c, value_qm2) > 0); */
+
+  /* x = c + 1 */
+  mpi_add_ui(value_x, value_c, 1);
+
+  /* y = g^x mod p */
+  value_y = mpi_alloc_like (prime_p);
+  mpi_powm (value_y, value_g, value_x, prime_p);
+
+  if (DBG_CIPHER)
+    {
+      progress('\n');
+      log_mpidump("dsa  p", prime_p );
+      log_mpidump("dsa  q", prime_q );
+      log_mpidump("dsa  g", value_g );
+      log_mpidump("dsa  y", value_y );
+      log_mpidump("dsa  x", value_x );
+      log_mpidump("dsa  h", value_h );
+    }
+
+  /* Copy the stuff to the key structures. */
+  sk->p = prime_p; prime_p = NULL;
+  sk->q = prime_q; prime_q = NULL;
+  sk->g = value_g; value_g = NULL;
+  sk->y = value_y; value_y = NULL;
+  sk->x = value_x; value_x = NULL;
+  *r_h = value_h; value_h = NULL;
+
+ leave:
+  _gcry_mpi_release (prime_p);
+  _gcry_mpi_release (prime_q);
+  _gcry_mpi_release (value_g);
+  _gcry_mpi_release (value_y);
+  _gcry_mpi_release (value_x);
+  _gcry_mpi_release (value_h);
+  _gcry_mpi_release (value_e);
+  _gcry_mpi_release (value_c);
+  _gcry_mpi_release (value_qm2);
+
+  /* As a last step test this keys (this should never fail of course). */
+  if (!ec && test_keys (sk, qbits) )
+    {
+      _gcry_mpi_release (sk->p); sk->p = NULL;
+      _gcry_mpi_release (sk->q); sk->q = NULL;
+      _gcry_mpi_release (sk->g); sk->g = NULL;
+      _gcry_mpi_release (sk->y); sk->y = NULL;
+      _gcry_mpi_release (sk->x); sk->x = NULL;
+      fips_signal_error ("self-test after key generation failed");
+      ec = GPG_ERR_SELFTEST_FAILED;
+    }
+
+  if (ec)
+    {
+      *r_counter = 0;
+      xfree (*r_seed); *r_seed = NULL;
+      *r_seedlen = 0;
+      _gcry_mpi_release (*r_h); *r_h = NULL;
+    }
+
+  return ec;
+}
+
+/* Generate a DSA key pair with a key of size NBITS using the
+   algorithm given in FIPS-186-3.  If USE_FIPS186_2 is true,
+   FIPS-186-2 is used and thus the length is restricted to 1024/160.
+   If DERIVEPARMS is not NULL it may contain a seed value.  If domain
+   parameters are specified in DOMAIN, DERIVEPARMS may not be given
+   and NBITS and QBITS must match the specified domain parameters.  */
+static gpg_err_code_t
 generate_fips186 (DSA_secret_key *sk, unsigned int nbits, unsigned int qbits,
                   gcry_sexp_t deriveparms, int use_fips186_2,
                   dsa_domain_t *domain,
@@ -568,7 +765,6 @@ generate_fips186 (DSA_secret_key *sk, unsigned int nbits, unsigned int qbits,
 
   return ec;
 }
-
 
 
 /*
@@ -1042,6 +1238,251 @@ dsa_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
   return rc;
 }
 
+static gcry_err_code_t
+dsa_generate_woG (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
+{
+  gpg_err_code_t rc;
+  unsigned int nbits;
+  gcry_sexp_t domainsexp;
+  DSA_secret_key sk;
+  gcry_sexp_t l1;
+  unsigned int qbits = 0;
+  gcry_sexp_t deriveparms = NULL;
+  gcry_sexp_t seedinfo = NULL;
+  gcry_sexp_t misc_info = NULL;
+  int flags = 0;
+  dsa_domain_t domain;
+  gcry_mpi_t *factors = NULL;
+
+  memset (&sk, 0, sizeof sk);
+  memset (&domain, 0, sizeof domain);
+
+  rc = _gcry_pk_util_get_nbits (genparms, &nbits);
+  if (rc)
+    return rc;
+
+  /* Parse the optional flags list.  */
+  l1 = sexp_find_token (genparms, "flags", 0);
+  if (l1)
+    {
+      rc = _gcry_pk_util_parse_flaglist (l1, &flags, NULL);
+      sexp_release (l1);
+      if (rc)
+        return rc;\
+    }
+
+  /* Parse the optional qbits element.  */
+  l1 = sexp_find_token (genparms, "qbits", 0);
+  if (l1)
+    {
+      char buf[50];
+      const char *s;
+      size_t n;
+
+      s = sexp_nth_data (l1, 1, &n);
+      if (!s || n >= DIM (buf) - 1 )
+        {
+          sexp_release (l1);
+          return GPG_ERR_INV_OBJ; /* No value or value too large.  */
+        }
+      memcpy (buf, s, n);
+      buf[n] = 0;
+      qbits = (unsigned int)strtoul (buf, NULL, 0);
+      sexp_release (l1);
+    }
+
+  /* Parse the optional transient-key flag.  */
+  if (!(flags & PUBKEY_FLAG_TRANSIENT_KEY))
+    {
+      l1 = sexp_find_token (genparms, "transient-key", 0);
+      if (l1)
+        {
+          flags |= PUBKEY_FLAG_TRANSIENT_KEY;
+          sexp_release (l1);
+        }
+    }
+
+  /* Get the optional derive parameters.  */
+  deriveparms = sexp_find_token (genparms, "derive-parms", 0);
+
+  /* Parse the optional "use-fips186" flags.  */
+  if (!(flags & PUBKEY_FLAG_USE_FIPS186))
+    {
+      l1 = sexp_find_token (genparms, "use-fips186", 0);
+      if (l1)
+        {
+          flags |= PUBKEY_FLAG_USE_FIPS186;
+          sexp_release (l1);
+        }
+    }
+  if (!(flags & PUBKEY_FLAG_USE_FIPS186_2))
+    {
+      l1 = sexp_find_token (genparms, "use-fips186-2", 0);
+      if (l1)
+        {
+          flags |= PUBKEY_FLAG_USE_FIPS186_2;
+          sexp_release (l1);
+        }
+    }
+
+  /* Check whether domain parameters are given.  */
+  domainsexp = sexp_find_token (genparms, "domain", 0);
+  if (domainsexp)
+    {
+      /* DERIVEPARMS can't be used together with domain parameters.
+         NBITS abnd QBITS may not be specified because there values
+         are derived from the domain parameters.  */
+      if (deriveparms || qbits || nbits)
+        {
+          sexp_release (domainsexp);
+          sexp_release (deriveparms);
+          return GPG_ERR_INV_VALUE;
+        }
+
+      /* Put all domain parameters into the domain object.  */
+      l1 = sexp_find_token (domainsexp, "p", 0);
+      domain.p = sexp_nth_mpi (l1, 1, GCRYMPI_FMT_USG);
+      sexp_release (l1);
+      l1 = sexp_find_token (domainsexp, "q", 0);
+      domain.q = sexp_nth_mpi (l1, 1, GCRYMPI_FMT_USG);
+      sexp_release (l1);      
+      sexp_release (domainsexp);
+
+      /* Check that p and q domain parameters are available.  */
+      if (!domain.p || !domain.q )
+        {
+          _gcry_mpi_release (domain.p);
+          _gcry_mpi_release (domain.q);          
+          sexp_release (deriveparms);
+          return GPG_ERR_MISSING_VALUE;
+        }
+
+      /* Get NBITS and QBITS from the domain parameters.  */
+      nbits = mpi_get_nbits (domain.p);
+      qbits = mpi_get_nbits (domain.q);
+    }
+
+  if (deriveparms
+      || (flags & PUBKEY_FLAG_USE_FIPS186)
+      || (flags & PUBKEY_FLAG_USE_FIPS186_2)
+      || fips_mode ())
+    {
+      int counter;
+      void *seed;
+      size_t seedlen;
+      gcry_mpi_t h_value;
+
+      rc = generate_fips186_woG (&sk, nbits, qbits, deriveparms,
+                             !!(flags & PUBKEY_FLAG_USE_FIPS186_2),
+                             &domain,
+                             &counter, &seed, &seedlen, &h_value);
+      if (!rc && h_value)
+        {
+          /* Format the seed-values unless domain parameters are used
+             for which a H_VALUE of NULL is an indication.  */
+          rc = sexp_build (&seedinfo, NULL,
+                           "(seed-values(counter %d)(seed %b)(h %m))",
+                           counter, (int)seedlen, seed, h_value);
+          xfree (seed);
+          _gcry_mpi_release (h_value);
+        }
+    }
+  else
+    {
+      rc = generate (&sk, nbits, qbits,
+                     !!(flags & PUBKEY_FLAG_TRANSIENT_KEY),
+                     &domain, &factors);
+    }
+
+  if (!rc)
+    {
+      /* Put the factors into MISC_INFO.  Note that the factors are
+         not confidential thus we can store them in standard memory.  */
+      int nfactors, i, j;
+      char *p;
+      char *format = NULL;
+      void **arg_list = NULL;
+
+      for (nfactors=0; factors && factors[nfactors]; nfactors++)
+        ;
+      /* Allocate space for the format string:
+         "(misc-key-info%S(pm1-factors%m))"
+         with one "%m" for each factor and construct it.  */
+      format = xtrymalloc (50 + 2*nfactors);
+      if (!format)
+        rc = gpg_err_code_from_syserror ();
+      else
+        {
+          p = stpcpy (format, "(misc-key-info");
+          if (seedinfo)
+            p = stpcpy (p, "%S");
+          if (nfactors)
+            {
+              p = stpcpy (p, "(pm1-factors");
+              for (i=0; i < nfactors; i++)
+                p = stpcpy (p, "%m");
+              p = stpcpy (p, ")");
+            }
+          p = stpcpy (p, ")");
+
+          /* Allocate space for the list of factors plus one for the
+             seedinfo s-exp plus an extra NULL entry for safety and
+             fill it with the factors.  */
+          arg_list = xtrycalloc (nfactors+1+1, sizeof *arg_list);
+          if (!arg_list)
+            rc = gpg_err_code_from_syserror ();
+          else
+            {
+              i = 0;
+              if (seedinfo)
+                arg_list[i++] = &seedinfo;
+              for (j=0; j < nfactors; j++)
+                arg_list[i++] = factors + j;
+              arg_list[i] = NULL;
+
+              rc = sexp_build_array (&misc_info, NULL, format, arg_list);
+            }
+        }
+
+      xfree (arg_list);
+      xfree (format);
+    }
+
+  if (!rc)
+    rc = sexp_build (r_skey, NULL,
+                     "(key-data"
+                     " (public-key"
+                     "  (dsa(p%m)(q%m)(g%m)(y%m)))"
+                     " (private-key"
+                     "  (dsa(p%m)(q%m)(g%m)(y%m)(x%m)))"
+                     " %S)",
+                     sk.p, sk.q, sk.g, sk.y,
+                     sk.p, sk.q, sk.g, sk.y, sk.x,
+                     misc_info);
+
+
+  _gcry_mpi_release (sk.p);
+  _gcry_mpi_release (sk.q);
+  _gcry_mpi_release (sk.g);
+  _gcry_mpi_release (sk.y);
+  _gcry_mpi_release (sk.x);
+
+  _gcry_mpi_release (domain.p);
+  _gcry_mpi_release (domain.q);
+  _gcry_mpi_release (domain.g);
+
+  sexp_release (seedinfo);
+  sexp_release (misc_info);
+  sexp_release (deriveparms);
+  if (factors)
+    {
+      gcry_mpi_t *mp;
+      for (mp = factors; *mp; mp++)
+        mpi_free (*mp);
+      xfree (factors);
+    }
+  return rc;
+}
 
 
 static gcry_err_code_t
