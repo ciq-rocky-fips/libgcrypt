@@ -14,6 +14,86 @@
 # fips-mode-setup --check # check after restart
 #
 
+# Test case list. Name: Desccription.
+# all_pass: All test cases pass except for a negative XTS AES test.
+# run_hmac_sha256_selftests.fail_md: MD failure on initial selftest.
+# run_hmac_sha256_selftests.fail_mac: MAC failure on initial selftest.
+# check_binary_integrity: Binary corruption failure case.
+# selftest_basic_128.encrypt: AES128 encryption failure case.
+# selftest_basic_128.decrypt: AES128 decryption failure case.
+# selftest_basic_192.encrypt: AES192 encryption failure case.
+# selftest_basic_192.decrypt: AES192 decryption failure case.
+# selftest_basic_256.encrypt: AES256 encryption failure case.
+# selftest_basic_256.decrypt: AES256 decryption failure case.
+# selftests_cmac_aes: AES CMAC 128/192/256 encryption/decryption failure cases.
+# check_xts_cipher.encrypt: XTS-AES 128/192/256 encryption failure cases.
+# check_xts_cipher.decrypt: XTS-AES 128/192/256 decryption failure cases.
+# aes_cbc_128: AES-CBC-128 decrypt failure case.
+# gcry_rngdrbg_healthcheck_one.fail: DRBG KAT failure cases.
+# - DRBG CTR AES128 NO PR
+# - DRBG CTR AES128 PR
+# - DRBG HASH SHA1 NO PR
+# - DRBG HASH SHA256 NO PR
+# - DRBG HASH SHA256 PR
+# - DRBG HMAC SHA256 NO PR
+# - DRBG HMAC SHA256 PR
+# drbg_seed: CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit) failure cases.
+# drbg_get_entropy: DRBG entropy failure case.
+# ecc_selftest_sign.sign: ECDSA sign KAT (P-224 curve, SHA2-256) signing failure case.
+# ecc_selftest_sign.verify: ECDSA sign KAT (P-224 curve, SHA2-256) verify failure case.
+# selftest_pbkdf2: HKDF KAT (PBKDF2 SHA256) failure case.
+# run_mac_selftests: HMAC KAT failure cases.
+# - CMAC AES
+# - HMAC SHA1
+# - HMAC SHA224
+# - HMAC SHA3-224
+# - HMAC SHA3-256
+# - HMAC SHA3-384
+# - HMAC SHA3-512
+# - HMAC SHA384
+# - HMAC SHA512
+# selftests_sha1: HMAC KATs (SHA1) failure case.
+# selftests_sha224: HMAC KATs (SHA224) failure case.
+# selftests_sha256: HMAC KATs (SHA256) failure case.
+# selftests_sha384: HMAC KATs (SHA384) failure case.
+# selftests_sha512: HMAC KATs (SHA512) failure case.
+# selftests_sha3: HMAC KATs (SHA-3) failure cases.
+# - 224 bit
+# - 256 bit
+# - 384 bit
+# - 512 bit
+# selftests_rsa.sign: 2048bit RSA sign KAT failure case.
+# selftests_rsa.encrypt: 2048bit RSA encrypt KAT failure case.
+# selftests_rsa.decrypt: 2048bit RSA decrypt KAT failure case.
+# selftests_rsa.verify: 2048bit RSA verify KAT failure case.
+# run_digest_selftests: SHA KATs MD failure cases.
+# - SHA-1
+# - SHA-224
+# - SHA-384
+# - SHA-512
+# selftests_keccak: SHA3 and SHAKE KAT failure cases.
+# - SHA3-224
+# - SHA3-256
+# - SHA3-384
+# - SHA3-512
+# - SHAKE-256
+# selftests_ecdsa.sign: ECDSA key generation PCT sign failure case.
+# selftests_ecdsa.verify: ECDSA key generation PCT verify failure case.
+# ecc_test_keys_fips.sign: ECC test keys FIPS sign failure case.
+# ecc_test_keys_fips.verify: ECC test keys FIPS verify failure case.
+# rsa_test_keys_fips.encrypt: RSA key generation PCT fips (SHA-256; initial encrypt) failure case.
+# rsa_test_keys_fips.decrypt: RSA key generation PCT fips (SHA-256; initial decrypt) failure case.
+# rsa_test_keys_fips.extract: RSA key generation PCT fips (SHA-256; extract) failure case.
+# rsa_test_keys_fips.strip: RSA key generation PCT fips (SHA-256; strip) failure case.
+# rsa_test_keys_fips.strip: RSA key generation PCT fips (SHA-256; md open) failure case.
+# rsa_test_keys_fips.sign: RSA key generation PCT fips (SHA-256; sign) failure case.
+# rsa_test_keys_fips.verify: RSA key generation PCT fips (SHA-256; verify) failure case.
+# rsa_test_keys_fips.verify_should_fail: RSA key generation PCT fips (SHA-256; verify should fail) failure case.
+# gcry_mpi_ec_curve_point.assurance: ECDH public key assurance checks, not/on curve, on/not curve failure cases.
+# check_ec_mul_reduction_a: ECDH public key assurance checks, check_ec_mul_reduction_a failure case.
+# check_ec_mul_reduction_b: ECDH public key assurance checks, check_ec_mul_reduction_b failure case.
+# cipher_setkey.invalid_keylen: XTS AES duplicate key test failure case.
+
 set -e
 
 # Machine must be in fips mode
@@ -399,13 +479,13 @@ verify "rsa_test_keys_fips" 2 "RSA key generation PCT fips (SHA-256; sign)" 1
 
 # Test function: cipher/rsa.c:test_keys_fips
 # Test trace: RSA key generation PCT fips (SHA-256; md sign)
-# Test env var: rsa_test_keys_fips.md_open.
+# Test env var: rsa_test_keys_fips.verify.
 start_test ${LDCHECK} "rsa_test_keys_fips" "rsa_test_keys_fips.verify"
 verify "rsa_test_keys_fips" 2 "RSA key generation PCT fips (SHA-256; verify should succeed)" 1
 
 # Test function: cipher/rsa.c:test_keys_fips
 # Test trace: RSA key generation PCT fips (SHA-256; md sign)
-# Test env var: rsa_test_keys_fips.md_open.
+# Test env var: rsa_test_keys_fips.verify_should_fail.
 start_test ${LDCHECK} "rsa_test_keys_fips" "rsa_test_keys_fips.verify_should_fail"
 verify "rsa_test_keys_fips" 2 "RSA key generation PCT fips (SHA-256; verify should fail)" 1
 
