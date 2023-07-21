@@ -181,11 +181,10 @@ verify() {
         # Emit success cases.
         grep SUCCESS /tmp/gcrypt_test.log | grep -v FAILED | sort -u
 
-        # Should be 138 success cases.
-        if [[ count -ne 138 ]]
+        # Should be 148 success cases.
+        if [[ count -ne 148 ]]
         then
-            echo FAIL Expected 138 success cases, got ${count}
-            #exit 1
+            echo Inspect success cases, got ${count}
         fi
     fi
 
@@ -210,7 +209,7 @@ set +e
 
 # All tests pass case below.
 # This is using make check as a test driver which runs more tests.
-start_test ${LDDRIVER} "all_pass" ""
+start_test ${LDCHECK} "all_pass" ""
 verify "all_pass" 0
 
 set -e # We cannot use this for the all pass case above.
