@@ -73,8 +73,8 @@ _gcry_hash_selftest_check_one (int algo,
     return "digest size does not match expected size";
 
   err = _gcry_md_open (&hd, algo, 0);
-  trace_fmt = "SHA KAT (SHA-%d), open";
-  sprintf(trace_buf, trace_fmt, bit_len);
+  trace_fmt = "SHA KAT (%s), open";
+  sprintf(trace_buf, trace_fmt, _gcry_md_algo_name(algo));
   if (err) {
     KAT_FAILED(0, trace_buf);
     return "gcry_md_open failed";
@@ -109,8 +109,8 @@ _gcry_hash_selftest_check_one (int algo,
 	{
 	  digest = _gcry_md_read (hd, algo);
 
-    trace_fmt = "SHA KAT (SHA-%d), digest check";
-    sprintf(trace_buf, trace_fmt, bit_len);
+    trace_fmt = "SHA KAT (%s), digest check";
+    sprintf(trace_buf, trace_fmt, _gcry_md_algo_name(algo));
 	  if ( memcmp (digest, expect, expectlen) ) {
       KAT_FAILED(1, trace_buf);
 	    result = "digest mismatch";
@@ -124,22 +124,22 @@ _gcry_hash_selftest_check_one (int algo,
 
 	  err = _gcry_md_extract (hd, algo, aaa, expectlen);
 	  if (err) {
-      trace_fmt = "SHA KAT (SHA-%d), xtract XOF";
-      sprintf(trace_buf, trace_fmt, bit_len);
+      trace_fmt = "SHA KAT (%s), xtract XOF";
+      sprintf(trace_buf, trace_fmt, _gcry_md_algo_name(algo));
       KAT_FAILED(3, trace_buf);
 	    result = "error extracting output from XOF";
     }
 	  else if ( memcmp (aaa, expect, expectlen) ) {
-      trace_fmt = "SHA KAT (SHA-%d), digest mismatch2";
-      sprintf(trace_buf, trace_fmt, bit_len);
+      trace_fmt = "SHA KAT (%s), digest mismatch2";
+      sprintf(trace_buf, trace_fmt, _gcry_md_algo_name(algo));
       KAT_FAILED(4, trace_buf);
 	    result = "digest mismatch";
     } else {
-      trace_fmt = "SHA KAT (SHA-%d), xtract XOF";
-      sprintf(trace_buf, trace_fmt, bit_len);
+      trace_fmt = "SHA KAT (%s), xtract XOF";
+      sprintf(trace_buf, trace_fmt,_gcry_md_algo_name(algo));
       KAT_SUCCESS(3, trace_buf);
-      trace_fmt = "SHA KAT (SHA-%d), digest mismatch2";
-      sprintf(trace_buf, trace_fmt, bit_len);
+      trace_fmt = "SHA KAT (%s), digest mismatch2";
+      sprintf(trace_buf, trace_fmt,_gcry_md_algo_name(algo));
       KAT_SUCCESS(4, trace_buf);
     }
 	}

@@ -1,15 +1,14 @@
 # Location if the libgrypt library under test. Should point at the library, not a symlink.
-export TEST_LIBRARY_LOCATION="/home/mhink/src/bitbucket.org/ciqinc/libgcrypt/ src/.libs/libgcrypt.so.20.4.0"
+export TEST_LIBRARY_LOCATION="install/lib/libgcrypt.so.20.4.0"
 
 # Location of the binary test driver that quickly runs self tests.
-export SIMPLE_DRIVER=/home/mhink/src/bitbucket.org/ciqinc/libgcrypt/driver
+export SIMPLE_DRIVER="./driver"
 # Location of the bash test driver that truncates /tmp/gcrypt_test.log, loads the library under test, and runs selftests.
-export LDDRIVER=/home/mhink/src/bitbucket.org/ciqinc/libgcrypt/ld_driver.sh
+export LDDRIVER=./ld_driver.sh
 
 # Location of the make check test driver that truncates /tmp/gcrypt_test.log, loads the library under test, and runs make check.
-export MAKE_LOCATION=/home/mhink/src/bitbucket.org/ciqinc/libgcrypt/libgcrypt-1.10.0
-export CHECK_DRIVER="make check"
-export LDCHECK=/home/mhink/src/bitbucket.org/ciqinc/libgcrypt/ld_check.sh
+export MAKE_LOCATION=./libgcrypt-1.10.0
+export LDCHECK=./ld_check.sh
 
 # Show expected failures as the tests run if 1. These come from the traces to the log.
 # This is the default. When the test passes, you will see something like:
