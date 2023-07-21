@@ -1941,11 +1941,11 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
   
   if (err)
     {
-      KAT_FAILED(1, "ECDSA sign KAT (P-224 curve, SHA2-256) signing");
+      KAT_FAILED(1, "ECDSA sign KAT (P-256 curve, SHA2-256) signing");
       errtxt = "signing failed";
       goto leave;
     } else {
-      KAT_SUCCESS(1, "ECDSA sign KAT (P-224 curve, SHA2-256) signing");
+      KAT_SUCCESS(1, "ECDSA sign KAT (P-256 curve, SHA2-256) signing");
     }
 
   /* check against known signature */
@@ -1995,11 +1995,11 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
 
   if (err)
     {
-      KAT_FAILED(10, "ECDSA verify KAT (P-224 curve, SHA2-256) verify failed");
+      KAT_FAILED(10, "ECDSA verify KAT (P-256 curve, SHA2-256) verify failed");
       errtxt = "verify failed";
       goto leave;
     } else {
-      KAT_SUCCESS(10, "ECDSA verify KAT (P-224 curve, SHA2-256) verify failed");
+      KAT_SUCCESS(10, "ECDSA verify KAT (P-256 curve, SHA2-256) verify failed");
     }
   err = _gcry_pk_verify (sig, data_bad, pkey);
   if (gcry_err_code (err) != GPG_ERR_BAD_SIGNATURE)
