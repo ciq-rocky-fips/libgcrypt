@@ -14,9 +14,12 @@ export hmackey=orboDeJITITejsirpADONivirpUkvarP
      --disable-brainpool \
      --enable-digests="$DIGESTS" \
      --enable-ciphers="$CIPHERS" \
-     --with-fips-module-version="$FIPS_MODULE_NAME %{version}-%{srpmhash}"
+     --with-fips-module-version="$FIPS_MODULE_NAME %{version}-%{srpmhash}" \
+     --prefix=`pwd`/../install
+     
 sed -i -e '/^sys_lib_dlsearch_path_spec/s,/lib /usr/lib,/usr/lib /lib64 /usr/lib64 /lib,g' libtool
 make
+make install
 
 # try in faked FIPS mode too
 #LIBGCRYPT_FORCE_FIPS_MODE=1 make check

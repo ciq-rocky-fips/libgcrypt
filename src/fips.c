@@ -509,19 +509,44 @@ run_digest_selftests (int extended)
 #endif
       384,
       512,
+      224,
+      256,
+      384,
+      512,
+      128,
+      256,
       0
     };
   int idx;
   gpg_error_t err;
   int anyerr = 0;
-  char trace_buf[128];
-  char * trace_fmt = "run_digest_selftests SHA KATs MD (SHA-%d)";
+  char trace_buf[128];  
   int fail_fips;
 
   fail_fips = gcry_fips_request_failure("run_digest_selftests", "fail");
   for (idx=0; algos[idx]; idx++)
     {
-      sprintf(trace_buf, trace_fmt, algo_bits[idx]);
+      switch (algos[idx])
+      {
+        case GCRY_MD_SHAKE128:
+        case GCRY_MD_SHAKE256:
+            sprintf(trace_buf, "run_digest_selftests SHAKE KATs MD (SHAKE-%d)", algo_bits[idx]);
+            break;
+        case GCRY_MD_SHA3_224:
+        case GCRY_MD_SHA3_256:
+        case GCRY_MD_SHA3_384:
+        case GCRY_MD_SHA3_512:
+            sprintf(trace_buf, "run_digest_selftests SHA3 KATs MD (SHA3-%d)", algo_bits[idx]);
+            break;
+        case GCRY_MD_SHA1:
+        case GCRY_MD_SHA224:
+        case GCRY_MD_SHA256:
+        case GCRY_MD_SHA384:
+        case GCRY_MD_SHA512:
+            sprintf(trace_buf, "run_digest_selftests SHA KATs MD (SHA-%d)", algo_bits[idx]);
+            break;        
+      }
+      
       err = _gcry_md_selftest (algos[idx], extended, reporter);
       reporter ("digest", algos[idx], NULL,
                 err? gpg_strerror (err):NULL);

@@ -8,6 +8,4 @@ source ./test_config
 ## LD_PRELOAD loads the library under tests. Caller is running the tests that run with make check.
 # This takes longer than the binary driver, but will run the tests.
 
-pushd ${MAKE_LOCATION} &>/dev/null
-${CHECK_DRIVER} &>/dev/null
-popd &>/dev/null
+LD_PRELOAD=${TEST_LIBRARY_LOCATION} ${CHECK_DRIVER}
