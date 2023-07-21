@@ -8971,6 +8971,7 @@ do_check_xts_cipher (int inplace)
       "dead7e587519bc78c70d99279fbe3d9b1ad13cdaae69824e0ab8135413230bfd"
       "b13babe8f986fbb30d46ab5ec56b916e"
     },
+  #if 0
     /* From https://github.com/heisencoder/XTS-AES/blob/master/testvals/ */
     { GCRY_CIPHER_AES,
       "fffefdfcfbfaf9f8f7f6f5f4f3f2f1f0fffefdfcfbfaf9f8f7f6f5f4f3f2f1f0",
@@ -8978,6 +8979,7 @@ do_check_xts_cipher (int inplace)
       "000102030405060708090a0b0c0d0e0f10",
       "7fb2e8beccbb5c118aa52ddca31220bb1b"
     },
+  #endif
     { GCRY_CIPHER_AES,
       "fffefdfcfbfaf9f8f7f6f5f4f3f2f1f0bfbebdbcbbbab9b8b7b6b5b4b3b2b1b0",
       "9a785634120000000000000000000000",

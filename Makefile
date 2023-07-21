@@ -1,6 +1,8 @@
 CC=gcc
+
 prefix_Idir=./libgcrypt-1.10.0
-prefix_Ldir=./libgcrypt-1.10.0/src/.libs
+prefix_Ldir=./libgcrypt-1.10.0/install/libs
+
 CFLAGS=-g -I. -I$(prefix_Idir) -I$(prefix_Idir)/src -I$(prefix_Idir)/tests
 DEPS = fip_utl.h
 
@@ -15,4 +17,4 @@ driver: $(OBJ)
 
 clean:
 	rm *.o || true
-	rm test || true
+	rm driver || true

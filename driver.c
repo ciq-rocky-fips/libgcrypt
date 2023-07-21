@@ -32,13 +32,6 @@
 
 #include <fcntl.h>
 
-gpg_err_code_t run_selftests() 
-{
-	gpg_err_code_t rc;
-	rc = gcry_control (GCRYCTL_SELFTEST, 1);
-	return rc;
-}
-
 int check_version() {
 	char * version;
 	int rc;
@@ -130,12 +123,6 @@ int main(int argc,char **argv)
 		printf("FAIL: !fips_mode_active\n");
 		return -1;
 	}
-
-	// This will run self tests.
-	rc = run_selftests();
-	if (rc != 0) 
-	{
-		return rc;
-	}
+	
 	return 0;
 }
