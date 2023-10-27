@@ -33,6 +33,7 @@
 #include "mpi.h"
 #include "cipher.h"
 #include "pubkey-internal.h"
+#include "const-time.h"
 
 
 typedef struct
@@ -1442,6 +1443,8 @@ rsa_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   unsigned char *unpad = NULL;
   size_t unpadlen = 0;
   unsigned int nbits = rsa_get_nbits (keyparms);
+  gcry_sexp_t result = NULL;
+  gcry_sexp_t dummy = NULL;
 
   rc = rsa_check_keysize (nbits);
   if (rc)
@@ -1510,8 +1513,10 @@ rsa_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
       rc = _gcry_rsa_pkcs1_decode_for_enc (&unpad, &unpadlen, nbits, plain);
       mpi_free (plain);
       plain = NULL;
-      if (!rc)
-        rc = sexp_build (r_plain, NULL, "(value %b)", (int)unpadlen, unpad);
+      sexp_build (&result, NULL, "(value %b)", (int)unpadlen, unpad);
+      *r_plain = sexp_null_cond (result, !!rc);
+      dummy = sexp_null_cond (result, !rc);
+      sexp_release (dummy);
       break;
 
     case PUBKEY_ENC_OAEP:
@@ -1520,8 +1525,10 @@ rsa_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
                                   plain, ctx.label, ctx.labellen);
       mpi_free (plain);
       plain = NULL;
-      if (!rc)
-        rc = sexp_build (r_plain, NULL, "(value %b)", (int)unpadlen, unpad);
+      sexp_build (&result, NULL, "(value %b)", (int)unpadlen, unpad);
+      *r_plain = sexp_null_cond (result, !!rc);
+      dummy = sexp_null_cond (result,!rc);
+      sexp_release (dummy);
       break;
 
     default:
