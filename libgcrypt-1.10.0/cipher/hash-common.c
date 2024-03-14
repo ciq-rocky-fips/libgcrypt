@@ -29,6 +29,14 @@
 #include "bufhelp.h"
 #include "hash-common.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 /* Run a selftest for hash algorithm ALGO.  If the resulting digest
    matches EXPECT/EXPECTLEN and everything else is fine as well,
@@ -52,6 +60,12 @@ _gcry_hash_selftest_check_one (int algo,
   unsigned char *digest;
   char aaa[1000];
   int xof = 0;
+  char trace_buf[128];
+  char * trace_fmt;
+  int bit_len = expectlen * 8;
+  if (bit_len == 160) {
+    bit_len = 1; /* SHA 1 */
+  }
 
   if (_gcry_md_get_algo_dlen (algo) == 0)
     xof = 1;
@@ -59,8 +73,14 @@ _gcry_hash_selftest_check_one (int algo,
     return "digest size does not match expected size";
 
   err = _gcry_md_open (&hd, algo, 0);
-  if (err)
+  trace_fmt = "SHA KAT (SHA-%d), open";
+  sprintf(trace_buf, trace_fmt, bit_len);
+  if (err) {
+    KAT_FAILED(0, trace_buf);
     return "gcry_md_open failed";
+  } else {
+    KAT_SUCCESS(0, trace_buf);
+  }
 
   switch (datamode)
     {
@@ -89,23 +109,43 @@ _gcry_hash_selftest_check_one (int algo,
 	{
 	  digest = _gcry_md_read (hd, algo);
 
-	  if ( memcmp (digest, expect, expectlen) )
+    trace_fmt = "SHA KAT (SHA-%d), digest check";
+    sprintf(trace_buf, trace_fmt, bit_len);
+	  if ( memcmp (digest, expect, expectlen) ) {
+      KAT_FAILED(1, trace_buf);
 	    result = "digest mismatch";
+    } else {
+      KAT_SUCCESS(1, trace_buf);
+    }
 	}
       else
 	{
 	  gcry_assert(expectlen <= sizeof(aaa));
 
 	  err = _gcry_md_extract (hd, algo, aaa, expectlen);
-	  if (err)
+	  if (err) {
+      trace_fmt = "SHA KAT (SHA-%d), xtract XOF";
+      sprintf(trace_buf, trace_fmt, bit_len);
+      KAT_FAILED(3, trace_buf);
 	    result = "error extracting output from XOF";
-	  else if ( memcmp (aaa, expect, expectlen) )
+    }
+	  else if ( memcmp (aaa, expect, expectlen) ) {
+      trace_fmt = "SHA KAT (SHA-%d), digest mismatch2";
+      sprintf(trace_buf, trace_fmt, bit_len);
+      KAT_FAILED(4, trace_buf);
 	    result = "digest mismatch";
+    } else {
+      trace_fmt = "SHA KAT (SHA-%d), xtract XOF";
+      sprintf(trace_buf, trace_fmt, bit_len);
+      KAT_SUCCESS(3, trace_buf);
+      trace_fmt = "SHA KAT (SHA-%d), digest mismatch2";
+      sprintf(trace_buf, trace_fmt, bit_len);
+      KAT_SUCCESS(4, trace_buf);
+    }
 	}
     }
 
   _gcry_md_close (hd);
-
   return result;
 }
 

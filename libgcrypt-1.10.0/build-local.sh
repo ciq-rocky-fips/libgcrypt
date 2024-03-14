@@ -3,7 +3,7 @@
 # should be all algorithms except SM3 and SM4
 export DIGESTS='crc gostr3411-94 md4 md5 rmd160 sha1 sha256 sha512 sha3 tiger whirlpool stribog blake2'
 export CIPHERS='arcfour blowfish cast5 des aes twofish serpent rfc2268 seed camellia idea salsa20 gost28147 chacha20'
-export FIPS_MODULE_NAME="CIQ Rocky Linux 8 Libgcrypt Cryptographic Module Version 1.0"
+export FIPS_MODULE_NAME="Rocky Linux 8 Libgcrypt Cryptographic Module"
 export gcrylibdir=%{_libdir}
 export gcrysoname=libgcrypt.so.20
 export hmackey=orboDeJITITejsirpADONivirpUkvarP

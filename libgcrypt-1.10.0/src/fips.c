@@ -30,6 +30,7 @@
 #ifdef HAVE_SYSLOG
 # include <syslog.h>
 #endif /*HAVE_SYSLOG*/
+#include <fcntl.h>
 
 /* The name of the file used to force libgcrypt into fips mode. */
 #define FIPS_FORCE_FILE "/etc/gcrypt/fips_enabled"
@@ -37,6 +38,15 @@
 #include "g10lib.h"
 #include "cipher-proto.h"
 #include "../random/random.h"
+
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 /* The states of the finite state machine used in fips mode.  */
 enum module_states
@@ -468,7 +478,6 @@ run_cipher_selftests (int extended)
   return anyerr;
 }
 
-
 /* Run self-tests for all required hash algorithms.  Return 0 on
    success. */
 static int
@@ -491,16 +500,40 @@ run_digest_selftests (int extended)
       GCRY_MD_SHAKE256,
       0
     };
+    static int algo_bits[] =
+    {
+      1,
+      224,
+#ifndef ENABLE_HMAC_BINARY_CHECK
+      256,
+#endif
+      384,
+      512,
+      0
+    };
   int idx;
   gpg_error_t err;
   int anyerr = 0;
+  char trace_buf[128];
+  char * trace_fmt = "run_digest_selftests SHA KATs MD (SHA-%d)";
+  int fail_fips;
 
+  fail_fips = gcry_fips_request_failure("run_digest_selftests", "fail");
   for (idx=0; algos[idx]; idx++)
     {
+      sprintf(trace_buf, trace_fmt, algo_bits[idx]);
       err = _gcry_md_selftest (algos[idx], extended, reporter);
       reporter ("digest", algos[idx], NULL,
                 err? gpg_strerror (err):NULL);
-      if (err)
+      if (fail_fips) {
+        err = GPG_ERR_GENERAL;
+      }
+      if (err) {
+        KAT_FAILED(idx, trace_buf);
+        anyerr = 1;
+      } else {
+        KAT_SUCCESS(idx, trace_buf);
+      }
         anyerr = 1;
     }
   return anyerr;
@@ -527,17 +560,45 @@ run_mac_selftests (int extended)
       GCRY_MAC_CMAC_AES,
       0
     };
+  static char * algostrings[] =
+    {
+      "GCRY_MAC_HMAC_SHA1",
+      "GCRY_MAC_HMAC_SHA224",
+#ifndef ENABLE_HMAC_BINARY_CHECK
+      "GCRY_MAC_HMAC_SHA256",
+#endif
+      "GCRY_MAC_HMAC_SHA384",
+      "GCRY_MAC_HMAC_SHA512",
+      "GCRY_MAC_HMAC_SHA3_224",
+      "GCRY_MAC_HMAC_SHA3_256",
+      "GCRY_MAC_HMAC_SHA3_384",
+      "GCRY_MAC_HMAC_SHA3_512",
+      "GCRY_MAC_CMAC_AES",
+      0
+    };
   int idx;
   gpg_error_t err;
   int anyerr = 0;
+  int fail_fips;
+  char trace_buf[128];
+  const char * trace_fmt = "run_mac_selftests HMAC KATs (%s)";
 
+  fail_fips = gcry_fips_request_failure("run_mac_selftests", "fail");
   for (idx=0; algos[idx]; idx++)
     {
       err = _gcry_mac_selftest (algos[idx], extended, reporter);
+      if (fail_fips) {
+        err = GPG_ERR_GENERAL;
+      }
       reporter ("mac", algos[idx], NULL,
                 err? gpg_strerror (err):NULL);
-      if (err)
+      sprintf(trace_buf, trace_fmt, algostrings[idx]);
+      if (err) {
+        KAT_FAILED(0, trace_buf);
         anyerr = 1;
+      } else {
+        KAT_SUCCESS(0, trace_buf);
+      }
     }
   return anyerr;
 }
@@ -706,6 +767,59 @@ hmac256_check (const char *filename, const char *key, struct link_map *lm)
   return err;
 }
 
+// Location of the library under test is in env var TEST_LIBRARY_LOCATION.
+# define BUFSIZE 512
+int corrupt_lib() {
+	uint8_t b = 0;
+    ssize_t len = 0;
+    int err = 0;
+	char path[BUFSIZE];
+	char *envvar = "TEST_LIBRARY_LOCATION";
+
+	if (!getenv(envvar)) {
+		printf("env var TEST_LIBRARY_LOCATION not set\n");
+		return -1;
+	}
+
+	if(snprintf(path, BUFSIZE, "%s", getenv(envvar)) >= BUFSIZE){
+        fprintf(stderr, "BUFSIZE of %d was too small. Aborting\n", BUFSIZE);
+        exit(1);
+    }
+    printf("PATH: %s\n", path);
+
+    int fd = open(path, O_RDWR);
+    if (fd == -1) {
+        err = errno;
+		printf("Failed to open library\n");
+        return err;
+    }
+	  // read the first byte,
+    len = pread(fd, &b, 1, 0);
+    if (len != 1) {
+        err = errno;
+        (void)close(fd);
+        if (len == 0) {
+			printf("Failed to read first byte\n");
+            /* Just map to EINVAL. */
+            err = EINVAL;
+        } else if (len < 0) {
+			err = errno;
+			printf("Failed to read first byte (%d)\n", err);
+        }
+        return err;
+    }
+    b ^= 0x1;
+    len = pwrite(fd, &b, 1, 0);
+    if (len != 1) {
+        err = errno;
+        (void)close(fd);
+		printf("Failed to write first byte (%d)\n", err);
+        return err;
+    }
+    (void)close(fd);
+    return 0;
+}
+
 /* Run an integrity check on the binary.  Returns 0 on success.  */
 static int
 check_binary_integrity (void)
@@ -715,12 +829,27 @@ check_binary_integrity (void)
   const char *key = KEY_FOR_BINARY_CHECK;
   void *extra_info;
 
+  if (gcry_fips_request_failure("check_binary_integrity", "fail")) {
+    /* corrupt library to force a failure below */
+    corrupt_lib();
+  }
+
   if (!dladdr1 (hmac_for_the_implementation,
                 &info, &extra_info, RTLD_DL_LINKMAP))
     err = gpg_error_from_syserror ();
   else
     err = hmac256_check (info.dli_fname, key, extra_info);
 
+  if (err) {
+    KAT_FAILED(0, "Software integrity test for libgcrypt (using an HMAC SHA2-256 digest)");
+
+    if (gcry_fips_request_failure("check_binary_integrity", "fail")) {
+      /* uncorrupt library */
+      corrupt_lib();
+    }
+  } else {
+    KAT_SUCCESS(0, "Software integrity test for libgcrypt (using an HMAC SHA2-256 digest)");
+  }
   reporter ("binary", 0, NULL, err? gpg_strerror (err):NULL);
 #ifdef HAVE_SYSLOG
   if (err)
@@ -737,20 +866,37 @@ check_binary_integrity (void)
 static int
 run_hmac_sha256_selftests (int extended)
 {
+  KAT_SUCCESS(0, "run_hmac_sha256_selftests (intial test) start");
   gpg_error_t err;
   int anyerr = 0;
 
   err = _gcry_md_selftest (GCRY_MD_SHA256, extended, reporter);
   reporter ("digest", GCRY_MD_SHA256, NULL,
             err? gpg_strerror (err):NULL);
-  if (err)
+
+  if (gcry_fips_request_failure("initial_hmac_sha256_test", "fail_md")) {
+    err = GPG_ERR_GENERAL;
+  }
+  if (err) {
+    KAT_FAILED(0, "Initial hmac sha256 self test, md");
     anyerr = 1;
+  } else {
+    KAT_SUCCESS(0, "Initial hmac sha256 self test, md");
+  }
 
   err = _gcry_mac_selftest (GCRY_MAC_HMAC_SHA256, extended, reporter);
   reporter ("mac", GCRY_MAC_HMAC_SHA256, NULL,
             err? gpg_strerror (err):NULL);
-  if (err)
+
+  if (gcry_fips_request_failure("initial_hmac_sha256_test", "fail_mac")) {
+    err = GPG_ERR_GENERAL;
+  }
+  if (err) {
+    KAT_FAILED(1, "Initial hmac sha256 self test, mac");
     anyerr = 1;
+  } else {
+    KAT_SUCCESS(1, "Initial hmac sha256 self test, mac");
+  }
 
   return anyerr;
 }
@@ -762,6 +908,7 @@ run_hmac_sha256_selftests (int extended)
 gpg_err_code_t
 _gcry_fips_run_selftests (int extended)
 {
+  KAT_SUCCESS(0, "_gcry_fips_run_selftests start");
   enum module_states result = STATE_ERROR;
   gcry_err_code_t ec = GPG_ERR_SELFTEST_FAILED;
 
