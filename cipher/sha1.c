@@ -42,6 +42,14 @@
 #include "cipher.h"
 #include "sha1.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 /* USE_SSSE3 indicates whether to compile with Intel SSSE3 code. */
 #undef USE_SSSE3
@@ -683,8 +691,12 @@ selftests_sha1 (int extended, selftest_report_func_t report)
      "abc", 3,
      "\xA9\x99\x3E\x36\x47\x06\x81\x6A\xBA\x3E"
      "\x25\x71\x78\x50\xC2\x6C\x9C\xD0\xD8\x9D", 20);
-  if (errtxt)
+  if (errtxt) {
+    KAT_FAILED(0, "SHA KATs (SHA-1)");
     goto failed;
+  } else {
+    KAT_SUCCESS(0, "SHA KATs (SHA-1)");
+  }
 
   if (extended)
     {
@@ -694,8 +706,12 @@ selftests_sha1 (int extended, selftest_report_func_t report)
          "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", 56,
          "\x84\x98\x3E\x44\x1C\x3B\xD2\x6E\xBA\xAE"
          "\x4A\xA1\xF9\x51\x29\xE5\xE5\x46\x70\xF1", 20);
-      if (errtxt)
+      if (errtxt) {
+        KAT_FAILED(1, "SHA KATs (SHA-1)");
         goto failed;
+      } else {
+        KAT_SUCCESS(0, "SHA KATs (SHA-1)");
+      }
 
       what = "one million \"a\"";
       errtxt = _gcry_hash_selftest_check_one
@@ -703,8 +719,12 @@ selftests_sha1 (int extended, selftest_report_func_t report)
          NULL, 0,
          "\x34\xAA\x97\x3C\xD4\xC4\xDA\xA4\xF6\x1E"
          "\xEB\x2B\xDB\xAD\x27\x31\x65\x34\x01\x6F", 20);
-      if (errtxt)
+      if (errtxt) {
+        KAT_FAILED(2, "SHA KATs (SHA-1)");
         goto failed;
+      } else {
+        KAT_SUCCESS(0, "SHA KATs (SHA-1)");
+      }
     }
 
   return 0; /* Succeeded. */

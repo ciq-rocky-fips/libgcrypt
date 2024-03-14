@@ -29,6 +29,15 @@
 #include "cipher-selftest.h"
 #include "cipher-internal.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
+
 #ifdef HAVE_STDINT_H
 # include <stdint.h> /* uintptr_t */
 #elif defined(HAVE_INTTYPES_H)
@@ -166,8 +175,14 @@ _gcry_selftest_helper_cbc (const char *cipher, gcry_cipher_setkey_t setkey_func,
   /* Decrypt using bulk CBC and compare result.  */
   bulk_ops.cbc_dec (ctx, iv2, plaintext2, ciphertext, nblocks);
 
+  if (strcmp(cipher, "AES") == 0) {
+    if (gcry_fips_request_failure("aes_cbc_128", "decrypt")) {
+      plaintext2[0] ^=1;
+    }
+  }
   if (memcmp (plaintext2, plaintext, nblocks * blocksize))
     {
+      KAT_FAILED(0, "AES-CBC-128 decrypt");
       xfree (mem);
 #ifdef HAVE_SYSLOG
       syslog (LOG_USER|LOG_WARNING, "Libgcrypt warning: "
@@ -178,6 +193,7 @@ _gcry_selftest_helper_cbc (const char *cipher, gcry_cipher_setkey_t setkey_func,
     }
   if (memcmp (iv2, iv, blocksize))
     {
+      KAT_FAILED(0, "AES-CBC-128 decrypt");
       xfree (mem);
 #ifdef HAVE_SYSLOG
       syslog (LOG_USER|LOG_WARNING, "Libgcrypt warning: "
@@ -185,6 +201,9 @@ _gcry_selftest_helper_cbc (const char *cipher, gcry_cipher_setkey_t setkey_func,
 	      cipher, blocksize * 8);
 #endif
       return "selftest for CBC failed - see syslog for details";
+    }
+    if (strcmp(cipher, "AES") == 0) {
+      KAT_SUCCESS(0, "AES-CBC-128 decrypt");
     }
 
   xfree (mem);

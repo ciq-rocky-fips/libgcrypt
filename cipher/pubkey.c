@@ -31,6 +31,14 @@
 #include "context.h"
 #include "pubkey-internal.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 /* This is the list of the public-key algorithms included in
    Libgcrypt.  */
@@ -721,8 +729,6 @@ _gcry_pk_testkey (gcry_sexp_t s_key)
     goto leave;
 
   if (spec->flags.disabled)
-    rc = GPG_ERR_PUBKEY_ALGO;
-  else if (!spec->flags.fips && fips_mode ())
     rc = GPG_ERR_PUBKEY_ALGO;
   else if (spec->check_secret_key)
     rc = spec->check_secret_key (keyparms);

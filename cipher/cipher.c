@@ -30,6 +30,14 @@
 #include "cipher.h"
 #include "./cipher-internal.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 /* This is the list of the default ciphers, which are included in
    libgcrypt.  */
@@ -740,9 +748,17 @@ cipher_setkey (gcry_cipher_hd_t c, byte *key, size_t keylen)
 
   if (c->mode == GCRY_CIPHER_MODE_XTS)
     {
+      if (gcry_fips_request_failure("cipher_setkey", "invalid_keylen")) {
+        keylen -= 1;
+      }
+
       /* XTS uses two keys. */
-      if (keylen % 2)
+      if (keylen % 2) {
+        KAT_FAILED(0, "XTS AES duplicate key test");
 	return GPG_ERR_INV_KEYLEN;
+      } else {
+      KAT_SUCCESS(0, "XTS AES duplicate key test");
+      }
       keylen /= 2;
 
       if (fips_mode ())
@@ -750,15 +766,26 @@ cipher_setkey (gcry_cipher_hd_t c, byte *key, size_t keylen)
 	  /* Reject key if subkeys Key_1 and Key_2 are equal.
 	     See "Implementation Guidance for FIPS 140-2, A.9 XTS-AES
 	     Key Generation Requirements" for details.  */
-	  if (buf_eq_const (key, key + keylen, keylen))
+	  if (buf_eq_const (key, key + keylen, keylen)) {
+      KAT_FAILED(0, "XTS AES duplicate key test");
 	    return GPG_ERR_WEAK_KEY;
+      } else {
+      KAT_SUCCESS(0, "XTS AES duplicate key test");
+      }
 	}
     }
   else if (c->mode == GCRY_CIPHER_MODE_SIV)
     {
+      if (gcry_fips_request_failure("cipher_setkey", "invalid_keylen")) {
+        keylen -= 1;
+      }
       /* SIV uses two keys. */
-      if (keylen % 2)
+      if (keylen % 2) {
+        KAT_FAILED(0, "XTS AES duplicate key test");
 	return GPG_ERR_INV_KEYLEN;
+      } else {
+        KAT_SUCCESS(0, "XTS AES duplicate key test");
+      }
       keylen /= 2;
     }
 

@@ -157,6 +157,14 @@
 #include "rand-internal.h"
 #include "../cipher/bufhelp.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 
 /******************************************************************
@@ -615,8 +623,12 @@ drbg_get_entropy (drbg_state_t drbg, unsigned char *buffer,
   int rc = 0;
 
   /* Perform testing as defined in 11.3.2 */
-  if (drbg->test_data && drbg->test_data->fail_seed_source)
+  if (drbg->test_data && drbg->test_data->fail_seed_source) {
+    KAT_FAILED(0, "DRBG: entropy");
     return -1;
+  } else {
+    KAT_SUCCESS(0, "DRBG: entropy");
+  }
 
   read_cb_buffer = buffer;
   read_cb_size = len;
@@ -640,6 +652,14 @@ drbg_get_entropy (drbg_state_t drbg, unsigned char *buffer,
 #else
   rc = -1;
 #endif
+  if (gcry_fips_request_failure("drbg_get_entropy", "fail")) {
+    rc = GPG_ERR_GENERAL;
+  }
+  if (rc) {
+    KAT_FAILED(1, "DRBG: entropy");
+  } else {
+    KAT_SUCCESS(1, "DRBG: entropy");
+  }
   return rc;
 }
 
@@ -1355,19 +1375,34 @@ drbg_seed (drbg_state_t drbg, drbg_string_t *pers, int reseed)
        * of the strength. The consideration of a nonce is only
        * applicable during initial seeding. */
       entropylen = drbg_sec_strength (drbg->core->flags);
-      if (!entropylen)
+      if (gcry_fips_request_failure("drbg_seed", "fail")) {
+        entropylen = 0;
+      }
+      if (!entropylen) {
+        KAT_FAILED(-1, "CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)");
 	return GPG_ERR_GENERAL;
+      } else {
+        KAT_SUCCESS(-1, "CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)");
+      }
       if (0 == reseed)
 	/* make sure we round up strength/2 in
 	 * case it is not divisible by 2 */
 	entropylen = ((entropylen + 1) / 2) * 3;
       dbg (("DRBG: (re)seeding with %lu bytes of entropy\n", entropylen));
       entropy = xcalloc_secure (1, entropylen);
-      if (!entropy)
+      if (!entropy) {
+        KAT_FAILED(ret, "CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)");
 	return GPG_ERR_ENOMEM;
+      } else {
+        KAT_SUCCESS(ret, "CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)");
+      }
       ret = drbg_get_entropy (drbg, entropy, entropylen);
-      if (ret)
+      if (ret) {
+        KAT_FAILED(ret, "CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)");
 	goto out;
+      } else {
+        KAT_SUCCESS(ret, "CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)");
+      }
       drbg_string_fill (&data1, entropy, entropylen);
     }
 
@@ -1382,8 +1417,12 @@ drbg_seed (drbg_state_t drbg, drbg_string_t *pers, int reseed)
 
   ret = drbg->d_ops->update (drbg, &data1, reseed);
   dbg (("DRBG: state updated with seed\n"));
-  if (ret)
+  if (ret) {
+    KAT_FAILED(ret, "CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)");
     goto out;
+  } else {
+    KAT_SUCCESS(ret, "CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)");
+  }
   drbg->seeded = 1;
   /* 10.1.1.2 / 10.1.1.3 step 5 */
   drbg->reseed_ctr = 1;
@@ -2374,6 +2413,32 @@ _gcry_rngdrbg_cavs_test (struct gcry_drbg_test_vector *test, unsigned char *buf)
   return ret;
 }
 
+char *
+_get_rngdrbg_trace(char * flagstr) {
+  if (strcmp(flagstr, "sha256") == 0) {
+    return "DRBG HASH SHA256 NO PR";
+  }
+  if (strcmp(flagstr, "hmac sha256") == 0) {
+    return "DRBG HMAC SHA256 NO PR";
+  }
+  if (strcmp(flagstr, "aes sym128") == 0) {
+    return "DRBG CTR AES128 NO PR";
+  }
+  if (strcmp(flagstr, "sha1") == 0) {
+    return "DRBG HASH SHA1 NO PR";
+  }
+  if (strcmp(flagstr, "sha256 pr") == 0) {
+    return "DRBG HASH SHA256 PR";
+  }
+  if (strcmp(flagstr, "hmac sha256 pr") == 0) {
+    return "DRBG HMAC SHA256 PR";
+  }
+  if (strcmp(flagstr, "aes sym128 pr") == 0) {
+    return "DRBG CTR AES128 PR";
+  }
+  return "BUG";
+}
+
 /*
  * Invoke the CAVS test and perform the final check whether the
  * calculated random value matches the expected one.
@@ -2386,6 +2451,8 @@ _gcry_rngdrbg_healthcheck_one (struct gcry_drbg_test_vector * test)
 {
   gpg_err_code_t ret = GPG_ERR_ENOMEM;
   unsigned char *buf = xcalloc_secure (1, test->expectedlen);
+  char * trace_fmt = "_gcry_rngdrbg_healthcheck_one DRBG KAT (%s) %s";
+  char trace_buf[128];
   if (!buf)
     return GPG_ERR_ENOMEM;
 
@@ -2393,7 +2460,18 @@ _gcry_rngdrbg_healthcheck_one (struct gcry_drbg_test_vector * test)
   /* FIXME: The next line is wrong.   */
   ret = memcmp (test->expected, buf, test->expectedlen);
 
+  /* fail case testing */
+  if (gcry_fips_request_failure("_gcry_rngdrbg_healthcheck_one", "fail")) {
+    ret = 1;
+  }
+
   xfree (buf);
+  sprintf(trace_buf, trace_fmt, _get_rngdrbg_trace(test->flagstr), "compare");
+  if (ret != 0) {
+    KAT_FAILED(1, trace_buf);
+  } else {
+    KAT_SUCCESS(1, trace_buf);
+  }
   return ret;
 }
 

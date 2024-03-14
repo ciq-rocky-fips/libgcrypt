@@ -29,6 +29,15 @@
 #define PGM "t-mpi-point"
 #include "t-common.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
+
 static const struct
 {
   const char *desc;           /* Description of the curve.  */
@@ -884,7 +893,6 @@ basic_ec_math_simplified (void)
   gcry_ctx_release (ctx);
 }
 
-
 /* Check the math used with Twisted Edwards curves.  */
 static void
 twistededwards_math (void)
@@ -956,9 +964,18 @@ twistededwards_math (void)
   if (gcry_mpi_cmp (w, a))
     fail ("failed assertion: I^2 mod p == p-1\n");
 
+  int on_curve;
+  on_curve = gcry_mpi_ec_curve_point (G, ctx);
+  if (gcry_fips_request_failure("gcry_mpi_ec_curve_point", "twistededwards_math")) {
+    on_curve = 0;
+  }
   /* Check: G is on the curve */
-  if (!gcry_mpi_ec_curve_point (G, ctx))
+  if (!on_curve) {
+    KAT_FAILED(0, "ECDH public key assurance checks, twistededwards_math");
     fail ("failed assertion: G is on the curve\n");
+  } else {
+    KAT_SUCCESS(0, "ECDH public key assurance checks, twistededwards_math");
+  }
 
   /* Check: nG == (0,1) */
   gcry_mpi_ec_mul (Q, n, G, ctx);
@@ -1020,7 +1037,6 @@ twistededwards_math (void)
   gcry_mpi_release (k);
   gcry_ctx_release (ctx);
 }
-
 
 /* Check the point on curve function.  */
 static void
@@ -1265,18 +1281,24 @@ point_on_curve (void)
         die ("gcry_mpi_point_set(Q) failed at idx %d\n", tidx);
 
       oncurve = gcry_mpi_ec_curve_point (Q, ctx);
-
+      if (gcry_fips_request_failure("gcry_mpi_ec_curve_point", "assurance")) {
+        oncurve = !oncurve;
+      }
       if (t[tidx].oncurve && !oncurve)
         {
+          KAT_FAILED(0, "ECDH public key assurance checks, on/not curve");
           fail ("point expected on curve but not identified as such (i=%d):\n",
                 tidx);
           print_point ("  Q", Q);
         }
       else if (!t[tidx].oncurve && oncurve)
         {
+          KAT_FAILED(0, "ECDH public key assurance checks, not/on curve");
           fail ("point not expected on curve but identified as such (i=%d):\n",
                 tidx);
           print_point ("  Q", Q);
+        } else {
+          KAT_SUCCESS(0, "ECDH public key assurance checks");
         }
       gcry_mpi_point_release (Q);
     }
@@ -4348,20 +4370,35 @@ check_ec_mul_reduction (void)
       x = gcry_mpi_new (0);
       y = gcry_mpi_new (0);
 
-      if (!gcry_mpi_ec_curve_point (U, ctx))
+      int on_curve;
+      on_curve = gcry_mpi_ec_curve_point (U, ctx);
+      if (gcry_fips_request_failure("gcry_mpi_ec_curve_point", "check_ec_mul_reduction_a")) {
+        on_curve = 0;
+      }
+      if (!on_curve)
         {
+          KAT_FAILED(0, "ECDH public key assurance checks, check_ec_mul_reduction_a");
           print_point ("  U", U);
 	  die ("tv[%d].'%s': point expected on curve but not "
 	       "identified as such\n", idx, tv[idx].curve);
+        } else {
+          KAT_SUCCESS(0, "ECDH public key assurance checks, check_ec_mul_reduction_a");
         }
 
       gcry_mpi_ec_mul (Q, scalar, U, ctx);
 
-      if (!gcry_mpi_ec_curve_point (Q, ctx))
+      on_curve = gcry_mpi_ec_curve_point (Q, ctx);
+      if (gcry_fips_request_failure("gcry_mpi_ec_curve_point", "check_ec_mul_reduction_b")) {
+        on_curve = 0;
+      }
+      if (!on_curve)
         {
+          KAT_FAILED(0, "ECDH public key assurance checks, check_ec_mul_reduction_b");
           print_point ("  Q", Q);
 	  die ("tv[%d].'%s': point expected on curve but not "
 	       "identified as such\n", idx, tv[idx].curve);
+        } else {
+          KAT_SUCCESS(0, "ECDH public key assurance checks, check_ec_mul_reduction_b");
         }
 
       if (gcry_mpi_ec_get_affine (x, y, Q, ctx))

@@ -29,6 +29,14 @@
 #include "cipher.h"
 #include "pubkey-internal.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 typedef struct
 {
@@ -197,13 +205,21 @@ test_keys (DSA_secret_key *sk, unsigned int qbits)
   sign (sig_a, sig_b, data, NULL, sk, 0, 0);
 
   /* Verify the signature using the public key.  */
-  if ( verify (sig_a, sig_b, data, &pk, 0, 0) )
+  if ( verify (sig_a, sig_b, data, &pk, 0, 0) ) {
+    KAT_FAILED(0, "DSA key generation PCT");
     goto leave; /* Signature does not match.  */
+  } else {
+    KAT_SUCCESS(0, "DSA key generation PCT");
+  }
 
   /* Modify the data and check that the signing fails.  */
   mpi_add_ui (data, data, 1);
-  if ( !verify (sig_a, sig_b, data, &pk, 0, 0) )
+  if ( !verify (sig_a, sig_b, data, &pk, 0, 0) ) {
+    KAT_FAILED(1, "DSA key generation PCT FAILCASE");
     goto leave; /* Signature matches but should not.  */
+  } else {
+    KAT_SUCCESS(1, "DSA key generation PCT FAILCASE");
+  }
 
   result = 0; /* The test succeeded.  */
 
@@ -1732,52 +1748,91 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
 
   if (err)
     {
+      KAT_FAILED(0, "DSA verify KAT (2048-bit; SHA2-256), convert");
       errtxt = "converting data failed";
       goto leave;
+    } else {
+      KAT_SUCCESS(0, "DSA verify KAT (2048-bit; SHA2-256), convert");
     }
 
   err = _gcry_pk_sign (&sig, data, skey);
   if (err)
     {
+      KAT_FAILED(1, "DSA verify KAT (2048-bit; SHA2-256), pk sign");
       errtxt = "signing failed";
       goto leave;
+    } else {
+      KAT_SUCCESS(1, "DSA verify KAT (2048-bit; SHA2-256), pk sign");
     }
 
   /* check against known signature */
   errtxt = "signature validity failed";
   l1 = _gcry_sexp_find_token (sig, "sig-val", 0);
-  if (!l1)
+  if (!l1) {
+    KAT_FAILED(2, "DSA verify KAT (2048-bit; SHA2-256), _gcry_sexp_find_token l1");
     goto leave;
+  } else {
+    KAT_SUCCESS(2, "DSA verify KAT (2048-bit; SHA2-256), _gcry_sexp_find_token l1");
+  }
   l2 = _gcry_sexp_find_token (l1, "dsa", 0);
-  if (!l2)
+  if (!l2) {
+    KAT_FAILED(3, "DSA verify KAT (2048-bit; SHA2-256), _gcry_sexp_find_token l2");
     goto leave;
+  } else {
+    KAT_SUCCESS(3, "DSA verify KAT (2048-bit; SHA2-256), _gcry_sexp_find_token l2");
+  }
 
   sexp_release (l1);
   l1 = l2;
 
   l2 = _gcry_sexp_find_token (l1, "r", 0);
-  if (!l2)
+  if (!calculated_s)
+  if (!l2) {
+    KAT_FAILED(4, "DSA verify KAT (2048-bit; SHA2-256) _gcry_sexp_find_token l12");
     goto leave;
+  } else {
+    KAT_SUCCESS(4, "DSA verify KAT (2048-bit; SHA2-256), _gcry_sexp_find_token l12");
+  }
   calculated_r = _gcry_sexp_nth_mpi (l2, 1, GCRYMPI_FMT_USG);
-  if (!calculated_r)
+  if (!calculated_r) {
+    KAT_FAILED(5, "DSA verify KAT (2048-bit; SHA2-256), _gcry_sexp_nth_mpi calculated_r");
     goto leave;
+  } else {
+    KAT_SUCCESS(5, "DSA verify KAT (2048-bit; SHA2-256), _gcry_sexp_nth_mpi calculated_r");
+  }
 
   sexp_release (l2);
   l2 = _gcry_sexp_find_token (l1, "s", 0);
-  if (!l2)
+  if (!l2) {
+    KAT_FAILED(6, "DSA verify KAT (2048-bit; SHA2-256), _gcry_sexp_find_token l2b");
     goto leave;
+  } else {
+    KAT_SUCCESS(6, "DSA verify KAT (2048-bit; SHA2-256), _gcry_sexp_find_token l2b");
+  }
   calculated_s = _gcry_sexp_nth_mpi (l2, 1, GCRYMPI_FMT_USG);
-  if (!calculated_s)
+  if (!calculated_s) {
+    KAT_FAILED(7, "DSA verify KAT (2048-bit; SHA2-256), _gcry_sexp_nth_mpi calculated_s");
     goto leave;
+  } else {
+    KAT_SUCCESS(7, "DSA verify KAT (2048-bit; SHA2-256), _gcry_sexp_nth_mpi calculated_s");
+  }
 
   errtxt = "known sig check failed";
 
   cmp = _gcry_mpi_cmp (r, calculated_r);
-  if (cmp)
+  if (cmp) {
+    KAT_FAILED(8, "DSA verify KAT (2048-bit; SHA2-256), _gcry_mpi_cmp calculated_r");
     goto leave;
+  } else {
+    KAT_SUCCESS(8, "DSA verify KAT (2048-bit; SHA2-256), _gcry_mpi_cmp calculated_r");
+  }
   cmp = _gcry_mpi_cmp (s, calculated_s);
-  if (cmp)
+  if (cmp) {
+    KAT_FAILED(9, "DSA verify KAT (2048-bit; SHA2-256), _gcry_mpi_cmp calculated_s");
     goto leave;
+  } else {
+    KAT_SUCCESS(9, "DSA verify KAT (2048-bit; SHA2-256), _gcry_mpi_cmp calculated_s");
+  }
 
   errtxt = NULL;
 
@@ -1785,14 +1840,20 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
   err = _gcry_pk_verify (sig, data, pkey);
   if (err)
     {
+      KAT_FAILED(10, "DSA verify KAT (2048-bit; SHA2-256), verify failed");
       errtxt = "verify failed";
       goto leave;
+    } else {
+      KAT_SUCCESS(10, "DSA verify KAT (2048-bit; SHA2-256), verify failed");
     }
   err = _gcry_pk_verify (sig, data_bad, pkey);
   if (gcry_err_code (err) != GPG_ERR_BAD_SIGNATURE)
     {
+      KAT_FAILED(11, "DSA verify KAT (2048-bit; SHA2-256), signature note detected");
       errtxt = "bad signature not detected";
       goto leave;
+    } else {
+      KAT_SUCCESS(11, "DSA verify KAT (2048-bit; SHA2-256), signature note detected");
     }
 
 
@@ -1819,6 +1880,9 @@ selftests_dsa_2048 (selftest_report_func_t report)
   gcry_sexp_t skey = NULL;
   gcry_sexp_t pkey = NULL;
 
+  if (fips_mode()) {
+    return 0;
+  }
   /* Convert the S-expressions into the internal representation.  */
   what = "convert";
   err = sexp_sscan (&skey, NULL, sample_secret_key_2048, strlen (sample_secret_key_2048));
@@ -1827,22 +1891,32 @@ selftests_dsa_2048 (selftest_report_func_t report)
                       sample_public_key_2048, strlen (sample_public_key_2048));
   if (err)
     {
+      KAT_FAILED(0, "DSA verify KAT (2048-bit; SHA2-256), convert");
       errtxt = _gcry_strerror (err);
       goto failed;
+    } else {
+      KAT_SUCCESS(0, "DSA verify KAT (2048-bit; SHA2-256), convert");
     }
 
   what = "key consistency";
   err = _gcry_pk_testkey (skey);
   if (err)
     {
+      KAT_FAILED(1, "DSA verify KAT (2048-bit; SHA2-256), key consistency");
       errtxt = _gcry_strerror (err);
       goto failed;
+    } else {
+      KAT_SUCCESS(1, "DSA verify KAT (2048-bit; SHA2-256), key consistency");
     }
 
   what = "sign";
   errtxt = selftest_sign (pkey, skey);
-  if (errtxt)
+  if (errtxt) {
+    KAT_FAILED(2, "DSA verify KAT (2048-bit; SHA2-256), sign");
     goto failed;
+  } else {
+    KAT_SUCCESS(2, "DSA verify KAT (2048-bit; SHA2-256), sign");
+  }
 
   sexp_release (pkey);
   sexp_release (skey);

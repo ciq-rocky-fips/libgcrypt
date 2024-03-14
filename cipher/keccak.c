@@ -26,6 +26,14 @@
 #include "cipher.h"
 #include "hash-common.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 
 /* USE_64BIT indicates whether to use 64-bit generic implementation.
@@ -1302,6 +1310,8 @@ selftests_keccak (int algo, int extended, selftest_report_func_t report)
   const char *long_hash;
   const char *one_million_a_hash;
   int hash_len;
+  char trace_buf[128];
+  int fail_fips;
 
   switch (algo)
   {
@@ -1319,6 +1329,7 @@ selftests_keccak (int algo, int extended, selftest_report_func_t report)
 	"\xd6\x93\x35\xb9\x33\x25\x19\x2e\x51\x6a\x91\x2e\x6d\x19\xa1\x5c"
 	"\xb5\x1c\x6e\xd5\xc1\x52\x43\xe7\xa7\xfd\x65\x3c";
       hash_len = 28;
+      sprintf(trace_buf, "selftests_keccak SHA3 KATs (SHA3-%d) %s", hash_len * 8, "shortstring");
       break;
 
     case GCRY_MD_SHA3_256:
@@ -1332,6 +1343,7 @@ selftests_keccak (int algo, int extended, selftest_report_func_t report)
 	"\x5c\x88\x75\xae\x47\x4a\x36\x34\xba\x4f\xd5\x5e\xc8\x5b\xff\xd6"
 	"\x61\xf3\x2a\xca\x75\xc6\xd6\x99\xd0\xcd\xcb\x6c\x11\x58\x91\xc1";
       hash_len = 32;
+      sprintf(trace_buf, "selftests_keccak SHA3 KATs (SHA3-%d) %s", hash_len * 8, "shortstring");
       break;
 
     case GCRY_MD_SHA3_384:
@@ -1348,6 +1360,7 @@ selftests_keccak (int algo, int extended, selftest_report_func_t report)
 	"\x9e\xed\xf2\x56\xc6\x33\x4f\x8e\x94\x8d\x25\x2d\x5e\x0e\x76\x84"
 	"\x7a\xa0\x77\x4d\xdb\x90\xa8\x42\x19\x0d\x2c\x55\x8b\x4b\x83\x40";
       hash_len = 48;
+      sprintf(trace_buf, "selftests_keccak SHA3 KATs (SHA3-%d) %s", hash_len * 8, "shortstring");
       break;
 
     case GCRY_MD_SHA3_512:
@@ -1367,6 +1380,7 @@ selftests_keccak (int algo, int extended, selftest_report_func_t report)
 	"\xed\x31\x1d\x0a\x9d\x51\x41\xce\x9c\xc5\xc6\x6e\xe6\x89\xb2\x66"
 	"\xa8\xaa\x18\xac\xe8\x28\x2a\x0e\x0d\xb5\x96\xc9\x0b\x0a\x7b\x87";
       hash_len = 64;
+      sprintf(trace_buf, "selftests_keccak SHA3 KATs (SHA3-%d) %s", hash_len * 8, "shortstring");
       break;
 
     case GCRY_MD_SHAKE128:
@@ -1380,6 +1394,7 @@ selftests_keccak (int algo, int extended, selftest_report_func_t report)
 	"\x9d\x22\x2c\x79\xc4\xff\x9d\x09\x2c\xf6\xca\x86\x14\x3a\xa4\x11"
 	"\xe3\x69\x97\x38\x08\xef\x97\x09\x32\x55\x82\x6c\x55\x72\xef\x58";
       hash_len = 32;
+      sprintf(trace_buf, "selftests_keccak SHAKE KATs (SHAKE-%d) %s", hash_len * 8, "shortstring");
       break;
 
     case GCRY_MD_SHAKE256:
@@ -1393,14 +1408,23 @@ selftests_keccak (int algo, int extended, selftest_report_func_t report)
 	"\x35\x78\xa7\xa4\xca\x91\x37\x56\x9c\xdf\x76\xed\x61\x7d\x31\xbb"
 	"\x99\x4f\xca\x9c\x1b\xbf\x8b\x18\x40\x13\xde\x82\x34\xdf\xd1\x3a";
       hash_len = 32;
+      sprintf(trace_buf, "selftests_keccak SHAKE KATs (SHAKE-%d) %s", hash_len * 8, "shortstring");
       break;
   }
 
+  fail_fips = gcry_fips_request_failure("selftests_keccak", "shortstring");
   what = "short string";
   errtxt = _gcry_hash_selftest_check_one (algo, 0, "abc", 3, short_hash,
 					  hash_len);
-  if (errtxt)
+  if (fail_fips) {
+    errtxt = "testing failure";
+  }
+if (errtxt) {
+    KAT_FAILED(0, trace_buf);
     goto failed;
+  } else {
+    KAT_SUCCESS(0, trace_buf);
+  }
 
   if (extended)
     {
@@ -1410,14 +1434,22 @@ selftests_keccak (int algo, int extended, selftest_report_func_t report)
 	"abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmn"
 	"hijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu", 112,
 	long_hash, hash_len);
-      if (errtxt)
+      if (errtxt) {
+            KAT_FAILED(algo, trace_buf);
 	goto failed;
+      } else {
+            KAT_SUCCESS(algo, trace_buf);
+      }
 
       what = "one million \"a\"";
       errtxt = _gcry_hash_selftest_check_one (algo, 1, NULL, 0,
 					      one_million_a_hash, hash_len);
-      if (errtxt)
+      if (errtxt) {
+          KAT_FAILED(algo, trace_buf);
 	goto failed;
+      } else {
+          KAT_SUCCESS(algo, trace_buf);
+      }
     }
 
   return 0; /* Succeeded. */
