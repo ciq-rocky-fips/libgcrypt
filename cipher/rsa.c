@@ -116,7 +116,7 @@ static int  check_secret_key (RSA_secret_key *sk);
 static void public (gcry_mpi_t output, gcry_mpi_t input, RSA_public_key *skey);
 static void secret (gcry_mpi_t output, gcry_mpi_t input, RSA_secret_key *skey);
 static unsigned int rsa_get_nbits (gcry_sexp_t parms);
-
+static gcry_mpi_t extract_a_from_sexp (gcry_sexp_t encr_data);
 
 /* Check that a freshly generated key actually works.  Returns 0 on success. */
 static int
@@ -182,14 +182,76 @@ test_keys_fips (gcry_sexp_t skey)
 {
   int result = -1; /* Default to failure.  */
   char plaintext[128];
+  //char plaintext[] =
+  //  "Jim quickly realized that the beautiful gowns are expensive.";
   gcry_sexp_t sig = NULL;
   const char *data_tmpl = "(data (flags pkcs1) (hash %s %b))";
   gcry_md_hd_t hd = NULL;
   int ec;
+  gcry_error_t err;
+  gcry_sexp_t plain = NULL;
+  gcry_sexp_t encr  = NULL;
+  gcry_mpi_t  ciphertext = NULL;
+  gcry_sexp_t decr  = NULL;
+  char *decr_plaintext = NULL;
+  int decr_plaintext_len = 0, strip;
+  gcry_sexp_t tmplist = NULL;  
+  gcry_mpi_t ref_mpi = NULL;
+  int counter;
 
-  /* Create a random plaintext.  */
-  _gcry_randomize (plaintext, sizeof plaintext, GCRY_WEAK_RANDOM);
+    /* Create a random plaintext.  */
+  _gcry_randomize (plaintext, sizeof(plaintext), GCRY_WEAK_RANDOM);
 
+  /* Put the plaintext into an S-expression.  */
+  err = sexp_build (&plain, NULL, "(data (flags raw) (value %b))", sizeof(plaintext), plaintext);
+  if (err)
+    {
+      goto leave;
+    }
+
+  /* Encrypt.  */
+  err = _gcry_pk_encrypt (&encr, plain, skey);
+  if (err)
+    {
+      goto leave;
+    }
+
+  /* Decrypt.  */
+  err = _gcry_pk_decrypt (&decr, encr, skey);
+  if (err)
+    {
+      goto leave;
+    }
+  
+  /* Extract the decrypted data from the S-expression.  Note that the
+     output of gcry_pk_decrypt depends on whether a flags lists occurs
+     in its input data.  Because we passed the output of
+     gcry_pk_encrypt directly to gcry_pk_decrypt, such a flag value
+     won't be there as of today.  To be prepared for future changes we
+     take care of it anyway.  */
+  tmplist = sexp_find_token (decr, "value", 0);
+  if (tmplist)
+    decr_plaintext = sexp_nth_string (tmplist, 1);
+  else
+    decr_plaintext = sexp_nth_data (decr, 0, &decr_plaintext_len);
+  if (!decr_plaintext)
+    {
+      goto leave;
+    }
+  
+  strip = decr_plaintext_len - sizeof(plaintext);
+  if (memcmp(plaintext, &decr_plaintext[strip], sizeof(plaintext)) != 0 ) {
+         goto leave;
+      }
+ 
+  
+  
+  
+  
+  
+  
+  
+       
   /* Open MD context and feed the random data in */
   ec = _gcry_md_open (&hd, GCRY_MD_SHA256, 0);
   if (ec)
@@ -216,6 +278,13 @@ test_keys_fips (gcry_sexp_t skey)
 
   result = 0; /* All tests succeeded.  */
  leave:
+  sexp_release (tmplist);
+  
+  sexp_release (decr);
+  _gcry_mpi_release (ciphertext);
+  _gcry_mpi_release (ref_mpi);
+  sexp_release (encr);
+  sexp_release (plain);
   sexp_release (sig);
   _gcry_md_close (hd);
   return result;
@@ -1254,6 +1323,11 @@ rsa_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
   if (deriveparms || (flags & PUBKEY_FLAG_USE_X931))
     {
       int swapped;
+      if (fips_mode ())
+        {
+          sexp_release (deriveparms);
+          return GPG_ERR_INV_SEXP;
+        }
       ec = generate_x931 (&sk, nbits, evalue, deriveparms, &swapped);
       sexp_release (deriveparms);
       if (!ec && swapped)
