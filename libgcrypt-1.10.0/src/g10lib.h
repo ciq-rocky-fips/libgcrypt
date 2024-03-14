@@ -119,6 +119,7 @@ void _gcry_post_syscall (void);
 int _gcry_get_debug_flag (unsigned int mask);
 
 char *_gcry_get_config (int mode, const char *what);
+char *_gcry_FIPS_version ();
 
 /* Malloc functions and common wrapper macros.  */
 void *_gcry_malloc (size_t n) _GCRY_GCC_ATTR_MALLOC;
