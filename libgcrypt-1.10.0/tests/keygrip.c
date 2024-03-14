@@ -149,6 +149,7 @@ static struct
       " (q #04C8A4CEC2E9A9BC8E173531A67B0840DF345C32E261ADD780E6D83D56EFADFD5DE872F8B854819B59543CE0B7F822330464FBC4E6324DADDCD9D059554F63B344#)))",
       "\xE6\xDF\x94\x2D\xBD\x8C\x77\x05\xA3\xDD\x41\x6E\xFC\x04\x01\xDB\x31\x0E\x99\xB6"
     },
+#ifdef ENABLE_BRAINPOOL
     {
       GCRY_PK_ECC,
       "(public-key"
@@ -197,6 +198,7 @@ static struct
       "\xD6\xE1\xBF\x43\xAC\x9B\x9A\x12\xE7\x3F",
       1
     },
+#endif /*ENABLE_BRAINPOOL */
     { /* Ed25519 standard */
       GCRY_PK_ECC,
       "(public-key"
