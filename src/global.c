@@ -152,7 +152,7 @@ _gcry_global_constructor (void)
     {
       no_secure_memory = 1;
       global_init ();
-      _gcry_fips_run_selftests (0);
+      _gcry_fips_run_selftests (1);
       _gcry_random_close_fds ();
       no_secure_memory = 0;
     }
@@ -291,6 +291,11 @@ _gcry_check_version (const char *req_version)
     return NULL;
 }
 
+char *
+_gcry_FIPS_version ()
+{
+  return "Rocky Linux 8 Libgcrypt Cryptographic Module Version rocky8.20230723";
+}
 
 static void
 print_config (const char *what, gpgrt_stream_t fp)

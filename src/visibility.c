@@ -1562,6 +1562,12 @@ gcry_get_config (int mode, const char *what)
   return _gcry_get_config (mode, what);
 }
 
+char *
+gcry_FIPS_version ()
+{
+  return _gcry_FIPS_version ();
+}
+
 void
 gcry_set_progress_handler (gcry_handler_progress_t cb, void *cb_data)
 {

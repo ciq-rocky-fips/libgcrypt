@@ -482,6 +482,12 @@ run_digest_selftests (int extended)
 #endif
       GCRY_MD_SHA384,
       GCRY_MD_SHA512,
+      GCRY_MD_SHA3_224,
+      GCRY_MD_SHA3_256,
+      GCRY_MD_SHA3_384,
+      GCRY_MD_SHA3_512,
+      GCRY_MD_SHAKE128,
+      GCRY_MD_SHAKE256,
       0
     };
   int idx;
