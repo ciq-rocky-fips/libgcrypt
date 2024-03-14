@@ -23,6 +23,7 @@
 GCRYPT_1.6 {
   global:
     gcry_FIPS_version;
+    gcry_fips_request_failure;
     gcry_check_version; gcry_control;
     gcry_set_allocation_handler; gcry_set_fatalerror_handler;
     gcry_set_gettext_handler; gcry_set_log_handler;
@@ -125,7 +126,7 @@ GCRYPT_1.6 {
 
     gcry_pk_hash_sign; gcry_pk_hash_verify; gcry_pk_random_override_new;
 
-    gcry_kdf_open; gcry_kdf_compute; gcry_kdf_final; gcry_kdf_close;
+    gcry_kdf_open; gcry_kdf_compute; gcry_kdf_final; gcry_kdf_close;    
   local:
     *;
 

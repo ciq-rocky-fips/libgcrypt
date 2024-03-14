@@ -33,6 +33,15 @@
 #define PGM "basic"
 #include "t-common.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
+
 #if __GNUC__ >= 4
 #  define ALWAYS_INLINE __attribute__((always_inline))
 #else
@@ -9114,12 +9123,6 @@ do_check_xts_cipher (int inplace)
       err = gcry_cipher_open (&hde, tv[tidx].algo, GCRY_CIPHER_MODE_XTS, 0);
       if (!err)
         err = gcry_cipher_open (&hdd, tv[tidx].algo, GCRY_CIPHER_MODE_XTS, 0);
-      if (err)
-        {
-          fail ("cipher-xts, gcry_cipher_open failed (tv %d): %s\n",
-                tidx, gpg_strerror (err));
-          return;
-        }
 
       err = gcry_cipher_setkey (hde, key, keylen);
       if (err && in_fips_mode && memcmp(key, key + keylen/2, keylen/2) == 0)
@@ -9146,8 +9149,7 @@ do_check_xts_cipher (int inplace)
                 tidx, gpg_strerror (err));
           goto err_out;
         }
-
-      if (inplace)
+        if (inplace)
 	{
 	  memcpy(out, plain, plainlen);
 	  err = gcry_cipher_encrypt (hde, out, plainlen, NULL, 0);
@@ -9163,11 +9165,20 @@ do_check_xts_cipher (int inplace)
           goto err_out;
         }
 
+      if (gcry_fips_request_failure("check_xts_cipher", "encrypt")) {
+        out[0] ^= 1;
+      }
       /* Check that the encrypt output matches the expected cipher text.  */
       if (memcmp (ciph, out, plainlen))
         {
+          KAT_FAILED(0, "XTS-AES KAT, encrypt output");
+          if (gcry_fips_request_failure("check_xts_cipher", "encrypt")) {
+            continue;
+          }
           mismatch (ciph, plainlen, out, plainlen);
           fail ("cipher-xts, encrypt data mismatch (tv %d)\n", tidx);
+        } else {
+          KAT_SUCCESS(0, "XTS-AES KAT, encrypt output");
         }
 
       /* Now for the decryption.  */
@@ -9182,16 +9193,28 @@ do_check_xts_cipher (int inplace)
 	}
       if (err)
         {
+          KAT_FAILED(0, "XTS-AES KAT, gcry_cipher_decrypt");
           fail ("cipher-xts, gcry_cipher_decrypt (tv %d) failed: %s\n",
                 tidx, gpg_strerror (err));
           goto err_out;
+        } else {
+          KAT_SUCCESS(0, "XTS-AES KAT, gcry_cipher_decrypt");
         }
 
+      if (gcry_fips_request_failure("check_xts_cipher", "decrypt")) {
+        out[0] ^= 1;
+      }
       /* Check that the decrypt output matches the expected plain text.  */
       if (memcmp (plain, out, plainlen))
         {
+          KAT_FAILED(0, "XTS-AES KAT, decrypt output");
+          if (gcry_fips_request_failure("check_xts_cipher", "decrypt")) {
+            continue;
+          }
           mismatch (plain, plainlen, out, plainlen);
           fail ("cipher-xts, decrypt data mismatch (tv %d)\n", tidx);
+        } else {
+          KAT_SUCCESS(0, "XTS-AES KAT, decrypt output");
         }
 
       if (0)

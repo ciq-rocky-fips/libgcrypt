@@ -921,6 +921,13 @@ File: gcrypt.info,  Node: Controlling the library,  Next: Error Handling,  Up: G
           returns 'GPG_ERR_NO_ERROR'.  Otherwise 'GPG_ERR_NOT_SUPPORTED'
           is returned.
 
+     'GCRYCTL_FIPS_SERVICE_INDICATOR_FUNCTION; Arguments: const char *'
+
+          Check if the given function is approved under the current FIPS
+          140-3 certification.  If the function is approved, this
+          function returns 'GPG_ERR_NO_ERROR' (other restrictions might
+          still apply).  Otherwise 'GPG_ERR_NOT_SUPPORTED' is returned.
+
 
 File: gcrypt.info,  Node: Error Handling,  Prev: Controlling the library,  Up: Generalities
 

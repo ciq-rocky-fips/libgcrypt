@@ -1,0 +1,395 @@
+fips mode is FIPS mode is enabled.
+version: Rocky Linux 8 Libgcrypt Cryptographic Module
+version check succeeded
+---
+starting test all_pass, fail none
+verifying all_pass, trace XTS AES duplicate key test FAILED
+138 success cases
+GCRYPT: basic.c:9181 0: XTS-AES KAT, encrypt output SUCCESS
+GCRYPT: basic.c:9201 0: XTS-AES KAT, gcry_cipher_decrypt SUCCESS
+GCRYPT: basic.c:9219 0: XTS-AES KAT, decrypt output SUCCESS
+GCRYPT: cipher.c:760 0: XTS AES duplicate key test SUCCESS
+GCRYPT: cipher.c:773 0: XTS AES duplicate key test SUCCESS
+GCRYPT: cipher.c:787 0: XTS AES duplicate key test SUCCESS
+GCRYPT: cipher-selftest.c:206 0: AES-CBC-128 decrypt SUCCESS
+GCRYPT: ecc.c:1866 2: ECDSA key generation PCT, verify SUCCESS
+GCRYPT: ecc.c:1948 1: ECDSA sign KAT (P-224 curve, SHA2-256) signing SUCCESS
+GCRYPT: ecc.c:2002 10: ECDSA verify KAT (P-224 curve, SHA2-256) verify failed SUCCESS
+GCRYPT: ecc.c:2047 0: ECDSA key generation PCT SUCCESS
+GCRYPT: ecc.c:2058 1: ECDSA key generation PCT SUCCESS
+GCRYPT: ecc.c:2072 2: ECDSA key generation PCT, sign SUCCESS
+GCRYPT: ecc.c:2082 3: ECDSA key generation PCT SUCCESS
+GCRYPT: ecc.c:337 0: ecc test_keys_fips:ECDSA key generation KAT SUCCESS
+GCRYPT: ecc.c:349 0: ecc test_keys_fips:ECDSA key generation KAT, sign SUCCESS
+GCRYPT: ecc.c:355 1: ecc test_keys_fips:ECDSA key generation KAT SUCCESS
+GCRYPT: ecc.c:369 2: ecc test_keys_fips:ECDSA key generation KAT SUCCESS
+GCRYPT: ecc.c:381 3: ecc test_keys_fips:ECDSA key generation KAT SUCCESS
+GCRYPT: fips.c:530 0: run_digest_selftests SHA KATs MD (SHA-1) SUCCESS
+GCRYPT: fips.c:530 1: run_digest_selftests SHA KATs MD (SHA-224) SUCCESS
+GCRYPT: fips.c:530 2: run_digest_selftests SHA KATs MD (SHA-384) SUCCESS
+GCRYPT: fips.c:530 3: run_digest_selftests SHA KATs MD (SHA-512) SUCCESS
+GCRYPT: fips.c:594 0: run_mac_selftests HMAC KATs (GCRY_MAC_CMAC_AES) SUCCESS
+GCRYPT: fips.c:594 0: run_mac_selftests HMAC KATs (GCRY_MAC_HMAC_SHA1) SUCCESS
+GCRYPT: fips.c:594 0: run_mac_selftests HMAC KATs (GCRY_MAC_HMAC_SHA224) SUCCESS
+GCRYPT: fips.c:594 0: run_mac_selftests HMAC KATs (GCRY_MAC_HMAC_SHA3_224) SUCCESS
+GCRYPT: fips.c:594 0: run_mac_selftests HMAC KATs (GCRY_MAC_HMAC_SHA3_256) SUCCESS
+GCRYPT: fips.c:594 0: run_mac_selftests HMAC KATs (GCRY_MAC_HMAC_SHA3_384) SUCCESS
+GCRYPT: fips.c:594 0: run_mac_selftests HMAC KATs (GCRY_MAC_HMAC_SHA3_512) SUCCESS
+GCRYPT: fips.c:594 0: run_mac_selftests HMAC KATs (GCRY_MAC_HMAC_SHA384) SUCCESS
+GCRYPT: fips.c:594 0: run_mac_selftests HMAC KATs (GCRY_MAC_HMAC_SHA512) SUCCESS
+GCRYPT: fips.c:845 0: Software integrity test for libgcrypt (using an HMAC SHA2-256 digest) SUCCESS
+GCRYPT: fips.c:863 0: run_hmac_sha256_selftests (intial test) start SUCCESS
+GCRYPT: fips.c:878 0: Initial hmac sha256 self test, md SUCCESS
+GCRYPT: fips.c:892 1: Initial hmac sha256 self test, mac SUCCESS
+GCRYPT: fips.c:905 0: _gcry_fips_run_selftests start SUCCESS
+GCRYPT: global.c:286 1: show version api call SUCCESS
+GCRYPT: hash-common.c:118 1: SHA KAT (SHA-1), digest check SUCCESS
+GCRYPT: hash-common.c:118 1: SHA KAT (SHA-224), digest check SUCCESS
+GCRYPT: hash-common.c:118 1: SHA KAT (SHA-256), digest check SUCCESS
+GCRYPT: hash-common.c:118 1: SHA KAT (SHA-384), digest check SUCCESS
+GCRYPT: hash-common.c:118 1: SHA KAT (SHA-512), digest check SUCCESS
+GCRYPT: hash-common.c:140 3: SHA KAT (SHA-256), xtract XOF SUCCESS
+GCRYPT: hash-common.c:143 4: SHA KAT (SHA-256), digest mismatch2 SUCCESS
+GCRYPT: hash-common.c:82 0: SHA KAT (SHA-1), open SUCCESS
+GCRYPT: hash-common.c:82 0: SHA KAT (SHA-224), open SUCCESS
+GCRYPT: hash-common.c:82 0: SHA KAT (SHA-256), open SUCCESS
+GCRYPT: hash-common.c:82 0: SHA KAT (SHA-384), open SUCCESS
+GCRYPT: hash-common.c:82 0: SHA KAT (SHA-512), open SUCCESS
+GCRYPT: kdf.c:1210 0: HKDF KAT (PBKDF2 SHA256) SUCCESS
+GCRYPT: keccak.c:1426 0: selftests_keccak SHA3 KATs (SHA3-224) shortstring SUCCESS
+GCRYPT: keccak.c:1426 0: selftests_keccak SHA3 KATs (SHA3-256) shortstring SUCCESS
+GCRYPT: keccak.c:1426 0: selftests_keccak SHA3 KATs (SHA3-384) shortstring SUCCESS
+GCRYPT: keccak.c:1426 0: selftests_keccak SHA3 KATs (SHA3-512) shortstring SUCCESS
+GCRYPT: keccak.c:1426 0: selftests_keccak SHAKE KATs (SHAKE-256) shortstring SUCCESS
+GCRYPT: keccak.c:1441 312: selftests_keccak SHA3 KATs (SHA3-224) shortstring SUCCESS
+GCRYPT: keccak.c:1441 313: selftests_keccak SHA3 KATs (SHA3-256) shortstring SUCCESS
+GCRYPT: keccak.c:1441 314: selftests_keccak SHA3 KATs (SHA3-384) shortstring SUCCESS
+GCRYPT: keccak.c:1441 315: selftests_keccak SHA3 KATs (SHA3-512) shortstring SUCCESS
+GCRYPT: keccak.c:1441 316: selftests_keccak SHAKE KATs (SHAKE-256) shortstring SUCCESS
+GCRYPT: keccak.c:1441 317: selftests_keccak SHAKE KATs (SHAKE-256) shortstring SUCCESS
+GCRYPT: keccak.c:1451 312: selftests_keccak SHA3 KATs (SHA3-224) shortstring SUCCESS
+GCRYPT: keccak.c:1451 313: selftests_keccak SHA3 KATs (SHA3-256) shortstring SUCCESS
+GCRYPT: keccak.c:1451 314: selftests_keccak SHA3 KATs (SHA3-384) shortstring SUCCESS
+GCRYPT: keccak.c:1451 315: selftests_keccak SHA3 KATs (SHA3-512) shortstring SUCCESS
+GCRYPT: keccak.c:1451 316: selftests_keccak SHAKE KATs (SHAKE-256) shortstring SUCCESS
+GCRYPT: keccak.c:1451 317: selftests_keccak SHAKE KATs (SHAKE-256) shortstring SUCCESS
+GCRYPT: mac-cmac.c:438 0: AES CMAC generate and verify KATs (CBC mode; 128-bit key length) SUCCESS
+GCRYPT: mac-cmac.c:438 0: AES CMAC generate and verify KATs (CBC mode; 192-bit key length) SUCCESS
+GCRYPT: mac-cmac.c:438 0: AES CMAC generate and verify KATs (CBC mode; 256-bit key length) SUCCESS
+GCRYPT: mac-hmac.c:1356 0: HMAC KATs (SHA-3) (224) SUCCESS
+GCRYPT: mac-hmac.c:1356 0: HMAC KATs (SHA-3) (256) SUCCESS
+GCRYPT: mac-hmac.c:1356 0: HMAC KATs (SHA-3) (384) SUCCESS
+GCRYPT: mac-hmac.c:1356 0: HMAC KATs (SHA-3) (512) SUCCESS
+GCRYPT: mac-hmac.c:330 0: HMAC KATs (SHA-1), FIPS-198a, A.1 SUCCESS
+GCRYPT: mac-hmac.c:352 0: HMAC KATs (SHA-1), FIPS-198a, A.2 SUCCESS
+GCRYPT: mac-hmac.c:372 0: HMAC KATs (SHA-1), FIPS-198a, A.3 SUCCESS
+GCRYPT: mac-hmac.c:392 0: HMAC KATs (SHA-1), FIPS-198a, A.4 SUCCESS
+GCRYPT: mac-hmac.c:517 0: HMAC KATs (SHA-224) SUCCESS
+GCRYPT: mac-hmac.c:643 0: HMAC KATs (SHA-256) SUCCESS
+GCRYPT: mac-hmac.c:781 0: HMAC KATs (SHA-384) SUCCESS
+GCRYPT: mac-hmac.c:931 0: HMAC KATs (SHA-512) SUCCESS
+GCRYPT: random-drbg.c:1385 -1: CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit) SUCCESS
+GCRYPT: random-drbg.c:1397 0: CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit) SUCCESS
+GCRYPT: random-drbg.c:1404 0: CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit) SUCCESS
+GCRYPT: random-drbg.c:1424 0: CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit) SUCCESS
+GCRYPT: random-drbg.c:2473 1: _gcry_rngdrbg_healthcheck_one DRBG KAT (DRBG CTR AES128 NO PR) compare SUCCESS
+GCRYPT: random-drbg.c:2473 1: _gcry_rngdrbg_healthcheck_one DRBG KAT (DRBG CTR AES128 PR) compare SUCCESS
+GCRYPT: random-drbg.c:2473 1: _gcry_rngdrbg_healthcheck_one DRBG KAT (DRBG HASH SHA1 NO PR) compare SUCCESS
+GCRYPT: random-drbg.c:2473 1: _gcry_rngdrbg_healthcheck_one DRBG KAT (DRBG HASH SHA256 NO PR) compare SUCCESS
+GCRYPT: random-drbg.c:2473 1: _gcry_rngdrbg_healthcheck_one DRBG KAT (DRBG HASH SHA256 PR) compare SUCCESS
+GCRYPT: random-drbg.c:2473 1: _gcry_rngdrbg_healthcheck_one DRBG KAT (DRBG HMAC SHA256 NO PR) compare SUCCESS
+GCRYPT: random-drbg.c:2473 1: _gcry_rngdrbg_healthcheck_one DRBG KAT (DRBG HMAC SHA256 PR) compare SUCCESS
+GCRYPT: random-drbg.c:630 0: DRBG: entropy SUCCESS
+GCRYPT: random-drbg.c:661 1: DRBG: entropy SUCCESS
+GCRYPT: rijndael.c:1607 1: AES encrypt and decrypt KATs CFB mode (128-bit length) AES-128 test encryption SUCCESS
+GCRYPT: rijndael.c:1617 2: AES encrypt and decrypt KATs CFB mode (128-bit length) AES-128 test decryption SUCCESS
+GCRYPT: rijndael.c:1663 1: AES encrypt and decrypt KATs CFB mode (192-bit length) AES-192 test encryption SUCCESS
+GCRYPT: rijndael.c:1674 2: AES encrypt and decrypt KATs CFB mode (192-bit length) AES-192 test decryption SUCCESS
+GCRYPT: rijndael.c:1722 1: AES encrypt and decrypt KATs CFB mode (256-bit length) AES-256 test encryption SUCCESS
+GCRYPT: rijndael.c:1733 2: AES encrypt and decrypt KATs CFB mode (256-bit length) AES-256 test decryption SUCCESS
+GCRYPT: rsa.c:2224 0: 2048bit RSA, convert data SUCCESS
+GCRYPT: rsa.c:2237 0: 2048bit RSA, encrypt KAT SUCCESS
+GCRYPT: rsa.c:2246 0: 2048bit RSA, convert to mpi SUCCESS
+GCRYPT: rsa.c:2257 0: 2048bit RSA, extract ciphertext SUCCESS
+GCRYPT: rsa.c:2268 0: 2048bit RSA, ciphertext equals plaintext SUCCESS
+GCRYPT: rsa.c:2281 0: 2048bit RSA, decrypt KAT SUCCESS
+GCRYPT: rsa.c:2300 0: 2048bit RSA, extract plaintext SUCCESS
+GCRYPT: rsa.c:2315 0: 2048bit RSA, verify KAT SUCCESS
+GCRYPT: rsa.c:2350 0: 2048bit RSA, convert SUCCESS
+GCRYPT: rsa.c:2363 1: 2048bit RSA, key consistency SUCCESS
+GCRYPT: rsa.c:2374 2: 2048bit RSA, sign SUCCESS
+GCRYPT: rsa.c:2387 3: 2048bit RSA, sign KAT SUCCESS
+GCRYPT: rsa.c:2398 4: 2048bit RSA Encrypt/decrypt SUCCESS
+GCRYPT: rsa.c:254 0: RSA key generation PCT fips (SHA-256; start) SUCCESS
+GCRYPT: rsa.c:267 1: RSA key generation PCT fips (SHA-256; initial encrypt) SUCCESS
+GCRYPT: rsa.c:280 2: RSA key generation PCT fips (SHA-256; initial decrypt) SUCCESS
+GCRYPT: rsa.c:302 3: RSA key generation PCT fips (SHA-256; extract) SUCCESS
+GCRYPT: rsa.c:315 4: RSA key generation PCT fips (SHA-256; strip) SUCCESS
+GCRYPT: rsa.c:335 5: RSA key generation PCT fips (SHA-256; md open) SUCCESS
+GCRYPT: rsa.c:348 6: RSA key generation PCT fips (SHA-256; sign) SUCCESS
+GCRYPT: rsa.c:360 7: RSA key generation PCT fips (SHA-256; verify should succeed) SUCCESS
+GCRYPT: rsa.c:375 8: RSA key generation PCT fips (SHA-256; verify should fail) SUCCESS
+GCRYPT: rsa-common.c:511 0: RSA key transport â€“ per specification (NIST SP 800-56B) SUCCESS
+GCRYPT: rsa-common.c:541 1: RSA key transport â€“ per specification (NIST SP 800-56B) SUCCESS
+GCRYPT: rsa-common.c:560 2: RSA key transport â€“ per specification (NIST SP 800-56B) SUCCESS
+GCRYPT: rsa-common.c:570 3: RSA key transport â€“ per specification (NIST SP 800-56B) SUCCESS
+GCRYPT: rsa-common.c:589 4: RSA key transport â€“ per specification (NIST SP 800-56B) SUCCESS
+GCRYPT: rsa-common.c:599 5: RSA key transport â€“ per specification (NIST SP 800-56B) SUCCESS
+GCRYPT: rsa-common.c:618 6: RSA key transport â€“ per specification (NIST SP 800-56B) SUCCESS
+GCRYPT: sha1.c:698 0: SHA KATs (SHA-1) SUCCESS
+GCRYPT: sha1.c:713 0: SHA KATs (SHA-1) SUCCESS
+GCRYPT: sha1.c:726 0: SHA KATs (SHA-1) SUCCESS
+GCRYPT: t-mpi-point.c:1301 0: ECDH public key assurance checks SUCCESS
+GCRYPT: t-mpi-point.c:4385 0: ECDH public key assurance checks, check_ec_mul_reduction_a SUCCESS
+GCRYPT: t-mpi-point.c:4401 0: ECDH public key assurance checks, check_ec_mul_reduction_b SUCCESS
+GCRYPT: visibility.c:1077 0: gcry_pk_testkey RSA key generation PCT (SHA-256; sign/verify, encrypt/decrypt) gcry_pk_testkey SUCCESS
+
+Test Result: PASS - Verified expected failures: all_pass XTS AES duplicate key test FAILED
+---
+starting test run_hmac_sha256_selftests, fail initial_hmac_sha256_test.fail_md
+verifying run_hmac_sha256_selftests, trace Initial hmac sha256 self test, md
+
+Test Result: PASS - Verified expected failures: run_hmac_sha256_selftests Initial hmac sha256 self test, md
+---
+starting test run_hmac_sha256_selftests, fail initial_hmac_sha256_test.fail_mac
+verifying run_hmac_sha256_selftests, trace Initial hmac sha256 self test, mac
+
+Test Result: PASS - Verified expected failures: run_hmac_sha256_selftests Initial hmac sha256 self test, mac
+---
+starting test check_binary_integrity, fail check_binary_integrity.fail
+verifying check_binary_integrity, trace Software integrity test for libgcrypt (using an HMAC SHA2-256 digest)
+
+Test Result: PASS - Verified expected failures: check_binary_integrity Software integrity test for libgcrypt (using an HMAC SHA2-256 digest)
+---
+starting test selftest_basic_128.encrypt, fail selftest_basic_128.encrypt
+verifying selftest_basic_128.encrypt, trace AES-128 test encryption
+
+Test Result: PASS - Verified expected failures: selftest_basic_128.encrypt AES-128 test encryption
+---
+starting test selftest_basic_128.decrypt, fail selftest_basic_128.decrypt
+verifying selftest_basic_128.decrypt, trace AES-128 test decryption
+
+Test Result: PASS - Verified expected failures: selftest_basic_128.decrypt AES-128 test decryption
+---
+starting test selftest_basic_192.encrypt, fail selftest_basic_192.encrypt
+verifying selftest_basic_192.encrypt, trace AES-192 test encryption
+
+Test Result: PASS - Verified expected failures: selftest_basic_192.encrypt AES-192 test encryption
+---
+starting test selftest_basic_192, fail selftest_basic_192.decrypt
+verifying selftest_basic_192, trace AES-192 test decryption
+
+Test Result: PASS - Verified expected failures: selftest_basic_192 AES-192 test decryption
+---
+starting test selftest_basic_256.encrypt, fail selftest_basic_256.encrypt
+verifying selftest_basic_256.encrypt, trace AES-256 test encryption
+
+Test Result: PASS - Verified expected failures: selftest_basic_256.encrypt AES-256 test encryption
+---
+starting test selftest_basic_256.decrypt, fail selftest_basic_256.decrypt
+verifying selftest_basic_256.decrypt, trace AES-256 test decryption
+
+Test Result: PASS - Verified expected failures: selftest_basic_256.decrypt AES-256 test decryption
+---
+starting test selftests_cmac_aes, fail selftests_cmac_aes.fail
+verifying selftests_cmac_aes, trace AES CMAC generate and verify KATs
+
+Test Result: PASS - Verified expected failures: selftests_cmac_aes AES CMAC generate and verify KATs
+---
+starting test check_xts_cipher, fail check_xts_cipher.encrypt
+verifying check_xts_cipher, trace XTS-AES KAT, encrypt output
+
+Test Result: PASS - Verified expected failures: check_xts_cipher XTS-AES KAT, encrypt output
+---
+starting test check_xts_cipher, fail check_xts_cipher.decrypt
+verifying check_xts_cipher, trace XTS-AES KAT, decrypt output
+
+Test Result: PASS - Verified expected failures: check_xts_cipher XTS-AES KAT, decrypt output
+---
+starting test aes_cbc_128, fail aes_cbc_128.decrypt
+verifying aes_cbc_128, trace AES-CBC-128 decrypt
+
+Test Result: PASS - Verified expected failures: aes_cbc_128 AES-CBC-128 decrypt
+---
+starting test _gcry_rngdrbg_healthcheck_one, fail _gcry_rngdrbg_healthcheck_one.fail
+verifying _gcry_rngdrbg_healthcheck_one, trace _gcry_rngdrbg_healthcheck_one DRBG KAT
+
+Test Result: PASS - Verified expected failures: _gcry_rngdrbg_healthcheck_one _gcry_rngdrbg_healthcheck_one DRBG KAT
+---
+starting test drbg_seed, fail drbg_seed.fail
+verifying drbg_seed, trace CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)
+
+Test Result: PASS - Verified expected failures: drbg_seed CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)
+---
+starting test drbg_get_entropy, fail drbg_get_entropy.fail
+verifying drbg_get_entropy, trace DRBG: entropy FAILED
+
+Test Result: PASS - Verified expected failures: drbg_get_entropy DRBG: entropy FAILED
+verifying drbg_get_entropy, trace CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)
+
+Test Result: PASS - Verified expected failures: drbg_get_entropy CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)
+---
+starting test ecc_selftest_sign, fail ecc_selftest_sign.sign
+verifying ecc_selftest_sign, trace ECDSA sign KAT (P-224 curve, SHA2-256) signing
+
+Test Result: PASS - Verified expected failures: ecc_selftest_sign ECDSA sign KAT (P-224 curve, SHA2-256) signing
+---
+starting test ecc_selftest_sign, fail ecc_selftest_sign.verify
+verifying ecc_selftest_sign, trace ECDSA verify KAT (P-224 curve, SHA2-256) verify failed
+
+Test Result: PASS - Verified expected failures: ecc_selftest_sign ECDSA verify KAT (P-224 curve, SHA2-256) verify failed
+---
+starting test selftest_pbkdf2, fail selftest_pbkdf2.fail
+verifying selftest_pbkdf2, trace HKDF KAT (PBKDF2 SHA256)
+
+Test Result: PASS - Verified expected failures: selftest_pbkdf2 HKDF KAT (PBKDF2 SHA256)
+---
+starting test run_mac_selftests, fail run_mac_selftests.fail
+verifying run_mac_selftests, trace run_mac_selftests
+
+Test Result: PASS - Verified expected failures: run_mac_selftests run_mac_selftests
+---
+starting test selftests_sha1, fail selftests_sha1.fail
+verifying selftests_sha1, trace HMAC KATs (SHA-1)
+
+Test Result: PASS - Verified expected failures: selftests_sha1 HMAC KATs (SHA-1)
+---
+starting test selftests_sha224, fail selftests_sha224.fail
+verifying selftests_sha224, trace HMAC KATs (SHA-224)
+
+Test Result: PASS - Verified expected failures: selftests_sha224 HMAC KATs (SHA-224)
+---
+starting test selftests_sha256, fail selftests_sha256.fail
+verifying selftests_sha256, trace HMAC KATs (SHA-256)
+
+Test Result: PASS - Verified expected failures: selftests_sha256 HMAC KATs (SHA-256)
+---
+starting test selftests_sha384, fail selftests_sha384.fail
+verifying selftests_sha384, trace HMAC KATs (SHA-384)
+
+Test Result: PASS - Verified expected failures: selftests_sha384 HMAC KATs (SHA-384)
+---
+starting test selftests_sha512, fail selftests_sha512.fail
+verifying selftests_sha512, trace HMAC KATs (SHA-512)
+
+Test Result: PASS - Verified expected failures: selftests_sha512 HMAC KATs (SHA-512)
+---
+starting test selftests_sha3, fail selftests_sha3.fail
+verifying selftests_sha3, trace HMAC KATs (SHA-3)
+
+Test Result: PASS - Verified expected failures: selftests_sha3 HMAC KATs (SHA-3)
+---
+starting test selftests_rsa, fail selftests_rsa.sign
+verifying selftests_rsa, trace 2048bit RSA, sign KAT
+
+Test Result: PASS - Verified expected failures: selftests_rsa 2048bit RSA, sign KAT
+---
+starting test selftests_rsa, fail selftests_rsa.encrypt
+verifying selftests_rsa, trace 2048bit RSA, encrypt KAT
+
+Test Result: PASS - Verified expected failures: selftests_rsa 2048bit RSA, encrypt KAT
+---
+starting test selftests_rsa, fail selftests_rsa.decrypt
+verifying selftests_rsa, trace 2048bit RSA, decrypt KAT
+
+Test Result: PASS - Verified expected failures: selftests_rsa 2048bit RSA, decrypt KAT
+---
+starting test selftests_rsa, fail selftests_rsa.verify
+verifying selftests_rsa, trace 2048bit RSA, verify KAT
+
+Test Result: PASS - Verified expected failures: selftests_rsa 2048bit RSA, verify KAT
+---
+starting test run_digest_selftests, fail run_digest_selftests.fail
+verifying run_digest_selftests, trace run_digest_selftests
+
+Test Result: PASS - Verified expected failures: run_digest_selftests run_digest_selftests
+---
+starting test selftests_keccak, fail selftests_keccak.shortstring
+verifying selftests_keccak, trace keccak
+
+Test Result: PASS - Verified expected failures: selftests_keccak keccak
+---
+starting test selftests_ecdsa, fail ecc_selftests_ecdsa.sign
+verifying selftests_ecdsa, trace ECDSA key generation PCT, sign
+
+Test Result: PASS - Verified expected failures: selftests_ecdsa ECDSA key generation PCT, sign
+---
+starting test selftests_ecdsa, fail ecc_selftests_ecdsa.verify
+verifying selftests_ecdsa, trace ECDSA key generation PCT, verify
+
+Test Result: PASS - Verified expected failures: selftests_ecdsa ECDSA key generation PCT, verify
+---
+starting test selftests_ecdsa, fail ecc_test_keys_fips.sign
+verifying selftests_ecdsa, trace ECDSA key generation KAT, sign
+
+Test Result: PASS - Verified expected failures: selftests_ecdsa ECDSA key generation KAT, sign
+---
+starting test selftests_ecdsa, fail ecc_test_keys_fips.verify
+verifying selftests_ecdsa, trace ECDSA key generation KAT, verify
+
+Test Result: PASS - Verified expected failures: selftests_ecdsa ECDSA key generation KAT, verify
+---
+starting test rsa_test_keys_fips, fail rsa_test_keys_fips.intial_encrypt
+verifying rsa_test_keys_fips, trace RSA key generation PCT fips (SHA-256; initial encrypt)
+
+Test Result: PASS - Verified expected failures: rsa_test_keys_fips RSA key generation PCT fips (SHA-256; initial encrypt)
+---
+starting test rsa_test_keys_fips, fail rsa_test_keys_fips.intial_decrypt
+verifying rsa_test_keys_fips, trace RSA key generation PCT fips (SHA-256; initial decrypt)
+
+Test Result: PASS - Verified expected failures: rsa_test_keys_fips RSA key generation PCT fips (SHA-256; initial decrypt)
+---
+starting test rsa_test_keys_fips, fail rsa_test_keys_fips.extract
+verifying rsa_test_keys_fips, trace RSA key generation PCT fips (SHA-256; extract)
+
+Test Result: PASS - Verified expected failures: rsa_test_keys_fips RSA key generation PCT fips (SHA-256; extract)
+---
+starting test rsa_test_keys_fips, fail rsa_test_keys_fips.strip
+verifying rsa_test_keys_fips, trace RSA key generation PCT fips (SHA-256; strip)
+
+Test Result: PASS - Verified expected failures: rsa_test_keys_fips RSA key generation PCT fips (SHA-256; strip)
+---
+starting test rsa_test_keys_fips, fail rsa_test_keys_fips.md_open
+verifying rsa_test_keys_fips, trace RSA key generation PCT fips (SHA-256; md open)
+
+Test Result: PASS - Verified expected failures: rsa_test_keys_fips RSA key generation PCT fips (SHA-256; md open)
+---
+starting test rsa_test_keys_fips, fail rsa_test_keys_fips.sign
+verifying rsa_test_keys_fips, trace RSA key generation PCT fips (SHA-256; sign)
+
+Test Result: PASS - Verified expected failures: rsa_test_keys_fips RSA key generation PCT fips (SHA-256; sign)
+---
+starting test rsa_test_keys_fips, fail rsa_test_keys_fips.verify
+verifying rsa_test_keys_fips, trace RSA key generation PCT fips (SHA-256; verify should succeed)
+
+Test Result: PASS - Verified expected failures: rsa_test_keys_fips RSA key generation PCT fips (SHA-256; verify should succeed)
+---
+starting test rsa_test_keys_fips, fail rsa_test_keys_fips.verify_should_fail
+verifying rsa_test_keys_fips, trace RSA key generation PCT fips (SHA-256; verify should fail)
+
+Test Result: PASS - Verified expected failures: rsa_test_keys_fips RSA key generation PCT fips (SHA-256; verify should fail)
+---
+starting test gcry_mpi_ec_curve_point, fail gcry_mpi_ec_curve_point.assurance
+verifying gcry_mpi_ec_curve_point, trace ECDH public key assurance checks, not/on curve
+
+Test Result: PASS - Verified expected failures: gcry_mpi_ec_curve_point ECDH public key assurance checks, not/on curve
+verifying gcry_mpi_ec_curve_point, trace ECDH public key assurance checks, on/not curve
+
+Test Result: PASS - Verified expected failures: gcry_mpi_ec_curve_point ECDH public key assurance checks, on/not curve
+---
+starting test gcry_mpi_ec_curve_point, fail gcry_mpi_ec_curve_point.check_ec_mul_reduction_a
+verifying gcry_mpi_ec_curve_point, trace ECDH public key assurance checks, check_ec_mul_reduction_a
+
+Test Result: PASS - Verified expected failures: gcry_mpi_ec_curve_point ECDH public key assurance checks, check_ec_mul_reduction_a
+---
+starting test gcry_mpi_ec_curve_point, fail gcry_mpi_ec_curve_point.check_ec_mul_reduction_b
+verifying gcry_mpi_ec_curve_point, trace ECDH public key assurance checks, check_ec_mul_reduction_b
+
+Test Result: PASS - Verified expected failures: gcry_mpi_ec_curve_point ECDH public key assurance checks, check_ec_mul_reduction_b
+---
+starting test cipher_setkey, fail cipher_setkey.invalid_keylen
+verifying cipher_setkey, trace XTS AES duplicate key test
+
+Test Result: PASS - Verified expected failures: cipher_setkey XTS AES duplicate key test
+
+Test pass completed. All tests have passed

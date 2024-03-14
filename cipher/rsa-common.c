@@ -28,6 +28,14 @@
 #include "cipher.h"
 #include "pubkey-internal.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 /* Turn VALUE into an octet string and store it in an allocated buffer
    at R_FRAME or - if R_RAME is NULL - copy it into the caller
@@ -497,7 +505,10 @@ _gcry_rsa_oaep_encode (gcry_mpi_t *r_result, unsigned int nbits, int algo,
   if (valuelen > nframe - 2 * hlen - 2 || !nframe)
     {
       /* Can't encode a VALUELEN value in a NFRAME bytes frame. */
+      KAT_FAILED(0, "RSA key transport â€“ per specification (NIST SP 800-56B)");
       return GPG_ERR_TOO_SHORT; /* The key is too short.  */
+    } else {
+      KAT_SUCCESS(0, "RSA key transport â€“ per specification (NIST SP 800-56B)");
     }
 
   /* Allocate the frame.  */
@@ -523,8 +534,11 @@ _gcry_rsa_oaep_encode (gcry_mpi_t *r_result, unsigned int nbits, int algo,
     {
       if (random_override_len != hlen)
         {
+          KAT_FAILED(1, "RSA key transport â€“ per specification (NIST SP 800-56B)");
           xfree (frame);
           return GPG_ERR_INV_ARG;
+        } else {
+          KAT_SUCCESS(1, "RSA key transport â€“ per specification (NIST SP 800-56B)");
         }
       memcpy (frame + 1, random_override, hlen);
     }
@@ -538,16 +552,22 @@ _gcry_rsa_oaep_encode (gcry_mpi_t *r_result, unsigned int nbits, int algo,
     dmask = xtrymalloc_secure (nframe - hlen - 1);
     if (!dmask)
       {
+        KAT_FAILED(2, "RSA key transport â€“ per specification (NIST SP 800-56B)");
         rc = gpg_err_code_from_syserror ();
         xfree (frame);
         return rc;
+      } else {
+        KAT_SUCCESS(2, "RSA key transport â€“ per specification (NIST SP 800-56B)");
       }
     rc = mgf1 (dmask, nframe - hlen - 1, frame+1, hlen, algo);
     if (rc)
       {
+        KAT_FAILED(3, "RSA key transport â€“ per specification (NIST SP 800-56B)");
         xfree (dmask);
         xfree (frame);
         return rc;
+      } else {
+        KAT_SUCCESS(3, "RSA key transport â€“ per specification (NIST SP 800-56B)");
       }
     for (n = 1 + hlen, p = dmask; n < nframe; n++)
       frame[n] ^= *p++;
@@ -561,16 +581,22 @@ _gcry_rsa_oaep_encode (gcry_mpi_t *r_result, unsigned int nbits, int algo,
     smask = xtrymalloc_secure (hlen);
     if (!smask)
       {
+        KAT_FAILED(4, "RSA key transport â€“ per specification (NIST SP 800-56B)");
         rc = gpg_err_code_from_syserror ();
         xfree (frame);
         return rc;
+      } else {
+        KAT_SUCCESS(4, "RSA key transport â€“ per specification (NIST SP 800-56B)");
       }
     rc = mgf1 (smask, hlen, frame + 1 + hlen, nframe - hlen - 1, algo);
     if (rc)
       {
+        KAT_FAILED(5, "RSA key transport â€“ per specification (NIST SP 800-56B)");
         xfree (smask);
         xfree (frame);
         return rc;
+      } else {
+        KAT_SUCCESS(5, "RSA key transport â€“ per specification (NIST SP 800-56B)");
       }
     for (n = 1, p = smask; n < 1 + hlen; n++)
       frame[n] ^= *p++;
@@ -586,6 +612,11 @@ _gcry_rsa_oaep_encode (gcry_mpi_t *r_result, unsigned int nbits, int algo,
     log_mpidump ("OAEP encoded data", *r_result);
   xfree (frame);
 
+  if (rc) {
+    KAT_FAILED(6, "RSA key transport â€“ per specification (NIST SP 800-56B)");
+  } else {
+    KAT_SUCCESS(6, "RSA key transport â€“ per specification (NIST SP 800-56B)");
+  }
   return rc;
 }
 
