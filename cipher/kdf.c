@@ -28,6 +28,14 @@
 #include "cipher.h"
 #include "kdf-internal.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 /* Transform a passphrase into a suitable key of length KEYSIZE and
    store this key in the caller provided buffer KEYBUFFER.  The caller
@@ -1183,6 +1191,7 @@ selftest_pbkdf2 (int extended, selftest_report_func_t report)
   const char *what;
   const char *errtxt;
   int tvidx;
+  int fail_fips = gcry_fips_request_failure("selftest_pbkdf2", "fail");
 
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
@@ -1194,8 +1203,20 @@ selftest_pbkdf2 (int extended, selftest_report_func_t report)
                           tv[tvidx].salt, tv[tvidx].saltlen,
                           tv[tvidx].c,
                           tv[tvidx].dk, tv[tvidx].dklen);
-      if (errtxt)
+
+      if (fail_fips) {
+        errtxt = "testing failed";
+      }
+
+      if (errtxt) {
+        KAT_FAILED(0, "HKDF KAT (PBKDF2 SHA256)");
+        if (fail_fips) {
+          continue; /* keep running tests */
+        }
         goto failed;
+      } else {
+        KAT_SUCCESS(0, "HKDF KAT (PBKDF2 SHA256)");
+      }
       if (tvidx >= NUM_TEST_VECTORS - 1 && !extended)
         break;
     }

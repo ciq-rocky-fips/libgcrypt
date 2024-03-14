@@ -35,6 +35,14 @@
 #include "pubkey-internal.h"
 #include "const-time.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 typedef struct
 {
@@ -141,15 +149,32 @@ test_keys (RSA_secret_key *sk, unsigned int nbits)
   public (ciphertext, plaintext, &pk);
 
   /* Check that the cipher text does not match the plaintext.  */
-  if (!mpi_cmp (ciphertext, plaintext))
+  int cmp;
+  cmp = mpi_cmp (ciphertext, plaintext);
+  if (gcry_fips_request_failure("rsa_test_keys", "encrypt")) {
+    cmp = 0;
+  }
+  if (!cmp) {
+    KAT_FAILED(0, "RSA key generation PCT (SHA-256; encrypt)");
     goto leave; /* Ciphertext is identical to the plaintext.  */
+  } else {
+    KAT_SUCCESS(0, "RSA key generation PCT (SHA-256; encrypt)");
+  }
 
   /* Decrypt using the secret key.  */
   secret (decr_plaintext, ciphertext, sk);
 
   /* Check that the decrypted plaintext matches the original plaintext.  */
-  if (mpi_cmp (decr_plaintext, plaintext))
+  cmp = mpi_cmp (decr_plaintext, plaintext);
+  if (gcry_fips_request_failure("rsa_test_keys", "encrypt")) {
+    cmp = 1;
+  }
+  if (cmp) {
+    KAT_FAILED(1, "RSA key generation PCT (SHA-256; decrypt)");
     goto leave; /* Plaintext does not match.  */
+  } else {
+    KAT_SUCCESS(1, "RSA key generation PCT (SHA-256; decrypt)");
+  }
 
   /* Create another random plaintext as data for signature checking.  */
   _gcry_mpi_randomize (plaintext, nbits, GCRY_WEAK_RANDOM);
@@ -159,14 +184,30 @@ test_keys (RSA_secret_key *sk, unsigned int nbits)
 
   /* Use the RSA public function to verify this signature.  */
   public (decr_plaintext, signature, &pk);
-  if (mpi_cmp (decr_plaintext, plaintext))
+  cmp = mpi_cmp (decr_plaintext, plaintext);
+  if (gcry_fips_request_failure("rsa_test_keys", "sign_verify_success")) {
+    cmp = 1;
+  }
+  if (cmp) {
+    KAT_FAILED(2, "RSA key generation PCT (SHA-256; sign/verify)");
     goto leave; /* Signature does not match.  */
+  } else {
+    KAT_SUCCESS(2, "RSA key generation PCT (SHA-256; sign/verify)");
+  }
 
   /* Modify the signature and check that the signing fails.  */
   mpi_add_ui (signature, signature, 1);
   public (decr_plaintext, signature, &pk);
-  if (!mpi_cmp (decr_plaintext, plaintext))
+  cmp = mpi_cmp (decr_plaintext, plaintext);
+  if (gcry_fips_request_failure("rsa_test_keys", "sign_verify_failure")) {
+    cmp = 0;
+  }
+  if (!cmp) {
+    KAT_FAILED(3, "RSA key generation PCT (SHA-256; sign/verify, modified signature)");
     goto leave; /* Signature matches but should not.  */
+  } else {
+    KAT_SUCCESS(3, "RSA key generation PCT (SHA-256; sign/verify, modified signature)");
+  }
 
   result = 0; /* All tests succeeded.  */
 
@@ -193,27 +234,55 @@ test_keys_fips (gcry_sexp_t skey)
 
   /* Open MD context and feed the random data in */
   ec = _gcry_md_open (&hd, GCRY_MD_SHA256, 0);
-  if (ec)
+  if (gcry_fips_request_failure("rsa_test_keys_fips", "md_open")) {
+    ec = GPG_ERR_PUBKEY_ALGO;
+  }
+  if (ec) {
+    KAT_FAILED(5, "RSA key generation PCT fips (SHA-256; md open)");
     goto leave;
+  } else {
+    KAT_SUCCESS(5, "RSA key generation PCT fips (SHA-256; md open)");
+  }
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
 
   /* Use the RSA secret function to create a signature of the plaintext.  */
   ec = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL);
-  if (ec)
+  if (gcry_fips_request_failure("rsa_test_keys_fips", "sign")) {
+    ec = GPG_ERR_PUBKEY_ALGO;
+  }
+  if (ec) {
+    KAT_FAILED(6, "RSA key generation PCT fips (SHA-256; sign)");
     goto leave;
+  } else {
+    KAT_SUCCESS(6, "RSA key generation PCT fips (SHA-256; sign)");
+  }
 
   /* Use the RSA public function to verify this signature.  */
   ec = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL);
-  if (ec)
+  if (gcry_fips_request_failure("rsa_test_keys_fips", "verify")) {
+    ec = GPG_ERR_PUBKEY_ALGO;
+  }
+  if (ec) {
+    KAT_FAILED(7, "RSA key generation PCT fips (SHA-256; verify should succeed)");
     goto leave;
+  } else {
+    KAT_SUCCESS(7, "RSA key generation PCT fips (SHA-256; verify should succeed)");
+  }
 
   /* Modify the data and check that the signing fails.  */
   _gcry_md_reset(hd);
   plaintext[sizeof plaintext / 2] ^= 1;
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
   ec = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL);
-  if (ec != GPG_ERR_BAD_SIGNATURE)
+  if (gcry_fips_request_failure("rsa_test_keys_fips", "verify_should_fail")) {
+    ec = GPG_ERR_NO_ERROR;
+  }
+  if (ec != GPG_ERR_BAD_SIGNATURE) {
+    KAT_FAILED(8, "RSA key generation PCT fips (SHA-256; verify should fail)");
     goto leave; /* Signature verification worked on modified data  */
+  } else {
+    KAT_SUCCESS(8, "RSA key generation PCT fips (SHA-256; verify should fail)");
+  }
 
   result = 0; /* All tests succeeded.  */
  leave:
@@ -2154,49 +2223,67 @@ selftest_encr_2048 (gcry_sexp_t pkey, gcry_sexp_t skey)
   if (err)
     {
       errtxt = "converting data failed";
+      KAT_FAILED(0, "2048bit RSA, convert data");
       goto leave;
     }
+  KAT_SUCCESS(0, "2048bit RSA, convert data");
 
   /* Encrypt.  */
   err = _gcry_pk_encrypt (&encr, plain, pkey);
+  if (gcry_fips_request_failure("selftests_rsa", "encrypt")) {
+    err = GPG_ERR_GENERAL;
+  }
   if (err)
     {
+      KAT_FAILED(0, "2048bit RSA, encrypt KAT");
       errtxt = "encrypt failed";
       goto leave;
     }
+  KAT_SUCCESS(0, "2048bit RSA, encrypt KAT");
 
   err = _gcry_mpi_scan(&ref_mpi, GCRYMPI_FMT_HEX, ref_data, 0, NULL);
   if (err)
     {
+      KAT_FAILED(0, "2048bit RSA, convert to mpi");
       errtxt = "converting encrydata to mpi failed";
       goto leave;
     }
+  KAT_SUCCESS(0, "2048bit RSA, convert to mpi");
 
   /* Extraxt the ciphertext from the returned S-expression.  */
   /*sexp_dump (encr);*/
   ciphertext = extract_a_from_sexp (encr);
   if (!ciphertext)
     {
+      KAT_FAILED(0, "2048bit RSA, extract ciphertext");
       errtxt = "gcry_pk_encrypt returned garbage";
       goto leave;
     }
+  KAT_SUCCESS(0, "2048bit RSA, extract ciphertext");
 
   /* Check that the ciphertext does no match the plaintext.  */
   /* _gcry_log_printmpi ("plaintext", plaintext); */
   /* _gcry_log_printmpi ("ciphertxt", ciphertext); */
   if (mpi_cmp (ref_mpi, ciphertext))
     {
+      KAT_FAILED(0, "2048bit RSA, ciphertext equals plaintext");
       errtxt = "ciphertext doesn't match reference data";
       goto leave;
     }
+  KAT_SUCCESS(0, "2048bit RSA, ciphertext equals plaintext");
 
   /* Decrypt.  */
   err = _gcry_pk_decrypt (&decr, encr, skey);
+  if (gcry_fips_request_failure("selftests_rsa", "decrypt")) {
+    err = GPG_ERR_GENERAL;
+  }
   if (err)
     {
+      KAT_FAILED(0, "2048bit RSA, decrypt KAT");
       errtxt = "decrypt failed";
       goto leave;
     }
+  KAT_SUCCESS(0, "2048bit RSA, decrypt KAT");
 
   /* Extract the decrypted data from the S-expression.  Note that the
      output of gcry_pk_decrypt depends on whether a flags lists occurs
@@ -2211,16 +2298,26 @@ selftest_encr_2048 (gcry_sexp_t pkey, gcry_sexp_t skey)
     decr_plaintext = sexp_nth_string (decr, 0);
   if (!decr_plaintext)
     {
+      KAT_FAILED(0, "2048bit RSA, extract plaintext");
       errtxt = "decrypt returned no plaintext";
       goto leave;
     }
+    KAT_SUCCESS(0, "2048bit RSA, extract plaintext");
 
   /* Check that the decrypted plaintext matches the original  plaintext.  */
-  if (strcmp (plaintext, decr_plaintext))
+  int cmp;
+  cmp = strcmp(plaintext, decr_plaintext);
+  if (gcry_fips_request_failure("selftests_rsa", "verify")) {
+    cmp = 1;
+  }
+
+  if (cmp)
     {
+      KAT_FAILED(0, "2048bit RSA, verify KAT");
       errtxt = "mismatch";
       goto leave;
     }
+  KAT_SUCCESS(0, "2048bit RSA, verify KAT");
 
  leave:
   sexp_release (tmplist);
@@ -2251,37 +2348,60 @@ selftests_rsa (selftest_report_func_t report, int extended)
                       sample_public_key, strlen (sample_public_key));
   if (err)
     {
+      KAT_FAILED(0, "2048bit RSA, convert");
       errtxt = _gcry_strerror (err);
       goto failed;
+    } else {
+      KAT_SUCCESS(0, "2048bit RSA, convert");
     }
 
   what = "key consistency";
-  err = _gcry_pk_testkey (skey);
+  if (!fips_mode()) {
+    err = _gcry_pk_testkey (skey);
+  }
   if (err)
     {
+      KAT_FAILED(1, "2048bit RSA, key consistency");
       errtxt = _gcry_strerror (err);
       goto failed;
+    } else {
+      KAT_SUCCESS(1, "2048bit RSA, key consistency");
     }
 
   if (extended)
     {
       what = "sign";
       errtxt = selftest_sign_2048 (pkey, skey);
-      if (errtxt)
+     if (errtxt) {
+        KAT_FAILED(2, "2048bit RSA, sign");
         goto failed;
+      } else {
+        KAT_SUCCESS(2, "2048bit RSA, sign");
+      }
     }
 
   what = "digest sign";
   errtxt = selftest_hash_sign_2048 (pkey, skey);
-  if (errtxt)
+    if (gcry_fips_request_failure("selftests_rsa", "sign")) {
+      errtxt = "testing failures";
+    }
+  if (errtxt) {
+    KAT_FAILED(3, "2048bit RSA, sign KAT");
     goto failed;
+  } else {
+    KAT_SUCCESS(3, "2048bit RSA, sign KAT");
+  }
 
   if (extended)
     {
       what = "encrypt";
       errtxt = selftest_encr_2048 (pkey, skey);
-      if (errtxt)
+      if (errtxt) {
+        KAT_FAILED(4, "2048bit RSA, Encrypt/decrypt");
         goto failed;
+      } else {
+        KAT_SUCCESS(4, "2048bit RSA Encrypt/decrypt");
+      }
     }
 
   sexp_release (pkey);

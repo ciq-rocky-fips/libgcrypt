@@ -61,6 +61,14 @@
 #include "pubkey-internal.h"
 #include "ecc-common.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 static const char *ecc_names[] =
   {
@@ -323,39 +331,62 @@ test_keys_fips (gcry_sexp_t skey)
 
   /* Open MD context and feed the random data in */
   rc = _gcry_md_open (&hd, GCRY_MD_SHA256, 0);
-  if (rc)
-    {
+  if (rc) {
+      KAT_FAILED(0, "ecc test_keys_fips: ECDSA key generation KAT");
       log_error ("ECDSA operation: failed to initialize MD context: %s\n", gpg_strerror (rc));
       goto leave;
-    }
+  } else {
+    KAT_SUCCESS(0, "ecc test_keys_fips:ECDSA key generation KAT");
+  }
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
 
   /* Sign the data */
   rc = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL);
-  if (rc)
-    {
+  /* failure test */
+  if (gcry_fips_request_failure("ecc_test_keys_fips", "sign")) {
+    KAT_FAILED(0, "ecc test_keys_fips:ECDSA key generation KAT, sign");
+    rc = GPG_ERR_GENERAL;
+    return;
+  }
+  KAT_SUCCESS(0, "ecc test_keys_fips:ECDSA key generation KAT, sign");
+
+  if (rc) {
+      KAT_FAILED(1, "ecc test_keys_fips:ECDSA key generation KAT");
       log_error ("ECDSA operation: signing failed: %s\n", gpg_strerror (rc));
-      goto leave;
-    }
+	  goto leave;
+  } else {
+    KAT_SUCCESS(1, "ecc test_keys_fips:ECDSA key generation KAT");
+  }
 
   /* Verify this signature.  */
   rc = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL);
-  if (rc)
-    {
-      log_error ("ECDSA operation: verification failed: %s\n", gpg_strerror (rc));
-      goto leave;
-    }
+  if (gcry_fips_request_failure("ecc_test_keys_fips", "verify")) {
+    KAT_FAILED(0, "ecc test_keys_fips:ECDSA key generation KAT, verify");
+    rc = GPG_ERR_GENERAL;
+    return;
+  }
+  if (rc) {
+    KAT_FAILED(2, "ecc test_keys_fips:ECDSA key generation KAT");
+    log_error ("ECDSA operation: verification failed: %s\n", gpg_strerror (rc));
+    goto leave;
+  } else {
+    KAT_SUCCESS(2, "ecc test_keys_fips:ECDSA key generation KAT");
+  }
+
 
   /* Modify the data and check that the signing fails.  */
   _gcry_md_reset(hd);
   plaintext[sizeof plaintext / 2] ^= 1;
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
   rc = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL);
-  if (rc != GPG_ERR_BAD_SIGNATURE)
-    {
-      log_error ("ECDSA operation: signature verification worked on modified data\n");
-      goto leave;
-    }
+  if (rc != GPG_ERR_BAD_SIGNATURE) {
+    KAT_FAILED(3, "ecc test_keys_fips:ECDSA key generation KAT");
+    log_error ("ECDSA operation: signature verification worked on modified data\n");
+    goto leave;
+  } else {
+    KAT_SUCCESS(3, "ecc test_keys_fips:ECDSA key generation KAT");
+  }
+
 
   result = 0;
 leave:
@@ -1836,11 +1867,17 @@ selftest_hash_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
 
   /* verify generated signature */
   err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL);
+  if (gcry_fips_request_failure("ecc_selftests_ecdsa", "verify")) {
+    err = GPG_ERR_GENERAL;
+  }
+
   if (err)
     {
+      KAT_FAILED(2, "ECDSA key generation PCT, verify");
       errtxt = "verify failed";
       goto leave;
     }
+  KAT_SUCCESS(2, "ECDSA key generation PCT, verify");
 
   _gcry_md_reset(hd);
   _gcry_md_write (hd, sample_data_bad, strlen(sample_data_bad));
@@ -1911,10 +1948,18 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
     }
 
   err = _gcry_pk_sign (&sig, data, skey);
+  if (gcry_fips_request_failure("ecc_selftest_sign", "sign")) {
+    err = GPG_ERR_GENERAL;
+    errtxt = "testing signing failed";
+  }
+
   if (err)
     {
+      KAT_FAILED(1, "ECDSA sign KAT (P-224 curve, SHA2-256) signing");
       errtxt = "signing failed";
       goto leave;
+    } else {
+      KAT_SUCCESS(1, "ECDSA sign KAT (P-224 curve, SHA2-256) signing");
     }
 
   /* check against known signature */
@@ -1943,7 +1988,6 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
   calculated_s = _gcry_sexp_nth_mpi (l2, 1, GCRYMPI_FMT_USG);
   if (!calculated_s)
     goto leave;
-
   errtxt = "known sig check failed";
 
   cmp = _gcry_mpi_cmp (r, calculated_r);
@@ -1957,10 +2001,18 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
 
   /* verify generated signature */
   err = _gcry_pk_verify (sig, data, pkey);
+  if (gcry_fips_request_failure("ecc_selftest_sign", "verify")) {
+    err = GPG_ERR_GENERAL;
+    errtxt = "testing verify failed";
+  }
+
   if (err)
     {
+      KAT_FAILED(10, "ECDSA verify KAT (P-224 curve, SHA2-256) verify failed");
       errtxt = "verify failed";
       goto leave;
+    } else {
+      KAT_SUCCESS(10, "ECDSA verify KAT (P-224 curve, SHA2-256) verify failed");
     }
   err = _gcry_pk_verify (sig, data_bad, pkey);
   if (gcry_err_code (err) != GPG_ERR_BAD_SIGNATURE)
@@ -2001,30 +2053,47 @@ selftests_ecdsa (selftest_report_func_t report, int extended)
                       strlen (sample_public_key_secp256));
   if (err)
     {
+      KAT_FAILED(0, "ECDSA key generation PCT");
       errtxt = _gcry_strerror (err);
       goto failed;
+    } else {
+      KAT_SUCCESS(0, "ECDSA key generation PCT");
     }
 
   what = "key consistency";
   err = ecc_check_secret_key(skey);
   if (err)
     {
+      KAT_FAILED(1, "ECDSA key generation PCT");
       errtxt = _gcry_strerror (err);
       goto failed;
+    } else {
+      KAT_SUCCESS(1, "ECDSA key generation PCT");
     }
 
   if (extended)
     {
       what = "sign";
       errtxt = selftest_sign (pkey, skey);
-      if (errtxt)
+      if (gcry_fips_request_failure("ecc_selftests_ecdsa", "sign")) {
+        errtxt = "testing sign failure";
+      }
+      if (errtxt) {
+        KAT_FAILED(2, "ECDSA key generation PCT, sign");
         goto failed;
+      } else {
+        KAT_SUCCESS(2, "ECDSA key generation PCT, sign");
+      }
     }
 
   what = "digest sign";
   errtxt = selftest_hash_sign (pkey, skey);
-  if (errtxt)
+  if (errtxt) {
+    KAT_FAILED(3, "ECDSA key generation PCT");
     goto failed;
+  } else {
+    KAT_SUCCESS(3, "ECDSA key generation PCT");
+  }
 
   sexp_release(pkey);
   sexp_release(skey);

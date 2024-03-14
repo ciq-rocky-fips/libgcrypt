@@ -28,6 +28,14 @@
 #include "cipher.h"
 #include "./mac-internal.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 static int
 map_mac_algo_to_cipher (int mac_algo)
@@ -286,8 +294,13 @@ selftests_cmac_3des (int extended, selftest_report_func_t report)
                           tv[tvidx].data, strlen (tv[tvidx].data),
                           tv[tvidx].key, strlen (tv[tvidx].key),
                           tv[tvidx].expect, 8);
-      if (errtxt)
+      if (errtxt) {
+        KAT_FAILED(tvidx, "Triple-DES CMAC generate and verify KAT (CBC mode; 3Â­Key)");
         goto failed;
+      } else {
+        KAT_SUCCESS(tvidx, "Triple-DES CMAC generate and verify KAT (CBC mode; 3Â­Key)");
+        goto failed;
+      }
       if (!extended)
         break;
     }
@@ -389,16 +402,41 @@ selftests_cmac_aes (int extended, selftest_report_func_t report)
   const char *what;
   const char *errtxt;
   int tvidx;
+  char trace_buf[128];
+  const char * trace_fmt = "AES CMAC generate and verify KATs (CBC mode; %d-bit key length)";
+  int fail_fips = gcry_fips_request_failure("selftests_cmac_aes", "fail");
 
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
       what = tv[tvidx].desc;
-      errtxt = check_one (GCRY_MAC_CMAC_AES,
-                          tv[tvidx].data, strlen (tv[tvidx].data),
-                          tv[tvidx].key, strlen (tv[tvidx].key),
-                          tv[tvidx].expect, strlen (tv[tvidx].expect));
-      if (errtxt)
-        goto failed;
+      if (!fail_fips) {
+        errtxt = check_one (
+          GCRY_MAC_CMAC_AES,
+          tv[tvidx].data,
+          strlen (tv[tvidx].data),
+          tv[tvidx].key, strlen (tv[tvidx].key),
+          tv[tvidx].expect, strlen (tv[tvidx].expect)
+          );
+      } else {
+        errtxt = check_one (
+          GCRY_MAC_CMAC_AES,
+          tv[tvidx].data,
+          strlen (tv[tvidx].data),
+          tv[tvidx].key, strlen (tv[tvidx].key),
+          tv[tvidx].expect, 8
+          );
+      }
+      sprintf(trace_buf, trace_fmt, 8 * strlen(tv[tvidx].key));
+      if (errtxt) {
+        KAT_FAILED(0, trace_buf);
+        if (!fail_fips) {
+          goto failed;
+        } else {
+          continue; /* keep running all tests */
+        }
+      } else {
+        KAT_SUCCESS(0, trace_buf);
+      }
       if (tvidx >= 2 && !extended)
         break;
     }

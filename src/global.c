@@ -40,6 +40,14 @@
 #include "stdmem.h" /* our own memory allocator */
 #include "secmem.h" /* our own secmem allocator */
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 
 
@@ -255,6 +263,7 @@ _gcry_check_version (const char *req_version)
     int my_major, my_minor, my_micro;
     int rq_major, rq_minor, rq_micro;
     const char *my_plvl;
+    const char * ret;
 
     if (req_version && req_version[0] == 1 && req_version[1] == 1)
         return _gcry_compat_identification ();
@@ -264,18 +273,37 @@ _gcry_check_version (const char *req_version)
 
     if ( !req_version )
         /* Caller wants our version number.  */
+        if (ver == NULL) {
+          KAT_FAILED(1, "show version api call");
+        } else {
+          KAT_SUCCESS(1, "show version api call");
+        }
 	return ver;
 
     /* Parse own version number.  */
     my_plvl = parse_version_string( ver, &my_major, &my_minor, &my_micro );
     if ( !my_plvl )
+    {
         /* very strange our own version is bogus.  Shouldn't we use
 	   assert() here and bail out in case this happens?  -mo.  */
+     KAT_FAILED(2, "show version api call")
+    }
+    else
+    {
+      KAT_SUCCESS(2, "show version api call");
+    }
 	return NULL;
 
     /* Parse requested version number.  */
     if (!parse_version_string (req_version, &rq_major, &rq_minor, &rq_micro))
+    {
+      KAT_FAILED(3, "show version api call");
       return NULL;  /* req version string is invalid, this can happen.  */
+    }
+    else
+    {
+      KAT_SUCCESS(3, "show version api call");
+    }
 
     /* Compare version numbers.  */
     if ( my_major > rq_major
@@ -285,9 +313,15 @@ _gcry_check_version (const char *req_version)
 	|| (my_major == rq_major && my_minor == rq_minor
                                  && my_micro == rq_micro))
       {
+        if (ver == NULL) {
+          KAT_FAILED(4, "show version api call");
+        } else {
+          KAT_SUCCESS(4, "show version api call");
+        }
 	return ver;
       }
 
+    KAT_FAILED(5, "show version api call");
     return NULL;
 }
 
@@ -296,6 +330,73 @@ _gcry_FIPS_version ()
 {
   return "Rocky Linux 8 Libgcrypt Cryptographic Module Version rocky8.20240502";
 }
+
+ #define false 0
+ #define true 1
+int _gcry_fips_request_failure(const char *name, const char *subname)
+{
+	static int fail_env_var_check_done = false;
+	static int fail_tests = false;
+	size_t cmp_len = 0;
+	size_t subname_cmp_len = 0;
+	const char *enames = NULL;
+	const char *np;
+
+	if (!fail_env_var_check_done) {
+		const char *e = secure_getenv("GCRYPT_FIPS_FAIL_TESTS");
+		if (e != NULL) {
+			fail_tests = true;
+		}
+		fail_env_var_check_done = true;
+	}
+	if (!fail_tests) {
+		return false;
+	}
+
+	/*
+	 * Here we know fail test probes are enabled. Parse
+	 * the GCRYPT_FIPS_FAIL_TESTS variable
+	 * and return true if the name (plus any subname) matches. Names are
+	 * separated by a ':' character. Subnames are separated by a '.'
+	 * character.
+	 */
+	enames = secure_getenv("GCRYPT_FIPS_FAIL_TESTS");
+	if (enames == NULL) {
+		return false;
+	}
+	cmp_len = strlen(name);
+	if (subname != NULL) {
+		subname_cmp_len = strlen(subname);
+	}
+	for (np = enames; np != NULL;) {
+		while (*np == ':') {
+			np++;
+		}
+		/* Does "name" match ? */
+		if (strncasecmp(np, name, cmp_len)==0) {
+			if (subname == NULL) {
+				if (np[cmp_len] == ':' || np[cmp_len] == '\0') {
+					return true;
+				}
+			} else {
+				/* Look for .subname */
+				if (np[cmp_len] != '.') {
+					np = strchr(np, ':');
+					continue;
+				}
+				/* Move past "name." */
+				np += cmp_len + 1;
+				if (strncasecmp(np, subname, subname_cmp_len) == 0) {
+					if (np[subname_cmp_len] == ':' || np[subname_cmp_len] == '\0') {
+						return true;
+					}
+				}
+			}
+		}
+		np = strchr(np, ':');
+	}
+	return false;
+ }
 
 static void
 print_config (const char *what, gpgrt_stream_t fp)

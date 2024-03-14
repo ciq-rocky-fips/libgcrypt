@@ -1789,6 +1789,7 @@ void gcry_log_debugsxp (const char *text, gcry_sexp_t sexp);
 
 char *gcry_get_config (int mode, const char *what);
 char *gcry_FIPS_version ();
+int gcry_fips_request_failure(const char *name, const char *subname);
 
 /* Log levels used by the internal logging facility. */
 enum gcry_log_levels

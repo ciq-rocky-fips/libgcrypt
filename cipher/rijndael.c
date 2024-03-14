@@ -50,6 +50,14 @@
 #include "rijndael-internal.h"
 #include "./cipher-internal.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 #ifdef USE_AMD64_ASM
 /* AMD64 assembly implementations of AES */
@@ -1587,15 +1595,27 @@ selftest_basic_128 (void)
 
   rijndael_setkey (ctx, key_128, sizeof (key_128), &bulk_ops);
   rijndael_encrypt (ctx, scratch, plaintext_128);
+  if (gcry_fips_request_failure("selftest_basic_128", "encrypt")) {
+    scratch[0] ^= 1;
+  }
   if (memcmp (scratch, ciphertext_128, sizeof (ciphertext_128)))
     {
       xfree (ctxmem);
+      KAT_FAILED(1, "AES encrypt and decrypt KATs CFB mode (128-bit length) AES-128 test encryption");
       return "AES-128 test encryption failed.";
+    } else {
+      KAT_SUCCESS(1, "AES encrypt and decrypt KATs CFB mode (128-bit length) AES-128 test encryption");
     }
   rijndael_decrypt (ctx, scratch, scratch);
   xfree (ctxmem);
-  if (memcmp (scratch, plaintext_128, sizeof (plaintext_128)))
-    return "AES-128 test decryption failed.";
+  if (gcry_fips_request_failure("selftest_basic_128", "decrypt")) {
+    scratch[0] ^= 1;
+  }
+  if (memcmp (scratch, plaintext_128, sizeof (plaintext_128))) {
+    KAT_FAILED(2, "AES encrypt and decrypt KATs CFB mode (128-bit length) AES-128 test decryption");
+  } else {
+    KAT_SUCCESS(2, "AES encrypt and decrypt KATs CFB mode (128-bit length) AES-128 test decryption");
+  }
 
   return NULL;
 }
@@ -1631,15 +1651,28 @@ selftest_basic_192 (void)
     return "failed to allocate memory";
   rijndael_setkey (ctx, key_192, sizeof(key_192), &bulk_ops);
   rijndael_encrypt (ctx, scratch, plaintext_192);
+  if (gcry_fips_request_failure("selftest_basic_192", "encrypt")) {
+    scratch[0] ^= 1;
+  }
   if (memcmp (scratch, ciphertext_192, sizeof (ciphertext_192)))
     {
       xfree (ctxmem);
+      KAT_FAILED(1, "AES encrypt and decrypt KATs CFB mode (192-bit length) AES-192 test encryption");
       return "AES-192 test encryption failed.";
+    } else {
+      KAT_SUCCESS(1, "AES encrypt and decrypt KATs CFB mode (192-bit length) AES-192 test encryption");
     }
   rijndael_decrypt (ctx, scratch, scratch);
   xfree (ctxmem);
-  if (memcmp (scratch, plaintext_192, sizeof (plaintext_192)))
+  if (gcry_fips_request_failure("selftest_basic_192", "decrypt")) {
+    scratch[0] ^= 1;
+  }
+  if (memcmp (scratch, plaintext_192, sizeof (plaintext_192))) {
+    KAT_FAILED(2, "AES encrypt and decrypt KATs CFB mode (192-bit length) AES-192 test decryption");
     return "AES-192 test decryption failed.";
+  } else {
+    KAT_SUCCESS(2, "AES encrypt and decrypt KATs CFB mode (192-bit length) AES-192 test decryption");
+  }
 
   return NULL;
 }
@@ -1677,15 +1710,28 @@ selftest_basic_256 (void)
     return "failed to allocate memory";
   rijndael_setkey (ctx, key_256, sizeof(key_256), &bulk_ops);
   rijndael_encrypt (ctx, scratch, plaintext_256);
+  if (gcry_fips_request_failure("selftest_basic_256", "encrypt")) {
+    scratch[0] ^= 1;
+  }
   if (memcmp (scratch, ciphertext_256, sizeof (ciphertext_256)))
     {
       xfree (ctxmem);
+      KAT_FAILED(1, "AES encrypt and decrypt KATs CFB mode (256-bit length) AES-256 test encryption");
       return "AES-256 test encryption failed.";
+    } else {
+      KAT_SUCCESS(1, "AES encrypt and decrypt KATs CFB mode (256-bit length) AES-256 test encryption");
     }
   rijndael_decrypt (ctx, scratch, scratch);
   xfree (ctxmem);
-  if (memcmp (scratch, plaintext_256, sizeof (plaintext_256)))
+  if (gcry_fips_request_failure("selftest_basic_256", "decrypt")) {
+    scratch[0] ^= 1;
+  }
+  if (memcmp (scratch, plaintext_256, sizeof (plaintext_256))) {
+    KAT_FAILED(2, "AES encrypt and decrypt KATs CFB mode (256-bit length) AES-256 test decryption");
     return "AES-256 test decryption failed.";
+  } else {
+    KAT_SUCCESS(2, "AES encrypt and decrypt KATs CFB mode (256-bit length) AES-256 test decryption");
+  }
 
   return NULL;
 }

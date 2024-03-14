@@ -29,6 +29,14 @@
 #include "bufhelp.h"
 #include "cipher.h"
 
+#define GCRYPT_AUDIT 1
+#if defined(GCRYPT_AUDIT)
+#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
+#else
+#define KAT_SUCCESS(x, y) ((void)0)
+#define KAT_FAILED(x, y) ((void)0)
+#endif
 
 static int
 map_mac_algo_to_md (int mac_algo)
@@ -297,6 +305,8 @@ selftests_sha1 (int extended, selftest_report_func_t report)
   const char *errtxt;
   unsigned char key[128];
   int i, j;
+  errtxt = NULL;
+  int fail_fips;
 
   what = "FIPS-198a, A.1";
   for (i=0; i < 64; i++)
@@ -306,8 +316,19 @@ selftests_sha1 (int extended, selftest_report_func_t report)
                       key, 64,
                       "\x4f\x4c\xa3\xd5\xd6\x8b\xa7\xcc\x0a\x12"
                       "\x08\xc9\xc6\x1e\x9c\x5d\xa0\x40\x3c\x0a", 20, 0);
-  if (errtxt)
-    goto failed;
+
+  fail_fips = gcry_fips_request_failure("selftests_sha1", "fail");
+  if (fail_fips) {
+    errtxt = "test failure";
+  }
+  if (errtxt) {
+    KAT_FAILED(0, "HMAC KATs (SHA-1), FIPS-198a, A.1");
+    if (!fail_fips) {
+        goto failed;
+    }
+  } else {
+    KAT_SUCCESS(0, "HMAC KATs (SHA-1), FIPS-198a, A.1");
+  }
 
   if (extended)
     {
@@ -319,8 +340,17 @@ selftests_sha1 (int extended, selftest_report_func_t report)
                           key, 20,
                           "\x09\x22\xd3\x40\x5f\xaa\x3d\x19\x4f\x82"
                           "\xa4\x58\x30\x73\x7d\x5c\xc6\xc7\x5d\x24", 20, 0);
-      if (errtxt)
-        goto failed;
+      if (fail_fips) {
+        errtxt = "test failure";
+      }
+      if (errtxt) {
+        KAT_FAILED(0, "HMAC KATs (SHA-1), FIPS-198a, A.2");
+        if (!fail_fips) {
+          goto failed;
+        }
+      } else {
+        KAT_SUCCESS(0, "HMAC KATs (SHA-1), FIPS-198a, A.2");
+      }
 
       what = "FIPS-198a, A.3";
       for (i=0, j=0x50; i < 100; i++)
@@ -330,8 +360,17 @@ selftests_sha1 (int extended, selftest_report_func_t report)
                           key, 100,
                           "\xbc\xf4\x1e\xab\x8b\xb2\xd8\x02\xf3\xd0"
                           "\x5c\xaf\x7c\xb0\x92\xec\xf8\xd1\xa3\xaa", 20, 0);
-      if (errtxt)
-        goto failed;
+      if (fail_fips) {
+        errtxt = "test failure";
+      }
+      if (errtxt) {
+        KAT_FAILED(0, "HMAC KATs (SHA-1), FIPS-198a, A.3");
+        if (!fail_fips) {
+          goto failed;
+        }
+      } else {
+        KAT_SUCCESS(0, "HMAC KATs (SHA-1), FIPS-198a, A.3");
+      }
 
       what = "FIPS-198a, A.4";
       for (i=0, j=0x70; i < 49; i++)
@@ -341,8 +380,17 @@ selftests_sha1 (int extended, selftest_report_func_t report)
                           key, 49,
                           "\x9e\xa8\x86\xef\xe2\x68\xdb\xec\xce\x42"
                           "\x0c\x75\x24\xdf\x32\xe0\x75\x1a\x2a\x26", 20, 0);
-      if (errtxt)
-        goto failed;
+      if (fail_fips) {
+        errtxt = "test failure";
+      }
+      if (errtxt) {
+        KAT_FAILED(0, "HMAC KATs (SHA-1), FIPS-198a, A.4");
+        if (!fail_fips) {
+          goto failed;
+        }
+      } else {
+        KAT_SUCCESS(0, "HMAC KATs (SHA-1), FIPS-198a, A.4");
+      }
     }
 
   return 0; /* Succeeded. */
@@ -446,7 +494,9 @@ selftests_sha224 (int extended, selftest_report_func_t report)
   const char *what;
   const char *errtxt;
   int tvidx;
+  int fail_fips;
 
+  fail_fips = gcry_fips_request_failure("selftests_sha224", "fail");
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
       what = tv[tvidx].desc;
@@ -454,8 +504,18 @@ selftests_sha224 (int extended, selftest_report_func_t report)
                           tv[tvidx].data, strlen (tv[tvidx].data),
                           tv[tvidx].key, strlen (tv[tvidx].key),
                           tv[tvidx].expect, DIM (tv[tvidx].expect), 0);
-      if (errtxt)
+      if (fail_fips) {
+        errtxt = "test failure";
+      }
+      if (errtxt) {
+        KAT_FAILED(0, "HMAC KATs (SHA-224)");
+        if (fail_fips) {
+          continue;
+        }
         goto failed;
+      } else {
+        KAT_SUCCESS(0, "HMAC KATs (SHA-224)");
+      }
       if (!extended)
         break;
     }
@@ -560,7 +620,9 @@ selftests_sha256 (int extended, selftest_report_func_t report)
   const char *what;
   const char *errtxt;
   int tvidx;
+  int fail_fips;
 
+  fail_fips = gcry_fips_request_failure("selftests_sha256", "fail");
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
       what = tv[tvidx].desc;
@@ -568,8 +630,18 @@ selftests_sha256 (int extended, selftest_report_func_t report)
                           tv[tvidx].data, strlen (tv[tvidx].data),
                           tv[tvidx].key, strlen (tv[tvidx].key),
                           tv[tvidx].expect, DIM (tv[tvidx].expect), 0);
-      if (errtxt)
+      if (fail_fips) {
+        errtxt = "test failure";
+      }
+      if (errtxt) {
+        KAT_FAILED(0, "HMAC KATs (SHA-256)");
+        if (fail_fips) {
+          continue;
+        }
         goto failed;
+      } else {
+        KAT_SUCCESS(0, "HMAC KATs (SHA-256)");
+      }
       if (!extended)
         break;
     }
@@ -686,7 +758,9 @@ selftests_sha384 (int extended, selftest_report_func_t report)
   const char *what;
   const char *errtxt;
   int tvidx;
+  int fail_fips;
 
+  fail_fips = gcry_fips_request_failure("selftests_sha384", "fail");
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
       what = tv[tvidx].desc;
@@ -694,8 +768,18 @@ selftests_sha384 (int extended, selftest_report_func_t report)
                           tv[tvidx].data, strlen (tv[tvidx].data),
                           tv[tvidx].key, strlen (tv[tvidx].key),
                           tv[tvidx].expect, DIM (tv[tvidx].expect), 0);
-      if (errtxt)
+      if (fail_fips) {
+        errtxt = "test failure";
+      }
+      if (errtxt) {
+        KAT_FAILED(0, "HMAC KATs (SHA-384)");
+        if (fail_fips) {
+          continue;
+        }
         goto failed;
+      } else {
+        KAT_SUCCESS(0, "HMAC KATs (SHA-384)");
+      }
       if (!extended)
         break;
     }
@@ -824,7 +908,9 @@ selftests_sha512 (int extended, selftest_report_func_t report)
   const char *what;
   const char *errtxt;
   int tvidx;
+  int fail_fips;
 
+  fail_fips = gcry_fips_request_failure("selftests_sha512", "fail");
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
       what = tv[tvidx].desc;
@@ -832,8 +918,18 @@ selftests_sha512 (int extended, selftest_report_func_t report)
                           tv[tvidx].data, strlen (tv[tvidx].data),
                           tv[tvidx].key, strlen (tv[tvidx].key),
                           tv[tvidx].expect, DIM (tv[tvidx].expect), 0);
-      if (errtxt)
+      if (fail_fips) {
+        errtxt = "test failure";
+      }
+      if (errtxt) {
+        KAT_FAILED(0, "HMAC KATs (SHA-512)");
+        if (fail_fips) {
+          continue;
+        }
         goto failed;
+      } else {
+        KAT_SUCCESS(0, "HMAC KATs (SHA-512)");
+      }
       if (!extended)
         break;
     }
@@ -1205,7 +1301,11 @@ selftests_sha3 (int hashalgo, int extended, selftest_report_func_t report)
   int tvidx;
   const char *expect;
   int nexpect;
+  char trace_buf[128];
+  const char * trace_fmt = "HMAC KATs (SHA-3) (%d)";
+  int fail_fips;
 
+  fail_fips = gcry_fips_request_failure("selftests_sha3", "fail");
   for (tvidx=0; tvidx < DIM(tv); tvidx++)
     {
       what = tv[tvidx].desc;
@@ -1213,21 +1313,25 @@ selftests_sha3 (int hashalgo, int extended, selftest_report_func_t report)
         {
           expect = tv[tvidx].expect_224;
           nexpect = DIM (tv[tvidx].expect_224);
+          sprintf(trace_buf, trace_fmt, 224);
         }
       else if (hashalgo == GCRY_MD_SHA3_256)
         {
           expect = tv[tvidx].expect_256;
           nexpect = DIM (tv[tvidx].expect_256);
+          sprintf(trace_buf, trace_fmt, 256);
         }
       else if (hashalgo == GCRY_MD_SHA3_384)
         {
           expect = tv[tvidx].expect_384;
           nexpect = DIM (tv[tvidx].expect_384);
+          sprintf(trace_buf, trace_fmt, 384);
         }
       else if (hashalgo == GCRY_MD_SHA3_512)
         {
           expect = tv[tvidx].expect_512;
           nexpect = DIM (tv[tvidx].expect_512);
+          sprintf(trace_buf, trace_fmt, 512);
         }
       else
         BUG();
@@ -1239,8 +1343,18 @@ selftests_sha3 (int hashalgo, int extended, selftest_report_func_t report)
                           tv[tvidx].data, strlen (tv[tvidx].data),
                           tv[tvidx].key, strlen (tv[tvidx].key),
                           expect, nexpect, !!tv[tvidx].trunc);
-      if (errtxt)
+      if (fail_fips) {
+        errtxt = "test failure";
+      }
+      if (errtxt) {
+        KAT_FAILED(0, trace_buf);
+        if (fail_fips) {
+          continue;
+        }
         goto failed;
+      } else {
+        KAT_SUCCESS(0, trace_buf);
+      }
       if (!extended)
         break;
     }
