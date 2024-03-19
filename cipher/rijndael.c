@@ -2004,6 +2004,10 @@ selftest_fips_128 (int extended, selftest_report_func_t report)
       errtxt = selftest_fips_128_38a (GCRY_CIPHER_MODE_CBC);
       if (errtxt)
         goto failed;
+
+      errtxt = selftest_cbc_128();
+      if (errtxt)
+        goto failed;
     }
 
   return 0; /* Succeeded. */

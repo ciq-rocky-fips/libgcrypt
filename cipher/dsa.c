@@ -1786,7 +1786,6 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
   l1 = l2;
 
   l2 = _gcry_sexp_find_token (l1, "r", 0);
-  if (!calculated_s)
   if (!l2) {
     KAT_FAILED(4, "DSA verify KAT (2048-bit; SHA2-256) _gcry_sexp_find_token l12");
     goto leave;
@@ -1880,9 +1879,6 @@ selftests_dsa_2048 (selftest_report_func_t report)
   gcry_sexp_t skey = NULL;
   gcry_sexp_t pkey = NULL;
 
-  if (fips_mode()) {
-    return 0;
-  }
   /* Convert the S-expressions into the internal representation.  */
   what = "convert";
   err = sexp_sscan (&skey, NULL, sample_secret_key_2048, strlen (sample_secret_key_2048));
