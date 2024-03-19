@@ -1157,10 +1157,10 @@ selftest (void)
 	memcpy (input, temp1, 8);
       }
     if (memcmp (temp3, result, 8)) {
-      KAT_FAILED(i, "Triple-DES encrypt and decrypt KATs (3Â­Key) maintenance");
+      KAT_FAILED(i, "Triple-DES encrypt and decrypt KATs (3­Key) maintenance");
       return "DES maintenance test failed.";
     } else {
-      KAT_SUCCESS(i, "Triple-DES encrypt and decrypt KATs (3Â­Key) maintenance");
+      KAT_SUCCESS(i, "Triple-DES encrypt and decrypt KATs (3­Key) maintenance");
     }
   }
 
@@ -1190,10 +1190,10 @@ selftest (void)
 	tripledes_ecb_encrypt (des3, input, input);
       }
     if (memcmp (input, result, 8)) {
-      KAT_FAILED(i, "Triple-DES encrypt and decrypt KATs (3Â­Key)");
+      KAT_FAILED(i, "Triple-DES encrypt and decrypt KATs (3­Key)");
       return "Triple-DES test failed.";
     } else {
-      KAT_SUCCESS(i, "Triple-DES encrypt and decrypt KATs (3Â­Key)");
+      KAT_SUCCESS(i, "Triple-DES encrypt and decrypt KATs (3­Key)");
     }
   }
 
@@ -1279,17 +1279,17 @@ selftest (void)
         tripledes_ecb_encrypt (des3, testdata[i].plain, result);
         if (memcmp (testdata[i].cipher, result, 8)) {
           KAT_FAILED(i, "des selftest SSLeay encryption");
-          return "Triple-DES encrypt and decrypt KATs (3Â­Key) SSLeay test failed on encryption.";
+          return "Triple-DES encrypt and decrypt KATs (3­Key) SSLeay test failed on encryption.";
         } else {
-          KAT_SUCCESS(i, "Triple-DES encrypt and decrypt KATs (3Â­Key) SSLeay encryption");
+          KAT_SUCCESS(i, "Triple-DES encrypt and decrypt KATs (3­Key) SSLeay encryption");
         }
 
         tripledes_ecb_decrypt (des3, testdata[i].cipher, result);
         if (memcmp (testdata[i].plain, result, 8)) {
-          KAT_FAILED(i, "Triple-DES encrypt and decrypt KATs (3Â­Key) SSLeay decryption");
+          KAT_FAILED(i, "Triple-DES encrypt and decrypt KATs (3­Key) SSLeay decryption");
           return  "Triple-DES SSLeay test failed on decryption.";;
         } else {
-          KAT_SUCCESS(i, "Triple-DES encrypt and decrypt KATs (3Â­Key) SSLeay decryption");
+          KAT_SUCCESS(i, "Triple-DES encrypt and decrypt KATs (3­Key) SSLeay decryption");
         }
       }
   }
@@ -1305,10 +1305,10 @@ selftest (void)
     gcry_md_hd_t h;
 
     if (_gcry_md_open (&h, GCRY_MD_SHA1, 0)) {
-      KAT_FAILED(0, "Triple-DES encrypt and decrypt KATs (3Â­Key) cbc");
+      KAT_FAILED(0, "Triple-DES encrypt and decrypt KATs (3­Key) cbc");
       return "SHA1 not available";
     } else {
-      KAT_SUCCESS(0, "Triple-DES encrypt and decrypt KATs (3Â­Key) cbc");
+      KAT_SUCCESS(0, "Triple-DES encrypt and decrypt KATs (3­Key) cbc");
     }
 
     for (i = 0; i < 64; ++i)
@@ -1317,40 +1317,40 @@ selftest (void)
     i = memcmp (p, weak_keys_chksum, 20);
     _gcry_md_close (h);
     if (i) {
-      KAT_FAILED(1, "Triple-DES encrypt and decrypt KATs (3Â­Key) cbc");
+      KAT_FAILED(1, "Triple-DES encrypt and decrypt KATs (3­Key) cbc");
       return "weak key table defect";
     } else {
-      KAT_SUCCESS(1, "Triple-DES encrypt and decrypt KATs (3Â­Key) cbc");
+      KAT_SUCCESS(1, "Triple-DES encrypt and decrypt KATs (3­Key) cbc");
     }
 
     for (i = 0; i < 64; ++i)
       if (!is_weak_key(weak_keys[i])) {
-        KAT_FAILED(2, "Triple-DES encrypt and decrypt KATs (3Â­Key) weak key");
+        KAT_FAILED(2, "Triple-DES encrypt and decrypt KATs (3­Key) weak key");
         return "DES weak key detection failed";
       } else {
-        KAT_SUCCESS(2, "Triple-DES encrypt and decrypt KATs (3Â­Key) weak key");
+        KAT_SUCCESS(2, "Triple-DES encrypt and decrypt KATs (3­Key) weak key");
       }
   }
 
   if ( (r = selftest_cbc ()) ) {
-    KAT_FAILED(3, "Triple-DES encrypt and decrypt KATs (3Â­Key) cbc");
+    KAT_FAILED(3, "Triple-DES encrypt and decrypt KATs (3­Key) cbc");
     return r;
   } else {
-    KAT_SUCCESS(3, "Triple-DES encrypt and decrypt KATs (3Â­Key) cbc");
+    KAT_SUCCESS(3, "Triple-DES encrypt and decrypt KATs (3­Key) cbc");
   }
 
   if ( (r = selftest_cfb ()) ) {
-    KAT_FAILED(4, "Triple-DES encrypt and decrypt KATs (3Â­Key) cbc");
+    KAT_FAILED(4, "Triple-DES encrypt and decrypt KATs (3­Key) cbc");
     return r;
   } else {
-    KAT_SUCCESS(4, "Triple-DES encrypt and decrypt KATs (3Â­Key) cbc");
+    KAT_SUCCESS(4, "Triple-DES encrypt and decrypt KATs (3­Key) cbc");
   }
 
   if ( (r = selftest_ctr ()) ) {
-    KAT_FAILED(5, "Triple-DES encrypt and decrypt KATs (3Â­Key) ctr");
+    KAT_FAILED(5, "Triple-DES encrypt and decrypt KATs (3­Key) ctr");
     return r;
   } else {
-    KAT_SUCCESS(5, "Triple-DES encrypt and decrypt KATs (3Â­Key) ctr");
+    KAT_SUCCESS(5, "Triple-DES encrypt and decrypt KATs (3­Key) ctr");
   }
 
   return 0;
