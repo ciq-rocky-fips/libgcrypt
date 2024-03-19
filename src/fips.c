@@ -661,7 +661,6 @@ run_digest_selftests (int extended)
       } else {
         KAT_SUCCESS(idx, trace_buf);
       }
-        anyerr = 1;
     }
   return anyerr;
 }

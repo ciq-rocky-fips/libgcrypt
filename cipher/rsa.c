@@ -2356,9 +2356,7 @@ selftests_rsa (selftest_report_func_t report, int extended)
     }
 
   what = "key consistency";
-  if (!fips_mode()) {
-    err = _gcry_pk_testkey (skey);
-  }
+  err = _gcry_pk_testkey (skey);
   if (err)
     {
       KAT_FAILED(1, "2048bit RSA, key consistency");

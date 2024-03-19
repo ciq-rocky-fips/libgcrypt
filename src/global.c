@@ -320,7 +320,6 @@ _gcry_check_version (const char *req_version)
         }
 	return ver;
       }
-
     KAT_FAILED(5, "show version api call");
     return NULL;
 }
@@ -396,7 +395,7 @@ int _gcry_fips_request_failure(const char *name, const char *subname)
 		np = strchr(np, ':');
 	}
 	return false;
- }
+}
 
 static void
 print_config (const char *what, gpgrt_stream_t fp)

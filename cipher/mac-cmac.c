@@ -295,10 +295,10 @@ selftests_cmac_3des (int extended, selftest_report_func_t report)
                           tv[tvidx].key, strlen (tv[tvidx].key),
                           tv[tvidx].expect, 8);
       if (errtxt) {
-        KAT_FAILED(tvidx, "Triple-DES CMAC generate and verify KAT (CBC mode; 3Â­Key)");
+        KAT_FAILED(tvidx, "Triple-DES CMAC generate and verify KAT (CBC mode; 3­Key)");
         goto failed;
       } else {
-        KAT_SUCCESS(tvidx, "Triple-DES CMAC generate and verify KAT (CBC mode; 3Â­Key)");
+        KAT_SUCCESS(tvidx, "Triple-DES CMAC generate and verify KAT (CBC mode; 3­Key)");
         goto failed;
       }
       if (!extended)
