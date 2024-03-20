@@ -5,7 +5,8 @@
 bash -c "truncate -s 0 /tmp/gcrypt_test.log"
 # Load configuration
 source ./test_config
+
+export LIBGCRYPT_FORCE_FIPS_MODE=1
 ## LD_PRELOAD loads the library under tests. Caller is running the tests that run with make check.
 # This takes longer than the binary driver, but will run the tests.
-
-LD_PRELOAD=${TEST_LIBRARY_LOCATION} ${CHECK_DRIVER}
+${CHECK_DRIVER}
