@@ -5,5 +5,7 @@
 bash -c "truncate -s 0 /tmp/gcrypt_test.log"
 # Load configuration
 source ./test_config
+
+export LIBGCRYPT_FORCE_FIPS_MODE=1
 # LD_PRELOAD loads the library under tests. Caller is running the tests that work with our test binary.
-LD_PRELOAD=${TEST_LIBRARY_LOCATION} ${SIMPLE_DRIVER} &>/dev/null |:
+${SIMPLE_DRIVER} &>/dev/null |:
