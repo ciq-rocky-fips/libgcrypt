@@ -96,6 +96,8 @@
 
 set -e
 
+export LIBGCRYPT_FORCE_FIPS_MODE=1
+
 # Machine must be in fips mode
 #fips_mode=$(fips-mode-setup --check)
 #echo "fips mode is $fips_mode"
@@ -203,7 +205,7 @@ verify() {
 }
 
 # Dump the library version.
-LD_PRELOAD=${TEST_LIBRARY_LOCATION} ./driver -v
+./driver -v
 
 set +e
 

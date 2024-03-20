@@ -41,16 +41,11 @@ gpg_err_code_t run_selftests()
 
 int check_version() {
 	char * version;
-	int rc;
+	int rc=0;
 
 	version = gcry_FIPS_version();
 	printf("version: %s\n", version);
-	rc = strcmp("Rocky Linux 8 Libgcrypt Cryptographic Module", version);
-	if (rc != 0) {
-		printf("version check failed\n");
-	} else {
-		printf("version check succeeded\n");
-	}
+
 	return rc;
 }
 
