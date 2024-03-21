@@ -15,7 +15,7 @@ export hmackey=orboDeJITITejsirpADONivirpUkvarP
      --enable-digests="$DIGESTS" \
      --enable-ciphers="$CIPHERS" \
      --with-fips-module-version="$FIPS_MODULE_NAME %{version}-%{srpmhash}" \
-     --prefix=`pwd`/../install
+     --prefix=`pwd`/install
      
 sed -i -e '/^sys_lib_dlsearch_path_spec/s,/lib /usr/lib,/usr/lib /lib64 /usr/lib64 /lib,g' libtool
 make
