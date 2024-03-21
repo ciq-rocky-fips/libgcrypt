@@ -1,5 +1,5 @@
 # Location if the libgrypt library under test. Should point at the library, not a symlink.
-export TEST_LIBRARY_LOCATION="install/lib/libgcrypt.so.20.4.0"
+export TEST_LIBRARY_LOCATION="../install/lib/libgcrypt.so.20.4.0"
 
 # Location of the binary test driver that quickly runs self tests.
 export SIMPLE_DRIVER="./driver"
@@ -7,8 +7,8 @@ export SIMPLE_DRIVER="./driver"
 export LDDRIVER=./ld_driver.sh
 
 # Location of the make check test driver that truncates /tmp/gcrypt_test.log, loads the library under test, and runs make check.
-export MAKE_LOCATION=./libgcrypt-1.10.0
-export CHECK_DRIVER="./ tests/basic"
+export MAKE_LOCATION=`pwd`
+export CHECK_DRIVER="../tests/basic"
 export LDCHECK=./ld_check.sh
 
 # Show expected failures as the tests run if 1. These come from the traces to the log.
