@@ -203,6 +203,133 @@ _gcry_mpi_mul (gcry_mpi_t w, gcry_mpi_t u, gcry_mpi_t v)
 	_gcry_mpi_free_limb_space (tmp_limb, tmp_limb_nlimbs);
 }
 
+#ifdef WITH_MARVIN_WORKAROUND
+static void
+_gcry_mpi_mul_sec (gcry_mpi_t w, gcry_mpi_t u, gcry_mpi_t v)
+{
+  mpi_size_t usize, vsize, wsize;
+  mpi_ptr_t up, vp, wp;
+  int usign, vsign, usecure, vsecure, sign_product;
+  int assign_wp = 0;
+  int clean_vp = 0;
+  mpi_ptr_t tmp_limb = NULL;
+  unsigned int tmp_limb_nlimbs = 0;
+
+  if (u->nlimbs < v->nlimbs)
+    { /* Swap U and V. */
+      usize = v->nlimbs;
+      usign = v->sign;
+      usecure = mpi_is_secure (v);
+      up    = v->d;
+      vsize = u->nlimbs;
+      vsign = u->sign;
+      vsecure = mpi_is_secure (u);
+      vp    = u->d;
+    }
+  else
+    {
+      usize = u->nlimbs;
+      usign = u->sign;
+      usecure = mpi_is_secure (u);
+      up    = u->d;
+      vsize = v->nlimbs;
+      vsign = v->sign;
+      vsecure = mpi_is_secure (v);
+      vp    = v->d;
+    }
+  sign_product = usign ^ vsign;
+  wp = w->d;
+
+  /* make sure u and v have the same length by extending the limbs to the larger one, now u */
+  if (usize != vsize)
+    {
+      mpi_limb_t *tmp_vp = mpi_alloc_limb_space (usize, vsecure);
+      clean_vp = 1;
+      MPN_ZERO (tmp_vp, (usize - vsize));
+      MPN_COPY (tmp_vp + (usize - vsize), vp, vsize);
+      vsize = usize;
+      vp = tmp_vp;
+    }
+
+  /* w == u */
+  /* Ensure W has space enough to store the result.  */
+  wsize = usize + vsize;
+  if (!mpi_is_secure (w) && (mpi_is_secure (u) || mpi_is_secure (v)))
+    {
+      /* w is not allocated in secure space but u or v is.  To make sure
+       * that no temporary results are stored in w, we temporary use
+       * a newly allocated limb space for w */
+      wp = mpi_alloc_limb_space( wsize, 1 );
+      assign_wp = 2; /* mark it as 2 so that we can later copy it back to
+                      * normal memory */
+    }
+  else if (w->alloced < wsize )
+    {
+      if (wp == up || wp == vp)
+        {
+          wp = mpi_alloc_limb_space (wsize, mpi_is_secure (w));
+          assign_wp = 1;
+        }
+      else
+        {
+          mpi_resize(w, wsize );
+          wp = w->d;
+        }
+    }
+  else
+    { /* Make U and V not overlap with W.        */
+      if (wp == up)
+        {
+          /* W and U are identical.  Allocate temporary space for U. */
+          tmp_limb_nlimbs = usize;
+          up = tmp_limb = mpi_alloc_limb_space (usize, usecure);
+          /* Is V identical too?  Keep it identical with U.  */
+          if (wp == vp)
+              vp = up;
+          /* Copy to the temporary space.  */
+          MPN_COPY (up, wp, usize);
+        }
+      else if (wp == vp)
+        {
+          /* W and V are identical.  Allocate temporary space for V. */
+          tmp_limb_nlimbs = vsize;
+          vp = tmp_limb = mpi_alloc_limb_space (vsize, vsecure);
+          /* Copy to the temporary space.  */
+          MPN_COPY (vp, wp, vsize);
+        }
+    }
+
+  if (!vsize)
+    wsize = 0;
+  else
+    {
+      mpi_limb_t *tmp = mpi_alloc_limb_space (wsize * 2, mpi_is_secure (w));
+      mul_cs (wp, up, vp, vsize, tmp);
+      _gcry_mpi_free_limb_space (tmp, wsize * 2);
+    }
+
+  if (clean_vp)
+    {
+      _gcry_mpi_free_limb_space (vp, vsize);
+    }
+  if (assign_wp)
+    {
+      if (assign_wp == 2)
+        {
+          /* copy the temp wp from secure memory back to normal memory */
+          mpi_ptr_t tmp_wp = mpi_alloc_limb_space (wsize, 0);
+          MPN_COPY (tmp_wp, wp, wsize);
+          _gcry_mpi_free_limb_space (wp, 0);
+          wp = tmp_wp;
+        }
+      _gcry_mpi_assign_limb_space (w, wp, wsize);
+    }
+  w->nlimbs = wsize;
+  w->sign = sign_product;
+  if (tmp_limb)
+      _gcry_mpi_free_limb_space (tmp_limb, tmp_limb_nlimbs);
+}
+#endif /* WITH_MARVIN_WORKAROUND */
 
 void
 _gcry_mpi_mulm (gcry_mpi_t w, gcry_mpi_t u, gcry_mpi_t v, gcry_mpi_t m)
@@ -221,3 +348,45 @@ _gcry_mpi_mulm (gcry_mpi_t w, gcry_mpi_t u, gcry_mpi_t v, gcry_mpi_t m)
   if (temp_m)
     mpi_free(temp_m);
 }
+
+#ifdef WITH_MARVIN_WORKAROUND
+static void
+_gcry_mpi_mod_sec (gcry_mpi_t ret, gcry_mpi_t a, gcry_mpi_t mod)
+{
+  size_t asize = a->nlimbs;
+  size_t modsize = mod->nlimbs;
+  size_t tmp_size = mod_limb_numb (asize, modsize);
+  mpi_limb_t *tmp_limb = mpi_alloc_limb_space (tmp_size, mpi_is_secure(a));
+  mod_cs (ret->d, a->d, asize, mod->d, modsize, tmp_limb);
+  /* cut the length to the mod size */
+  ret->nlimbs = mod->nlimbs;
+  _gcry_mpi_free_limb_space (tmp_limb, tmp_size);
+}
+
+/* The constant time code uses different order of the limbs ... */
+static void
+_gcry_mpi_reverse_sec (gcry_mpi_t w)
+{
+  for (size_t i = 0; i < w->nlimbs/2; i++)
+    {
+      mpi_limb_t t = w->d[i];
+      w->d[i] = w->d[w->nlimbs - i - 1];
+      w->d[w->nlimbs - i - 1] = t;
+    }
+}
+
+void
+_gcry_mpi_mulm_sec (gcry_mpi_t w, gcry_mpi_t u, gcry_mpi_t v, gcry_mpi_t m)
+{
+  /* w == u */
+  _gcry_mpi_reverse_sec (u);
+  _gcry_mpi_reverse_sec (v);
+  _gcry_mpi_reverse_sec (m);
+  _gcry_mpi_mul_sec (w, u, v);
+  _gcry_mpi_mod_sec (w, w, m);
+
+  /* get them back to the order the rest of the code expects */
+  _gcry_mpi_reverse_sec (w); /* -- this is the result */
+  _gcry_mpi_reverse_sec (m); /* -- this might be still used by the calling function */
+}
+#endif /* WITH_MARVIN_WORKAROUND */

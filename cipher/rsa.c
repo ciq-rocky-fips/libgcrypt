@@ -1195,7 +1195,11 @@ secret_blinded (gcry_mpi_t output, gcry_mpi_t input,
   /* Undo blinding.  Here we calculate: y = (x * r^-1) mod n, where x
    * is the blinded decrypted data, ri is the modular multiplicative
    * inverse of r and n is the RSA modulus.  */
+#ifdef WITH_MARVIN_WORKAROUND
+  mpi_mulm_sec (output, output, ri, sk->n);
+#else
   mpi_mulm (output, output, ri, sk->n);
+#endif /* WITH_MARVIN_WORKAROUND */
 
   _gcry_mpi_release (r);
   _gcry_mpi_release (ri);

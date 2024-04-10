@@ -631,6 +631,22 @@ AC_ARG_ENABLE(jent-support,
 	      jentsupport=$enableval,jentsupport=yes)
 AC_MSG_RESULT($jentsupport)
 
+AC_MSG_CHECKING([whether a Marvin workaround is requested])
+AC_ARG_ENABLE(marvin-workaround,
+              AS_HELP_STRING([--enable-marvin-workaround],
+                             [Enable Marvin workaround for constant time PKCS1.5 depadding]),
+              [with_marvin_workaround="$enableval"],
+              [with_marvin_workaround=no])
+AC_MSG_RESULT($with_marvin_workaround)
+if test "$with_marvin_workaround" = no ; then
+    WITH_MARVIN_WORKAROUND=''
+else
+    AC_DEFINE(WITH_MARVIN_WORKAROUND,1,
+              [Define to provide constant time PKCS1.5 depadding])
+fi
+AM_CONDITIONAL(WITH_MARVIN_WORKAROUND, test "x$with_marvin_workaround" != xno)
+AC_SUBST(WITH_MARVIN_WORKAROUND)
+
 # Implementation of the --disable-padlock-support switch.
 AC_MSG_CHECKING([whether padlock support is requested])
 AC_ARG_ENABLE(padlock-support,

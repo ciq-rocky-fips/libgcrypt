@@ -421,6 +421,9 @@ void _gcry_mpi_subm (gcry_mpi_t w, gcry_mpi_t u, gcry_mpi_t v, gcry_mpi_t m);
 void _gcry_mpi_mul (gcry_mpi_t w, gcry_mpi_t u, gcry_mpi_t v);
 void _gcry_mpi_mul_ui (gcry_mpi_t w, gcry_mpi_t u, unsigned long v );
 void _gcry_mpi_mulm (gcry_mpi_t w, gcry_mpi_t u, gcry_mpi_t v, gcry_mpi_t m);
+#ifdef WITH_MARVIN_WORKAROUND
+void _gcry_mpi_mulm_sec (gcry_mpi_t w, gcry_mpi_t u, gcry_mpi_t v, gcry_mpi_t m);
+#endif /* WITH_MARVIN_WORKAROUND */
 void _gcry_mpi_mul_2exp (gcry_mpi_t w, gcry_mpi_t u, unsigned long cnt);
 void _gcry_mpi_div (gcry_mpi_t q, gcry_mpi_t r,
                    gcry_mpi_t dividend, gcry_mpi_t divisor, int round);
@@ -516,6 +519,9 @@ int _gcry_mpi_get_flag (gcry_mpi_t a, enum gcry_mpi_flag flag);
 #define mpi_mul_2exp(w,u,v)    _gcry_mpi_mul_2exp ((w),(u),(v))
 #define mpi_mul(w,u,v)         _gcry_mpi_mul ((w),(u),(v))
 #define mpi_mulm(w,u,v,m)      _gcry_mpi_mulm ((w),(u),(v),(m))
+#ifdef WITH_MARVIN_WORKAROUND
+#define mpi_mulm_sec(w,u,v,m)  _gcry_mpi_mulm_sec ((w),(u),(v),(m))
+#endif /* WITH_MARVIN_WORKAROUND */
 #define mpi_powm(w,b,e,m)      _gcry_mpi_powm ( (w), (b), (e), (m) )
 #define mpi_tdiv(q,r,a,m)      _gcry_mpi_div ( (q), (r), (a), (m), 0)
 #define mpi_fdiv(q,r,a,m)      _gcry_mpi_div ( (q), (r), (a), (m), -1)

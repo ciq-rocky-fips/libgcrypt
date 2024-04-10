@@ -239,6 +239,12 @@ void _gcry_mpih_mul_karatsuba_case( mpi_ptr_t prodp,
 				 mpi_ptr_t vp, mpi_size_t vsize,
 				 struct karatsuba_ctx *ctx );
 
+#ifdef WITH_MARVIN_WORKAROUND
+/*-- mpih-mul-cs.c --*/
+void mul_cs(mpi_limb_t *ret, mpi_limb_t *a, mpi_limb_t *b, size_t n, mpi_limb_t *tmp);
+void mod_cs(mpi_limb_t *ret, mpi_limb_t *a, size_t anum, mpi_limb_t *mod, size_t modnum, mpi_limb_t *tmp);
+size_t mod_limb_numb(size_t anum, size_t modnum);
+#endif /* WITH_MARVIN_WORKAROUND */
 
 /*-- mpih-mul_1.c (or xxx/cpu/ *.S) --*/
 mpi_limb_t _gcry_mpih_mul_1( mpi_ptr_t res_ptr, mpi_ptr_t s1_ptr,
