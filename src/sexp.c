@@ -31,6 +31,7 @@
 
 #define GCRYPT_NO_MPI_MACROS 1
 #include "g10lib.h"
+#include "const-time.h"
 
 
 /* Notes on the internal memory layout.
@@ -1079,6 +1080,10 @@ unquote_string (const char *string, size_t length, unsigned char *buf)
  *	%d - integer stored as string (no autoswitch to secure allocation)
  *      %b - memory buffer; this takes _two_ arguments: an integer with the
  *           length of the buffer and a pointer to the buffer.
+ *      %c - memory buffer same as %b, but written in constant time; this
+ *           takes _three_ arguments: an integer with the length of the buffer,
+ *           a pointer to the buffer and the maximum length of the buffer
+ *           to avoid potential side channel leaking the buffer length.
  *      %S - Copy an gcry_sexp_t here.  The S-expression needs to be a
  *           regular one, starting with a parenthesis.
  *           (no autoswitch to secure allocation)
@@ -1204,7 +1209,7 @@ do_vsexp_sscan (gcry_sexp_t *retsexp, size_t *erroff,
 	    {
 	      switch (*p)
 		{
-		case 'b': case 't': case 'v': case 'n': case 'f':
+		case 'b': case 'c': case 't': case 'v': case 'n': case 'f':
 		case 'r': case '"': case '\'': case '\\':
 		  quoted_esc = 0;
 		  break;
@@ -1538,14 +1543,27 @@ do_vsexp_sscan (gcry_sexp_t *retsexp, size_t *erroff,
 	      memcpy (c.pos, astr, alen);
 	      c.pos += alen;
 	    }
-	  else if (*p == 'b')
+	  else if (*p == 'b' || *p == 'c')
 	    {
 	      /* Insert a memory buffer.  */
 	      const char *astr;
-	      int alen;
+	      int alen, buflen = 0, reallen = 0;
 
 	      ARG_NEXT (alen, int);
 	      ARG_NEXT (astr, const char *);
+	      if (*p == 'c')
+	        {
+	          ARG_NEXT (buflen, int);
+	          if (buflen < alen)
+	            {
+	              *erroff = p - buffer;
+	              err = GPG_ERR_INV_ARG;
+	              goto leave;
+	            }
+	           /* Do all the calculations with the buflen */
+	           reallen = alen;
+	           alen = buflen;
+	         }
 
               if (alen < 0)
                 {
@@ -1578,9 +1596,18 @@ do_vsexp_sscan (gcry_sexp_t *retsexp, size_t *erroff,
 		}
 
 	      *c.pos++ = ST_DATA;
-	      STORE_LEN (c.pos, alen);
-	      memcpy (c.pos, astr, alen);
-	      c.pos += alen;
+	      if (*p == 'c')
+	        {
+	          STORE_LEN (c.pos, reallen);
+	          ct_memcpy (c.pos, astr, reallen, buflen);
+	          c.pos += reallen;
+	        }
+	      else
+	        {
+	          STORE_LEN (c.pos, alen);
+	          memcpy (c.pos, astr, alen);
+	          c.pos += alen;
+	        }
 	    }
 	  else if (*p == 'd')
 	    {

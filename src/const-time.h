@@ -26,6 +26,7 @@
 #define ct_not_memequal _gcry_ct_not_memequal
 #define ct_memequal _gcry_ct_memequal
 #define ct_memmov_cond _gcry_ct_memmov_cond
+#define ct_memcpy _gcry_ct_memcpy
 
 
 #ifndef HAVE_GCC_ASM_VOLATILE_MEMORY
@@ -33,6 +34,14 @@ extern volatile unsigned int _gcry_ct_vzero;
 extern volatile unsigned int _gcry_ct_vone;
 #endif
 
+/*
+ * Return 1 if A < B and return 0 otherwise.
+ */
+static inline int
+ct_lt (unsigned int a, unsigned int b)
+{
+  return (a ^ ((a ^ b) | ((a - b) ^ b))) >> (sizeof(unsigned int)*8 - 1);
+}
 
 static inline size_t
 ct_lt_s (size_t a, size_t b)
@@ -111,6 +120,7 @@ unsigned int _gcry_ct_memequal (const void *b1, const void *b2, size_t len);
 #endif
 DEFINE_CT_TYPE_GEN_MASK(uintptr, uintptr_t)
 DEFINE_CT_TYPE_GEN_MASK(ulong, unsigned long)
+DEFINE_CT_TYPE_GEN_MASK(uchar, unsigned char)
 
 /*
  * Return all bits set if A is 0 and return 1 otherwise.
@@ -135,6 +145,7 @@ DEFINE_CT_TYPE_GEN_MASK(ulong, unsigned long)
 #endif
 DEFINE_CT_TYPE_GEN_INV_MASK(uintptr, uintptr_t)
 DEFINE_CT_TYPE_GEN_INV_MASK(ulong, unsigned long)
+DEFINE_CT_TYPE_GEN_INV_MASK(uchar, unsigned char)
 
 /*
  *  Return A when OP_ENABLED=1
@@ -169,5 +180,6 @@ sexp_null_cond (gcry_sexp_t w, unsigned long op_enable)
  */
 void _gcry_ct_memmov_cond (void *dst, const void *src, size_t len,
 			   unsigned long op_enable);
+void _gcry_ct_memcpy (void *dst, const void *src, size_t len, size_t buffer_len);
 
 #endif /*GCRY_CONST_TIME_H*/
