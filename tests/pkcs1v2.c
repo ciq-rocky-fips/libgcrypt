@@ -82,7 +82,7 @@ data_from_hex (const char *string, size_t *r_length)
 
 static int
 extract_cmp_data (gcry_sexp_t sexp, const char *name, const char *expected,
-                  const char *description)
+                  const char *description, int quiet)
 {
   gcry_sexp_t l1;
   const void *a;
@@ -96,13 +96,15 @@ extract_cmp_data (gcry_sexp_t sexp, const char *name, const char *expected,
   b = data_from_hex (expected, &blen);
   if (!a)
     {
-      info ("%s: parameter \"%s\" missing in key\n", description, name);
+      if (!quiet)
+        info ("%s: parameter \"%s\" missing in key\n", description, name);
       rc = 1;
     }
   else if ( alen != blen || memcmp (a, b, alen) )
     {
-      info ("%s: parameter \"%s\" does not match expected value\n",
-            description, name);
+      if (!quiet)
+        info ("%s: parameter \"%s\" does not match expected value\n",
+              description, name);
       rc = 1;
     }
   gcry_free (b);
@@ -192,7 +194,7 @@ check_oaep (void)
           else
             {
               if (extract_cmp_data (ciph, "a", tbl[tno].m[mno].encr,
-                                    tbl[tno].m[mno].desc))
+                                    tbl[tno].m[mno].desc, 0))
                 {
                   show_sexp ("encrypt result:\n", ciph);
                   fail ("mismatch in gcry_pk_encrypt\n");
@@ -227,7 +229,7 @@ check_oaep (void)
           else
             {
               if (extract_cmp_data (plain, "value", tbl[tno].m[mno].mesg,
-                                    tbl[tno].m[mno].desc))
+                                    tbl[tno].m[mno].desc, 0))
                 {
                   show_sexp ("decrypt result:\n", plain);
                   fail ("mismatch in gcry_pk_decrypt\n");
@@ -330,7 +332,7 @@ check_pss (void)
           else
             {
               if (extract_cmp_data (sig, "s", tbl[tno].m[mno].sign,
-                                    tbl[tno].m[mno].desc))
+                                    tbl[tno].m[mno].desc, 0))
                 {
                   show_sexp ("sign result:\n", sig);
                   fail ("mismatch in gcry_pk_sign\n");
@@ -437,44 +439,84 @@ check_v15crypt (void)
           size_t mesg_len, seed_len, encr_len;
           gcry_sexp_t plain, ciph;
 
+          if (tbl[tno].m[mno].desc == NULL)
+            break;
+
           if (verbose)
             info ("running test: %s\n", tbl[tno].m[mno].desc);
 
-          mesg = data_from_hex (tbl[tno].m[mno].mesg, &mesg_len);
-          seed = data_from_hex (tbl[tno].m[mno].seed, &seed_len);
-
-          err = gcry_sexp_build (&plain, NULL,
-                                 "(data (flags pkcs1)"
-                                 "(value %b)(random-override %b))",
-                                 (int)mesg_len, mesg,
-                                 (int)seed_len, seed);
-          if (err)
-            die ("constructing plain data failed: %s\n", gpg_strerror (err));
-          gcry_free (mesg);
-          gcry_free (seed);
-
-          err = gcry_pk_encrypt (&ciph, plain, pub_key);
-          if (err)
+          if (tbl[tno].m[mno].mesg)
             {
-              show_sexp ("plain:\n", ciph);
-              fail ("gcry_pk_encrypt failed: %s\n", gpg_strerror (err));
-            }
-          else
-            {
-              if (extract_cmp_data (ciph, "a", tbl[tno].m[mno].encr,
-                                    tbl[tno].m[mno].desc))
+              mesg = data_from_hex (tbl[tno].m[mno].mesg, &mesg_len);
+              seed = data_from_hex (tbl[tno].m[mno].seed, &seed_len);
+
+              err = gcry_sexp_build (&plain, NULL,
+                                     "(data (flags pkcs1)"
+                                     "(value %b)(random-override %b))",
+                                     (int)mesg_len, mesg,
+                                     (int)seed_len, seed);
+              if (err)
+                die ("constructing plain data failed: %s\n", gpg_strerror (err));
+              gcry_free (mesg);
+              gcry_free (seed);
+
+              err = gcry_pk_encrypt (&ciph, plain, pub_key);
+              if (err)
                 {
-                  show_sexp ("encrypt result:\n", ciph);
-                  fail ("mismatch in gcry_pk_encrypt\n");
+                  show_sexp ("plain:\n", ciph);
+                  fail ("gcry_pk_encrypt failed: %s\n", gpg_strerror (err));
                 }
-              gcry_sexp_release (ciph);
-              ciph = NULL;
+              else
+                {
+                  if (extract_cmp_data (ciph, "a", tbl[tno].m[mno].encr,
+                                        tbl[tno].m[mno].desc, 0))
+                    {
+                      show_sexp ("encrypt result:\n", ciph);
+                      fail ("mismatch in gcry_pk_encrypt\n");
+                    }
+                  gcry_sexp_release (ciph);
+                  ciph = NULL;
+                }
+              gcry_sexp_release (plain);
+              plain = NULL;
             }
-          gcry_sexp_release (plain);
-          plain = NULL;
 
           /* Now test the decryption.  */
           encr = data_from_hex (tbl[tno].m[mno].encr, &encr_len);
+
+#ifdef WITH_MARVIN_WORKAROUND
+          /* First try without implicit rejection -- this should fail for invalid inputs */
+          err = gcry_sexp_build (&ciph, NULL,
+                                 "(enc-val (flags pkcs1 no-implicit-rejection)"
+                                 "(rsa (a %b)))",
+                                 (int)encr_len, encr);
+          if (err)
+            die ("constructing cipher data failed: %s\n", gpg_strerror (err));
+
+          err = gcry_pk_decrypt (&plain, ciph, sec_key);
+          if (err)
+            {
+              /* If the message is not set, the padding is invalid and failure is expected */
+              if (tbl[tno].m[mno].mesg != NULL)
+                {
+                  show_sexp ("ciph:\n", ciph);
+                  fail ("gcry_pk_decrypt failed: %s\n", gpg_strerror (err));
+                }
+            }
+          else
+            {
+              /* If the message is not set, it is in the synthetic field */
+              const char *msg = tbl[tno].m[mno].mesg;
+              if (msg == NULL)
+                msg = tbl[tno].m[mno].synt;
+              if (extract_cmp_data (plain, "value", msg,
+                                    tbl[tno].m[mno].desc, 0))
+                {
+                  show_sexp ("decrypt result:\n", plain);
+                  fail ("mismatch in gcry_pk_decrypt.\n");
+                }
+            }
+#endif /* WITH_MARVIN_WORKAROUND */
 
           err = gcry_sexp_build (&ciph, NULL,
                                  "(enc-val (flags pkcs1)"
@@ -492,15 +534,19 @@ check_v15crypt (void)
             }
           else
             {
-              if (extract_cmp_data (plain, "value", tbl[tno].m[mno].mesg,
-                                    tbl[tno].m[mno].desc))
+              /* If the message is not set, expect the synthetic message here */
+              const char *msg = tbl[tno].m[mno].mesg;
+              if (msg == NULL)
+                msg = tbl[tno].m[mno].synt;
+              if (extract_cmp_data (plain, "value", msg,
+                                    tbl[tno].m[mno].desc, 0))
                 {
                   show_sexp ("decrypt result:\n", plain);
-                  fail ("mismatch in gcry_pk_decrypt\n");
+                  fail ("mismatch in gcry_pk_decrypt. Expected %s\n", msg);
                 }
-              gcry_sexp_release (plain);
-              plain = NULL;
             }
+          gcry_sexp_release (plain);
+          plain = NULL;
           gcry_sexp_release (ciph);
           ciph = NULL;
         }
@@ -592,7 +638,7 @@ check_v15sign (void)
           else
             {
               if (extract_cmp_data (sig, "s", tbl[tno].m[mno].sign,
-                                    tbl[tno].m[mno].desc))
+                                    tbl[tno].m[mno].desc, 0))
                 {
                   show_sexp ("sign result:\n", sig);
                   fail ("mismatch in gcry_pk_sign\n");

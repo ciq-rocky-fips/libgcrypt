@@ -40,7 +40,7 @@ extern volatile unsigned int _gcry_ct_vone;
 static inline int
 ct_lt (unsigned int a, unsigned int b)
 {
-  return (a ^ ((a ^ b) | ((a - b) ^ b))) >> (sizeof(unsigned int)*8 - 1);
+  return (a ^ ((a ^ b) | ((a - b) ^ b))) >> (sizeof(unsigned int) * 8 - 1);
 }
 
 static inline size_t
@@ -161,6 +161,7 @@ DEFINE_CT_TYPE_GEN_INV_MASK(uchar, unsigned char)
   }
 DEFINE_CT_TYPE_SELECT_FUNC(uintptr, uintptr_t)
 DEFINE_CT_TYPE_SELECT_FUNC(ulong, unsigned long)
+DEFINE_CT_TYPE_SELECT_FUNC(uchar, unsigned char)
 
 /*
  *  Return NULL when OP_ENABLED=1

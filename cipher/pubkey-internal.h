@@ -55,6 +55,14 @@ _gcry_rsa_pkcs1_encode_for_enc (gcry_mpi_t *r_result, unsigned int nbits,
 gpg_err_code_t
 _gcry_rsa_pkcs1_decode_for_enc (unsigned char **r_result, size_t *r_resultlen,
                                 unsigned int nbits, gcry_mpi_t value);
+#ifdef WITH_MARVIN_WORKAROUND
+gpg_err_code_t
+_gcry_rsa_pkcs1_decode_for_enc_implicit_rejection (unsigned char **r_result,
+                                                   size_t *r_resultlen,
+                                                   unsigned int nbits,
+                                                   gcry_mpi_t value,
+                                                   unsigned char *kdk);
+#endif /* WITH_MARVIN_WORKAROUND */
 gpg_err_code_t
 _gcry_rsa_pkcs1_encode_raw_for_sig (gcry_mpi_t *r_result, unsigned int nbits,
                                 const unsigned char *value, size_t valuelen);

@@ -96,7 +96,7 @@ _gcry_ct_memmov_cond (void *dst, const void *src, size_t len,
 void
 _gcry_ct_memcpy (void *dst, const void *src, size_t len, size_t buffer_len)
 {
-  unsigned char mask_a, mask_b;
+  volatile unsigned char mask_a, mask_b;
   unsigned char *b_dst = dst;
   const unsigned char *b_src = src;
   unsigned int writing;

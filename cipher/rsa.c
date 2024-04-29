@@ -1434,6 +1434,7 @@ rsa_encrypt (gcry_sexp_t *r_ciph, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 }
 
 
+#define SHA256_LEN 32
 static gcry_err_code_t
 rsa_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 
@@ -1449,6 +1450,9 @@ rsa_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   unsigned int nbits = rsa_get_nbits (keyparms);
   gcry_sexp_t result = NULL;
   gcry_sexp_t dummy = NULL;
+#ifdef WITH_MARVIN_WORKAROUND
+  unsigned char kdk[SHA256_LEN];
+#endif /* WITH_MARVIN_WORKAROUND */
 
   rc = rsa_check_keysize (nbits);
   if (rc)
@@ -1496,6 +1500,71 @@ rsa_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   mpi_normalize (data);
   mpi_fdiv_r (data, data, sk.n);
 
+#ifdef WITH_MARVIN_WORKAROUND
+  /* Implicit rejection: Derive KDK */
+  if (ctx.encoding == PUBKEY_ENC_PKCS1)
+    {
+      unsigned char *buf, *tmp;
+      unsigned int nbytes = (mpi_get_nbits (sk.n)+7)/8;
+      unsigned char key[SHA256_LEN];
+      gcry_md_hd_t hd;
+
+      /* (a) Convert `d` to big endian representation, left padded to the length of `n` */
+      rc = _gcry_mpi_to_octet_string (&buf, NULL, sk.d, nbytes);
+      if (rc)
+        {
+          rc = GPG_ERR_INTERNAL;
+          goto leave;
+        }
+
+      /* (b) Hash it using SHA-256 */
+      rc = _gcry_md_open (&hd, GCRY_MD_SHA256, 0);
+      if (rc)
+        {
+          xfree (buf);
+          rc = GPG_ERR_INTERNAL;
+          goto leave;
+        }
+      _gcry_md_write (hd, buf, nbytes);
+      /* keep the buffer around -- it will be needed for the ciphertext */
+      tmp = _gcry_md_read (hd, GCRY_MD_SHA256);
+      memcpy(key, tmp, SHA256_LEN);
+      _gcry_md_close (hd);
+
+      /* (c) Use the hash as a SHA-256 HMAC key and ciphertext as a message */
+      rc = _gcry_md_open (&hd, GCRY_MD_SHA256, GCRY_MD_FLAG_HMAC);
+      if (rc)
+        {
+          xfree (buf);
+          rc = GPG_ERR_INTERNAL;
+          goto leave;
+        }
+      rc = _gcry_md_setkey (hd, key, sizeof (key));
+      if (rc)
+        {
+          xfree (buf);
+          _gcry_md_close (hd);
+          rc = GPG_ERR_INTERNAL;
+          goto leave;
+        }
+
+      /* We need to convert the ciphertext to string, padded to the length of modulus */
+      rc = _gcry_mpi_to_octet_string (NULL, buf, data, nbytes);
+      if (rc)
+        {
+          xfree (buf);
+          _gcry_md_close (hd);
+          rc = GPG_ERR_INTERNAL;
+          goto leave;
+        }
+      _gcry_md_write (hd, buf, nbytes);
+      xfree (buf);
+      buf = _gcry_md_read (hd, 0);
+      memcpy(kdk, buf, SHA256_LEN);
+      _gcry_md_close (hd);
+    }
+#endif /* WITH_MARVIN_WORKAROUND */
+
   /* Allocate MPI for the plaintext.  */
   plain = mpi_snew (nbits);
 
@@ -1514,6 +1583,18 @@ rsa_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   switch (ctx.encoding)
     {
     case PUBKEY_ENC_PKCS1:
+#ifdef WITH_MARVIN_WORKAROUND
+      if (!(ctx.flags & PUBKEY_FLAG_NO_IMPLICIT_REJECTION))
+        {
+          rc = _gcry_rsa_pkcs1_decode_for_enc_implicit_rejection (&unpad, &unpadlen, nbits, plain, kdk);
+          mpi_free (plain);
+          plain = NULL;
+          rc_sexp = sexp_build (&result, NULL, "(value %c)", (int)unpadlen, unpad, (nbits + 7) / 8);
+          *r_plain = result;
+          rc = ct_ulong_select (rc_sexp, rc, ct_is_zero (rc) & ct_is_not_zero (rc_sexp));
+          break;
+        }
+#endif /* WITH_MARVIN_WORKAROUND */
       rc = _gcry_rsa_pkcs1_decode_for_enc (&unpad, &unpadlen, nbits, plain);
       mpi_free (plain);
       plain = NULL;
