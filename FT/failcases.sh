@@ -329,7 +329,9 @@ verify "ecc_selftest_sign" 2 "ECDSA verify KAT (P-256 curve, SHA2-256) verify fa
 # Test trace: HKDF KAT (PBKDF2 SHA256)
 # Test env var: selftest_pbkdf2.fail
 start_test ${LDDRIVER} "selftest_pbkdf2" "selftest_pbkdf2.fail"
-verify "selftest_pbkdf2" 1 "HKDF KAT (PBKDF2 SHA256)" 1
+verify "selftest_pbkdf2" 3 "HKDF KAT (PBKDF2 SHA256) passphrase" 1
+verify "selftest_pbkdf2" 3 "HKDF KAT (PBKDF2 SHA256) salt" 1
+verify "selftest_pbkdf2" 3 "HKDF KAT (PBKDF2 SHA256) derived key" 1
 
 # Test function: run_mac_selftests
 # Test trace: run_mac_selftests

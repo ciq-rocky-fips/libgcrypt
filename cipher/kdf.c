@@ -1192,31 +1192,84 @@ selftest_pbkdf2 (int extended, selftest_report_func_t report)
   const char *errtxt;
   int tvidx;
   int fail_fips = gcry_fips_request_failure("selftest_pbkdf2", "fail");
+  char buf[64];
 
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
       what = tv[tvidx].desc;
       if (tv[tvidx].disabled)
         continue;
+
+      /* Skip test with shoter passphrase in FIPS mode.  */
+      if (fips_mode() && tv[tvidx].plen < 14)
+	continue;
+
       errtxt = check_one (GCRY_KDF_PBKDF2, tv[tvidx].hashalgo,
                           tv[tvidx].p, tv[tvidx].plen,
                           tv[tvidx].salt, tv[tvidx].saltlen,
                           tv[tvidx].c,
                           tv[tvidx].dk, tv[tvidx].dklen);
 
-      if (fail_fips) {
-        errtxt = "testing failed";
-      }
-
       if (errtxt) {
         KAT_FAILED(0, "HKDF KAT (PBKDF2 SHA256)");
-        if (fail_fips) {
-          continue; /* keep running tests */
-        }
         goto failed;
       } else {
         KAT_SUCCESS(0, "HKDF KAT (PBKDF2 SHA256)");
       }
+
+      if (fail_fips) {
+	/*
+	 * Test corrupting the passphrase
+	 */
+	if (tv[tvidx].plen > sizeof(buf))
+	  continue;
+	memcpy(&buf[0], tv[tvidx].p, tv[tvidx].plen);
+	buf[0] ^= 0x01;
+	if (check_one (GCRY_KDF_PBKDF2, tv[tvidx].hashalgo,
+		       buf, tv[tvidx].plen,
+		       tv[tvidx].salt, tv[tvidx].saltlen,
+		       tv[tvidx].c,
+		       tv[tvidx].dk, tv[tvidx].dklen)) {
+	  KAT_FAILED(0, "HKDF KAT (PBKDF2 SHA256) passphrase");
+	} else {
+	  KAT_SUCCESS(0, "HKDF KAT (PBKDF2 SHA256) passphrase");
+	}
+
+	/*
+	 * Test corrupting the salt
+	 */
+	if (tv[tvidx].saltlen > sizeof(buf))
+	  continue;
+	memcpy(&buf[0], tv[tvidx].salt, tv[tvidx].saltlen);
+	buf[0] ^= 0x01;
+	if (check_one (GCRY_KDF_PBKDF2, tv[tvidx].hashalgo,
+		       tv[tvidx].p, tv[tvidx].plen,
+		       buf, tv[tvidx].saltlen,
+		       tv[tvidx].c,
+		       tv[tvidx].dk, tv[tvidx].dklen)) {
+	  KAT_FAILED(0, "HKDF KAT (PBKDF2 SHA256) salt");
+	} else {
+	  KAT_SUCCESS(0, "HKDF KAT (PBKDF2 SHA256) salt");
+	}
+
+	/*
+	 * Test corrupting the derived key
+	 */
+	if (tv[tvidx].dklen > sizeof(buf))
+	  continue;
+	memcpy(&buf[0], tv[tvidx].dk, tv[tvidx].dklen);
+	buf[0] ^= 0x01;
+	if (check_one (GCRY_KDF_PBKDF2, tv[tvidx].hashalgo,
+		       tv[tvidx].p, tv[tvidx].plen,
+		       tv[tvidx].salt, tv[tvidx].saltlen,
+		       tv[tvidx].c,
+		       buf, tv[tvidx].dklen)) {
+	  KAT_FAILED(0, "HKDF KAT (PBKDF2 SHA256) derived key");
+	} else {
+	  KAT_SUCCESS(0, "HKDF KAT (PBKDF2 SHA256) derived key");
+	}
+      }
+
       if (tvidx >= NUM_TEST_VECTORS - 1 && !extended)
         break;
     }
