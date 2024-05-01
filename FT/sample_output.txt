@@ -387,7 +387,7 @@ verifying gcry_mpi_ec_curve_point, trace ECDH public key assurance checks, check
 
 Test Result: PASS - Verified expected failures: gcry_mpi_ec_curve_point ECDH public key assurance checks, check_ec_mul_reduction_b
 ---
-starting test cipher_setkey, fail cipher_setkey.invalid_keylen
+starting test cipher_setkey, fail cipher_setkey.duplicate_key
 verifying cipher_setkey, trace XTS AES duplicate key test
 
 Test Result: PASS - Verified expected failures: cipher_setkey XTS AES duplicate key test

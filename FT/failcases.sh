@@ -92,7 +92,7 @@
 # gcry_mpi_ec_curve_point.assurance: ECDH public key assurance checks, not/on curve, on/not curve failure cases.
 # check_ec_mul_reduction_a: ECDH public key assurance checks, check_ec_mul_reduction_a failure case.
 # check_ec_mul_reduction_b: ECDH public key assurance checks, check_ec_mul_reduction_b failure case.
-# cipher_setkey.invalid_keylen: XTS AES duplicate key test failure case.
+# cipher_setkey.duplicate_key: XTS AES duplicate key test failure case.
 
 set -e
 
@@ -473,9 +473,9 @@ verify "rsa_test_keys_fips" 1 "RSA key generation PCT fips (SHA-256; verify shou
 
 # Test function: cipher_setkey
 # Test trace: XTS AES duplicate key test
-# Test env var: cipher_setkey.invalid_keylen.
-start_test ${LDCHECK} "cipher_setkey" "cipher_setkey.invalid_keylen"
-verify "cipher_setkey" 2 "XTS AES duplicate key test" 2
+# Test env var: cipher_setkey.duplicate_key.
+start_test ${LDCHECK} "cipher_setkey" "cipher_setkey.duplicate_key"
+verify "cipher_setkey" 1 "XTS AES duplicate key test" 1
 
 # Test function: check_xts_cipher
 # Test trace:

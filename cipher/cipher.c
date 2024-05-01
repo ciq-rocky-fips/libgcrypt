@@ -745,47 +745,52 @@ static gcry_err_code_t
 cipher_setkey (gcry_cipher_hd_t c, byte *key, size_t keylen)
 {
   gcry_err_code_t rc;
+  /*
+   * We need a temp key pointer here as key may
+   * be pointing to a const string.
+   */
+  byte dup_key[256];
 
   if (c->mode == GCRY_CIPHER_MODE_XTS)
     {
-      if (gcry_fips_request_failure("cipher_setkey", "invalid_keylen")) {
-        keylen -= 1;
-      }
-
       /* XTS uses two keys. */
       if (keylen % 2) {
-        KAT_FAILED(0, "XTS AES duplicate key test");
 	return GPG_ERR_INV_KEYLEN;
-      } else {
-      KAT_SUCCESS(0, "XTS AES duplicate key test");
       }
       keylen /= 2;
 
       if (fips_mode ())
 	{
+	  byte *orig_key = key;
+	  if (gcry_fips_request_failure("cipher_setkey", "duplicate_key"))
+	  {
+		if (keylen == 0 || keylen > 128) {
+			return GPG_ERR_INV_KEYLEN;
+		}
+		memcpy(dup_key, key, keylen);
+		memcpy(dup_key + keylen, key, keylen);
+		key = dup_key;
+	  }
+
 	  /* Reject key if subkeys Key_1 and Key_2 are equal.
 	     See "Implementation Guidance for FIPS 140-2, A.9 XTS-AES
 	     Key Generation Requirements" for details.  */
 	  if (buf_eq_const (key, key + keylen, keylen)) {
-      KAT_FAILED(0, "XTS AES duplicate key test");
+	    memset(dup_key, '\0', sizeof(dup_key));
+	    KAT_FAILED(0, "XTS AES duplicate key test");
 	    return GPG_ERR_WEAK_KEY;
-      } else {
-      KAT_SUCCESS(0, "XTS AES duplicate key test");
-      }
+	  } else {
+	    memset(dup_key, '\0', sizeof(dup_key));
+	    KAT_SUCCESS(0, "XTS AES duplicate key test");
+	  }
+	  key = orig_key;
 	}
     }
   else if (c->mode == GCRY_CIPHER_MODE_SIV)
     {
-      if (gcry_fips_request_failure("cipher_setkey", "invalid_keylen")) {
-        keylen -= 1;
-      }
       /* SIV uses two keys. */
-      if (keylen % 2) {
-        KAT_FAILED(0, "XTS AES duplicate key test");
+      if (keylen % 2)
 	return GPG_ERR_INV_KEYLEN;
-      } else {
-        KAT_SUCCESS(0, "XTS AES duplicate key test");
-      }
       keylen /= 2;
     }
 
