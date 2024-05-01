@@ -516,11 +516,10 @@ GCRYPT: t-mpi-point.c:4396 0: ECDH public key assurance checks, check_ec_mul_red
 
 Test Result: PASS - Verified expected failures: gcry_mpi_ec_curve_point ECDH public key assurance checks, check_ec_mul_reduction_b
 ---
-starting test cipher_setkey, fail cipher_setkey.invalid_keylen
+starting test cipher_setkey, fail cipher_setkey.duplicate_key
 verifying cipher_setkey, trace XTS AES duplicate key test
 Expected Failures:
 GCRYPT: cipher.c:757 0: XTS AES duplicate key test FAILED
-GCRYPT: cipher.c:784 0: XTS AES duplicate key test FAILED
 
 Test Result: PASS - Verified expected failures: cipher_setkey XTS AES duplicate key test
 
