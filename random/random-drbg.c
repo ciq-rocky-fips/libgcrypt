@@ -245,6 +245,8 @@
 
 #define DRBG_CTR_NULL_LEN 128
 
+static int drbg_healthcheck (void);
+
 
 /******************************************************************
  * Common data structures
@@ -1526,7 +1528,7 @@ drbg_generate (drbg_state_t drbg,
    * is unlikely that the integrity violation only affects to the
    * correct operation of the DRBG.
    */
-#if 0
+
   if (drbg->reseed_ctr && !(drbg->reseed_ctr % 4096))
     {
       dbg (("DRBG: start to perform self test\n"));
@@ -1541,7 +1543,6 @@ drbg_generate (drbg_state_t drbg,
 	  dbg (("DRBG: self test successful\n"));
 	}
     }
-#endif
 
   return ret;
 }
