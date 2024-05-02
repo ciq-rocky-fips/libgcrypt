@@ -1901,6 +1901,11 @@ selftest_fips_xts (int cipher, int requested_mode)
 	} while (0)
 
 	for (tvi = 0; tvi < DIM(tv); tvi++) {
+		const char *cipher_name = (cipher == GCRY_CIPHER_AES128) ?
+				"AES128" : "AES256";
+		char *msg_str = NULL;
+		int err;
+
 		if (cipher != tv[tvi].cipher)
 			continue;
 		/* Setup. */
@@ -1933,8 +1938,24 @@ selftest_fips_xts (int cipher, int requested_mode)
 					    tv[tvi].len);
 		if (err)
 			Fail ("xts encrypt");
-		if (memcmp (scratch, tv[tvi].ciphertext, tv[tvi].len))
+		if (memcmp (scratch, tv[tvi].ciphertext, tv[tvi].len)) {
+			err = asprintf(&msg_str,
+					"%s %s",
+					cipher_name,
+					"XTS encrypt");
+			if (err == -1)
+				Fail ("xts encrypt mismatch malloc fail");
+			KAT_FAILED(1, msg_str);
 			Fail ("xts encrypt mismatch");
+		}
+		err = asprintf(&msg_str,
+				"%s %s",
+				cipher_name,
+				"XTS encrypt");
+		if (err == -1)
+			Fail ("xts encrypt success malloc fail");
+		KAT_SUCCESS(1, msg_str);
+		free(msg_str);
 
 		/* Dec test */
 		err = _gcry_cipher_decrypt (hddec,
@@ -1944,8 +1965,25 @@ selftest_fips_xts (int cipher, int requested_mode)
 					    tv[tvi].len);
 		if (err)
 			Fail ("xts decrypt");
-		if (memcmp (scratch, tv[tvi].plaintext, tv[tvi].len))
+		if (memcmp (scratch, tv[tvi].plaintext, tv[tvi].len)) {
+			err = asprintf(&msg_str,
+					"%s %s",
+					cipher_name,
+					"XTS decrypt");
+			if (err == -1)
+				Fail ("xts decrypt mismatch malloc fail");
+			KAT_FAILED(2, msg_str);
 			Fail ("xts decrypt mismatch");
+		}
+		err = asprintf(&msg_str,
+				"%s %s",
+				cipher_name,
+				"XTS decrypt");
+		if (err == -1)
+			Fail ("xts decrypt success malloc fail");
+		KAT_SUCCESS(2, msg_str);
+		free(msg_str);
+
 		_gcry_cipher_close (hdenc);
 		hdenc = NULL;
 		_gcry_cipher_close (hddec);
