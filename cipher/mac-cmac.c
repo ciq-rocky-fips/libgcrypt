@@ -418,12 +418,20 @@ selftests_cmac_aes (int extended, selftest_report_func_t report)
           tv[tvidx].expect, strlen (tv[tvidx].expect)
           );
       } else {
+	char corrupt_data[256];
+	if (strlen (tv[tvidx].data) > sizeof(corrupt_data)) {
+		KAT_FAILED(0, trace_buf);
+		/* This should *NOT* happen. */
+		abort();
+	}
+	memcpy(corrupt_data, tv[tvidx].data, strlen (tv[tvidx].data));
+	corrupt_data[0] ^= 0x1;
         errtxt = check_one (
           GCRY_MAC_CMAC_AES,
-          tv[tvidx].data,
+          corrupt_data,
           strlen (tv[tvidx].data),
           tv[tvidx].key, strlen (tv[tvidx].key),
-          tv[tvidx].expect, 8
+          tv[tvidx].expect, strlen (tv[tvidx].expect)
           );
       }
       sprintf(trace_buf, trace_fmt, 8 * strlen(tv[tvidx].key));
