@@ -311,16 +311,15 @@ selftests_sha1 (int extended, selftest_report_func_t report)
   what = "FIPS-198a, A.1";
   for (i=0; i < 64; i++)
     key[i] = i;
+
+  fail_fips = gcry_fips_request_failure("selftests_sha1", "fail");
+
   errtxt = check_one (GCRY_MD_SHA1,
-                      "Sample #1", 9,
+                      fail_fips ? "Sample A1" : "Sample #1", 9,
                       key, 64,
                       "\x4f\x4c\xa3\xd5\xd6\x8b\xa7\xcc\x0a\x12"
                       "\x08\xc9\xc6\x1e\x9c\x5d\xa0\x40\x3c\x0a", 20, 0);
 
-  fail_fips = gcry_fips_request_failure("selftests_sha1", "fail");
-  if (fail_fips) {
-    errtxt = "test failure";
-  }
   if (errtxt) {
     KAT_FAILED(0, "HMAC KATs (SHA-1), FIPS-198a, A.1");
     if (!fail_fips) {
@@ -336,13 +335,10 @@ selftests_sha1 (int extended, selftest_report_func_t report)
       for (i=0, j=0x30; i < 20; i++)
         key[i] = j++;
       errtxt = check_one (GCRY_MD_SHA1,
-                          "Sample #2", 9,
+                          fail_fips ? "Sample B2" : "Sample #2", 9,
                           key, 20,
                           "\x09\x22\xd3\x40\x5f\xaa\x3d\x19\x4f\x82"
                           "\xa4\x58\x30\x73\x7d\x5c\xc6\xc7\x5d\x24", 20, 0);
-      if (fail_fips) {
-        errtxt = "test failure";
-      }
       if (errtxt) {
         KAT_FAILED(0, "HMAC KATs (SHA-1), FIPS-198a, A.2");
         if (!fail_fips) {
@@ -356,13 +352,10 @@ selftests_sha1 (int extended, selftest_report_func_t report)
       for (i=0, j=0x50; i < 100; i++)
         key[i] = j++;
       errtxt = check_one (GCRY_MD_SHA1,
-                          "Sample #3", 9,
+                          fail_fips ? "Sample C2" : "Sample #3", 9,
                           key, 100,
                           "\xbc\xf4\x1e\xab\x8b\xb2\xd8\x02\xf3\xd0"
                           "\x5c\xaf\x7c\xb0\x92\xec\xf8\xd1\xa3\xaa", 20, 0);
-      if (fail_fips) {
-        errtxt = "test failure";
-      }
       if (errtxt) {
         KAT_FAILED(0, "HMAC KATs (SHA-1), FIPS-198a, A.3");
         if (!fail_fips) {
@@ -376,13 +369,10 @@ selftests_sha1 (int extended, selftest_report_func_t report)
       for (i=0, j=0x70; i < 49; i++)
         key[i] = j++;
       errtxt = check_one (GCRY_MD_SHA1,
-                          "Sample #4", 9,
+                          fail_fips ? "Sample D4" : "Sample #4", 9,
                           key, 49,
                           "\x9e\xa8\x86\xef\xe2\x68\xdb\xec\xce\x42"
                           "\x0c\x75\x24\xdf\x32\xe0\x75\x1a\x2a\x26", 20, 0);
-      if (fail_fips) {
-        errtxt = "test failure";
-      }
       if (errtxt) {
         KAT_FAILED(0, "HMAC KATs (SHA-1), FIPS-198a, A.4");
         if (!fail_fips) {
@@ -499,14 +489,18 @@ selftests_sha224 (int extended, selftest_report_func_t report)
   fail_fips = gcry_fips_request_failure("selftests_sha224", "fail");
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
+      char *data = (char *)tv[tvidx].data;
+      char corrupt_data[256];
+      if (fail_fips) {
+        memcpy(corrupt_data, tv[tvidx].data, strlen (tv[tvidx].data));
+        corrupt_data[0] ^= 0x1;
+        data = corrupt_data;
+      }
       what = tv[tvidx].desc;
       errtxt = check_one (GCRY_MD_SHA224,
-                          tv[tvidx].data, strlen (tv[tvidx].data),
+                          data, strlen (tv[tvidx].data),
                           tv[tvidx].key, strlen (tv[tvidx].key),
                           tv[tvidx].expect, DIM (tv[tvidx].expect), 0);
-      if (fail_fips) {
-        errtxt = "test failure";
-      }
       if (errtxt) {
         KAT_FAILED(0, "HMAC KATs (SHA-224)");
         if (fail_fips) {
@@ -625,14 +619,18 @@ selftests_sha256 (int extended, selftest_report_func_t report)
   fail_fips = gcry_fips_request_failure("selftests_sha256", "fail");
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
+      char *data = (char *)tv[tvidx].data;
+      char corrupt_data[256];
+      if (fail_fips) {
+        memcpy(corrupt_data, tv[tvidx].data, strlen (tv[tvidx].data));
+        corrupt_data[0] ^= 0x1;
+        data = corrupt_data;
+      }
       what = tv[tvidx].desc;
       errtxt = check_one (GCRY_MD_SHA256,
-                          tv[tvidx].data, strlen (tv[tvidx].data),
+                          data, strlen (tv[tvidx].data),
                           tv[tvidx].key, strlen (tv[tvidx].key),
                           tv[tvidx].expect, DIM (tv[tvidx].expect), 0);
-      if (fail_fips) {
-        errtxt = "test failure";
-      }
       if (errtxt) {
         KAT_FAILED(0, "HMAC KATs (SHA-256)");
         if (fail_fips) {
@@ -763,14 +761,18 @@ selftests_sha384 (int extended, selftest_report_func_t report)
   fail_fips = gcry_fips_request_failure("selftests_sha384", "fail");
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
+      char *data = (char *)tv[tvidx].data;
+      char corrupt_data[256];
+      if (fail_fips) {
+        memcpy(corrupt_data, tv[tvidx].data, strlen (tv[tvidx].data));
+        corrupt_data[0] ^= 0x1;
+        data = corrupt_data;
+      }
       what = tv[tvidx].desc;
       errtxt = check_one (GCRY_MD_SHA384,
-                          tv[tvidx].data, strlen (tv[tvidx].data),
+                          data, strlen (tv[tvidx].data),
                           tv[tvidx].key, strlen (tv[tvidx].key),
                           tv[tvidx].expect, DIM (tv[tvidx].expect), 0);
-      if (fail_fips) {
-        errtxt = "test failure";
-      }
       if (errtxt) {
         KAT_FAILED(0, "HMAC KATs (SHA-384)");
         if (fail_fips) {
@@ -913,14 +915,18 @@ selftests_sha512 (int extended, selftest_report_func_t report)
   fail_fips = gcry_fips_request_failure("selftests_sha512", "fail");
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
+      char *data = (char *)tv[tvidx].data;
+      char corrupt_data[256];
+      if (fail_fips) {
+        memcpy(corrupt_data, tv[tvidx].data, strlen (tv[tvidx].data));
+        corrupt_data[0] ^= 0x1;
+        data = corrupt_data;
+      }
       what = tv[tvidx].desc;
       errtxt = check_one (GCRY_MD_SHA512,
-                          tv[tvidx].data, strlen (tv[tvidx].data),
+                          data, strlen (tv[tvidx].data),
                           tv[tvidx].key, strlen (tv[tvidx].key),
                           tv[tvidx].expect, DIM (tv[tvidx].expect), 0);
-      if (fail_fips) {
-        errtxt = "test failure";
-      }
       if (errtxt) {
         KAT_FAILED(0, "HMAC KATs (SHA-512)");
         if (fail_fips) {
@@ -1308,6 +1314,13 @@ selftests_sha3 (int hashalgo, int extended, selftest_report_func_t report)
   fail_fips = gcry_fips_request_failure("selftests_sha3", "fail");
   for (tvidx=0; tvidx < DIM(tv); tvidx++)
     {
+      char *data = (char *)tv[tvidx].data;
+      char corrupt_data[512];
+      if (fail_fips) {
+        memcpy(corrupt_data, tv[tvidx].data, strlen (tv[tvidx].data));
+        corrupt_data[0] ^= 0x1;
+        data = corrupt_data;
+      }
       what = tv[tvidx].desc;
       if (hashalgo == GCRY_MD_SHA3_224)
         {
@@ -1340,12 +1353,9 @@ selftests_sha3 (int hashalgo, int extended, selftest_report_func_t report)
         nexpect = tv[tvidx].trunc;
 
       errtxt = check_one (hashalgo,
-                          tv[tvidx].data, strlen (tv[tvidx].data),
+                          data, strlen (tv[tvidx].data),
                           tv[tvidx].key, strlen (tv[tvidx].key),
                           expect, nexpect, !!tv[tvidx].trunc);
-      if (fail_fips) {
-        errtxt = "test failure";
-      }
       if (errtxt) {
         KAT_FAILED(0, trace_buf);
         if (fail_fips) {
