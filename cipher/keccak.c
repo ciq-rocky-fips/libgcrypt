@@ -1414,12 +1414,9 @@ selftests_keccak (int algo, int extended, selftest_report_func_t report)
 
   fail_fips = gcry_fips_request_failure("selftests_keccak", "shortstring");
   what = "short string";
-  errtxt = _gcry_hash_selftest_check_one (algo, 0, "abc", 3, short_hash,
+  errtxt = _gcry_hash_selftest_check_one (algo, 0, fail_fips ? "abd" : "abc", 3, short_hash,
 					  hash_len);
-  if (fail_fips) {
-    errtxt = "testing failure";
-  }
-if (errtxt) {
+  if (errtxt) {
     KAT_FAILED(0, trace_buf);
     goto failed;
   } else {
