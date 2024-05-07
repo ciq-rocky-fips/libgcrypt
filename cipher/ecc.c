@@ -355,13 +355,14 @@ test_keys_fips (gcry_sexp_t skey)
     KAT_SUCCESS(1, "ecc test_keys_fips:ECDSA key generation KAT");
   }
 
+  if (gcry_fips_request_failure("ecc_test_keys_fips", "verify")) {
+    /* Add one byte extra to change the hash. */
+    unsigned char c = 0xe;
+    _gcry_md_write (hd, &c, sizeof(c));
+  }
+
   /* Verify this signature.  */
   rc = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL);
-  if (gcry_fips_request_failure("ecc_test_keys_fips", "verify")) {
-    KAT_FAILED(0, "ecc test_keys_fips:ECDSA key generation KAT, verify");
-    rc = GPG_ERR_GENERAL;
-    return;
-  }
   if (rc) {
     KAT_FAILED(2, "ecc test_keys_fips:ECDSA key generation KAT");
     log_fatal ("ECDSA operation: verification failed: %s\n", gpg_strerror (rc));
@@ -1851,12 +1852,14 @@ selftest_hash_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
 
   errtxt = NULL;
 
-  /* verify generated signature */
-  err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL);
   if (gcry_fips_request_failure("ecc_selftests_ecdsa", "verify")) {
-    err = GPG_ERR_GENERAL;
+    /* Add one byte extra to change the hash. */
+    unsigned char c = 0xe;
+    _gcry_md_write (hd, &c, sizeof(c));
   }
 
+  /* verify generated signature */
+  err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL);
   if (err)
     {
       KAT_FAILED(2, "ECDSA key generation PCT, verify");
@@ -1896,6 +1899,10 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
     "(data (flags rfc6979 prehash)"
     " (hash-algo sha256)"
     " (value 6:sample))";
+  static const char sample_data_corrupt[] =
+    "(data (flags rfc6979 prehash)"
+    " (hash-algo sha256)"
+    " (value 6:samplf))";
   static const char sample_data_bad[] =
     "(data (flags rfc6979)"
     " (hash sha256 #bf2bdbe1aa9b6ec1e2ade1d694f41fc71a831d0268e98915"
@@ -1908,6 +1915,7 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
   const char *errtxt = NULL;
   gcry_error_t err;
   gcry_sexp_t data = NULL;
+  gcry_sexp_t data_corrupt = NULL;
   gcry_sexp_t data_bad = NULL;
   gcry_sexp_t sig = NULL;
   gcry_sexp_t l1 = NULL;
@@ -1922,6 +1930,9 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
   if (!err)
     err = sexp_sscan (&data_bad, NULL,
                       sample_data_bad, strlen (sample_data_bad));
+  if (!err)
+    err = sexp_sscan (&data_corrupt, NULL,
+                      sample_data_corrupt, strlen (sample_data_corrupt));
   if (!err)
     err = _gcry_mpi_scan (&r, GCRYMPI_FMT_HEX, signature_r, 0, NULL);
   if (!err)
@@ -1986,11 +1997,11 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
 
   errtxt = NULL;
 
-  /* verify generated signature */
-  err = _gcry_pk_verify (sig, data, pkey);
   if (gcry_fips_request_failure("ecc_selftest_sign", "verify")) {
-    err = GPG_ERR_GENERAL;
-    errtxt = "testing verify failed";
+    err = _gcry_pk_verify (sig, data_corrupt, pkey);
+  } else {
+    /* verify generated signature */
+    err = _gcry_pk_verify (sig, data, pkey);
   }
 
   if (err)
@@ -2012,6 +2023,7 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
  leave:
   sexp_release (sig);
   sexp_release (data_bad);
+  sexp_release (data_corrupt);
   sexp_release (data);
   sexp_release (l1);
   sexp_release (l2);
