@@ -2457,13 +2457,14 @@ _gcry_rngdrbg_healthcheck_one (struct gcry_drbg_test_vector * test)
     return GPG_ERR_ENOMEM;
 
   ret = _gcry_rngdrbg_cavs_test (test, buf);
-  /* FIXME: The next line is wrong.   */
-  ret = memcmp (test->expected, buf, test->expectedlen);
 
   /* fail case testing */
   if (gcry_fips_request_failure("_gcry_rngdrbg_healthcheck_one", "fail")) {
-    ret = 1;
+    buf[0] ^= 0x1;
   }
+
+  /* FIXME: The next line is wrong.   */
+  ret = memcmp (test->expected, buf, test->expectedlen);
 
   xfree (buf);
   sprintf(trace_buf, trace_fmt, _get_rngdrbg_trace(test->flagstr), "compare");
