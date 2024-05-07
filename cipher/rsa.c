@@ -150,9 +150,10 @@ test_keys (RSA_secret_key *sk, unsigned int nbits)
 
   /* Check that the cipher text does not match the plaintext.  */
   int cmp;
-  cmp = mpi_cmp (ciphertext, plaintext);
   if (gcry_fips_request_failure("rsa_test_keys", "encrypt")) {
-    cmp = 0;
+    cmp = mpi_cmp (plaintext, plaintext);
+  } else {
+    cmp = mpi_cmp (ciphertext, plaintext);
   }
   if (!cmp) {
     KAT_FAILED(0, "RSA key generation PCT (SHA-256; encrypt)");
@@ -164,11 +165,12 @@ test_keys (RSA_secret_key *sk, unsigned int nbits)
   /* Decrypt using the secret key.  */
   secret (decr_plaintext, ciphertext, sk);
 
+  if (gcry_fips_request_failure("rsa_test_keys", "encrypt")) {
+    mpi_add_ui (decr_plaintext, decr_plaintext, 1);
+  }
+
   /* Check that the decrypted plaintext matches the original plaintext.  */
   cmp = mpi_cmp (decr_plaintext, plaintext);
-  if (gcry_fips_request_failure("rsa_test_keys", "encrypt")) {
-    cmp = 1;
-  }
   if (cmp) {
     KAT_FAILED(1, "RSA key generation PCT (SHA-256; decrypt)");
     goto leave; /* Plaintext does not match.  */
@@ -182,12 +184,12 @@ test_keys (RSA_secret_key *sk, unsigned int nbits)
   /* Use the RSA secret function to create a signature of the plaintext.  */
   secret (signature, plaintext, sk);
 
+  if (gcry_fips_request_failure("rsa_test_keys", "sign_verify_success")) {
+    mpi_add_ui (decr_plaintext, decr_plaintext, 1);
+  }
   /* Use the RSA public function to verify this signature.  */
   public (decr_plaintext, signature, &pk);
   cmp = mpi_cmp (decr_plaintext, plaintext);
-  if (gcry_fips_request_failure("rsa_test_keys", "sign_verify_success")) {
-    cmp = 1;
-  }
   if (cmp) {
     KAT_FAILED(2, "RSA key generation PCT (SHA-256; sign/verify)");
     goto leave; /* Signature does not match.  */
@@ -198,9 +200,10 @@ test_keys (RSA_secret_key *sk, unsigned int nbits)
   /* Modify the signature and check that the signing fails.  */
   mpi_add_ui (signature, signature, 1);
   public (decr_plaintext, signature, &pk);
-  cmp = mpi_cmp (decr_plaintext, plaintext);
   if (gcry_fips_request_failure("rsa_test_keys", "sign_verify_failure")) {
-    cmp = 0;
+    cmp = mpi_cmp (decr_plaintext, decr_plaintext);
+  } else {
+    cmp = mpi_cmp (decr_plaintext, plaintext);
   }
   if (!cmp) {
     KAT_FAILED(3, "RSA key generation PCT (SHA-256; sign/verify, modified signature)");
@@ -303,11 +306,11 @@ test_keys_fips (gcry_sexp_t skey)
     }
   
   strip = decr_plaintext_len - sizeof(plaintext);
+  if (gcry_fips_request_failure("rsa_test_keys_fips", "strip")) {
+    decr_plaintext[strip] ^= 0x1;
+  }  
   int cmp;
   cmp = memcmp(plaintext, &decr_plaintext[strip], sizeof(plaintext));
-  if (gcry_fips_request_failure("rsa_test_keys_fips", "strip")) {
-    cmp = 1;
-  }  
   if (cmp != 0 ) {
          KAT_FAILED(4, "RSA key generation PCT fips (SHA-256; strip)");
          goto leave;
@@ -363,11 +366,11 @@ test_keys_fips (gcry_sexp_t skey)
   /* Modify the data and check that the signing fails.  */
   _gcry_md_reset(hd);
   plaintext[sizeof plaintext / 2] ^= 1;
+  if (gcry_fips_request_failure("rsa_test_keys_fips", "verify_should_fail")) {
+    plaintext[sizeof plaintext / 2] ^= 1;
+  }
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
   ec = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL);
-  if (gcry_fips_request_failure("rsa_test_keys_fips", "verify_should_fail")) {
-    ec = GPG_ERR_NO_ERROR;
-  }  
   if (ec != GPG_ERR_BAD_SIGNATURE) {
     KAT_FAILED(8, "RSA key generation PCT fips (SHA-256; verify should fail)");
     goto leave; /* Signature verification worked on modified data  */
@@ -2038,6 +2041,11 @@ selftest_hash_sign_2048 (gcry_sexp_t pkey, gcry_sexp_t skey)
       goto leave;
     }
 
+  if (gcry_fips_request_failure("selftests_rsa", "sign")) {
+    char c = 0x1;
+    _gcry_md_write (hd, &c, sizeof(c));
+  }
+
   err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL);
   if (err)
     {
@@ -2299,12 +2307,12 @@ selftest_encr_2048 (gcry_sexp_t pkey, gcry_sexp_t skey)
     }
     KAT_SUCCESS(0, "2048bit RSA, extract plaintext");
 
+  if (gcry_fips_request_failure("selftests_rsa", "verify")) {
+    decr_plaintext[0] ^= 0x1;
+  }
   /* Check that the decrypted plaintext matches the original  plaintext.  */
   int cmp;
   cmp = strcmp(plaintext, decr_plaintext);
-  if (gcry_fips_request_failure("selftests_rsa", "verify")) {
-    cmp = 1;
-  }
 
   if (cmp)
     {
@@ -2375,9 +2383,6 @@ selftests_rsa (selftest_report_func_t report, int extended)
 
   what = "digest sign";
   errtxt = selftest_hash_sign_2048 (pkey, skey);
-    if (gcry_fips_request_failure("selftests_rsa", "sign")) {
-      errtxt = "testing failures";
-    }
   if (errtxt) {
     KAT_FAILED(3, "2048bit RSA, sign KAT");
     goto failed;
