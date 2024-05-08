@@ -220,13 +220,13 @@ set -e # We cannot use this for the all pass case above.
 # Test trace: Initial hmac sha256 self test, md
 # Test env var: GCRYPT_FIPS_FAIL_TESTS=initial_hmac_sha256_test.fail_md
 start_test ${LDDRIVER} "run_hmac_sha256_selftests" "initial_hmac_sha256_test.fail_md"
-verify "run_hmac_sha256_selftests" 1 "Initial hmac sha256 self test, md" 1
+verify "run_hmac_sha256_selftests" 2 "Initial hmac sha256 self test, md" 1
 
 # Test function: run_hmac_sha256_selftests
 # Test trace: Initial hmac sha256 self test, mac
 # Test env var: GCRYPT_FIPS_FAIL_TESTS=initial_hmac_sha256_test.fail_mac
 start_test ${LDDRIVER} "run_hmac_sha256_selftests" "initial_hmac_sha256_test.fail_mac"
-verify "run_hmac_sha256_selftests" 1 "Initial hmac sha256 self test, mac" 1
+verify "run_hmac_sha256_selftests" 2 "Initial hmac sha256 self test, mac" 1
 
 # Test function: check_binary_integrity
 # Test trace: Software integrity test for libgcrypt (using an HMAC SHA2-256 digest)

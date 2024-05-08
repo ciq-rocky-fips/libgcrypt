@@ -895,13 +895,12 @@ run_hmac_sha256_selftests (int extended)
   gpg_error_t err;
   int anyerr = 0;
 
+  fail_fips_digest_tests = gcry_fips_request_failure("initial_hmac_sha256_test", "fail_md");
   err = _gcry_md_selftest (GCRY_MD_SHA256, extended, reporter);
+  fail_fips_digest_tests = 0;
   reporter ("digest", GCRY_MD_SHA256, NULL,
             err? gpg_strerror (err):NULL);
 
-  if (gcry_fips_request_failure("initial_hmac_sha256_test", "fail_md")) {
-    err = GPG_ERR_GENERAL;
-  }
   if (err) {
     KAT_FAILED(0, "Initial hmac sha256 self test, md");
     anyerr = 1;
@@ -909,13 +908,12 @@ run_hmac_sha256_selftests (int extended)
     KAT_SUCCESS(0, "Initial hmac sha256 self test, md");
   }
 
+  fail_fips_digest_tests = gcry_fips_request_failure("initial_hmac_sha256_test", "fail_mac");
   err = _gcry_mac_selftest (GCRY_MAC_HMAC_SHA256, extended, reporter);
+  fail_fips_digest_tests = 0;
   reporter ("mac", GCRY_MAC_HMAC_SHA256, NULL,
             err? gpg_strerror (err):NULL);
 
-  if (gcry_fips_request_failure("initial_hmac_sha256_test", "fail_mac")) {
-    err = GPG_ERR_GENERAL;
-  }
   if (err) {
     KAT_FAILED(1, "Initial hmac sha256 self test, mac");
     anyerr = 1;
