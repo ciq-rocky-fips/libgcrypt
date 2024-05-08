@@ -42,6 +42,8 @@
 #include "cipher.h"
 #include "sha1.h"
 
+extern int fips_fail_digest_tests(void);
+
 #define GCRYPT_AUDIT 1
 #if defined(GCRYPT_AUDIT)
 #define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
@@ -684,11 +686,12 @@ selftests_sha1 (int extended, selftest_report_func_t report)
 {
   const char *what;
   const char *errtxt;
+  int fail_fips = fips_fail_digest_tests();
 
   what = "short string";
   errtxt = _gcry_hash_selftest_check_one
     (GCRY_MD_SHA1, 0,
-     "abc", 3,
+     fail_fips ? "abd" : "abc", 3,
      "\xA9\x99\x3E\x36\x47\x06\x81\x6A\xBA\x3E"
      "\x25\x71\x78\x50\xC2\x6C\x9C\xD0\xD8\x9D", 20);
   if (errtxt) {

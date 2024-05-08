@@ -54,6 +54,7 @@
 #include "cipher.h"
 #include "hash-common.h"
 
+extern int fips_fail_digest_tests(void);
 
 /* USE_ARM_NEON_ASM indicates whether to enable ARM NEON assembly code. */
 #undef USE_ARM_NEON_ASM
@@ -952,11 +953,12 @@ selftests_sha384 (int extended, selftest_report_func_t report)
 {
   const char *what;
   const char *errtxt;
+  int fail_fips = fips_fail_digest_tests();
 
   what = "short string";
   errtxt = _gcry_hash_selftest_check_one
     (GCRY_MD_SHA384, 0,
-     "abc", 3,
+     fail_fips ? "abd" : "abc", 3,
      "\xcb\x00\x75\x3f\x45\xa3\x5e\x8b\xb5\xa0\x3d\x69\x9a\xc6\x50\x07"
      "\x27\x2c\x32\xab\x0e\xde\xd1\x63\x1a\x8b\x60\x5a\x43\xff\x5b\xed"
      "\x80\x86\x07\x2b\xa1\xe7\xcc\x23\x58\xba\xec\xa1\x34\xc8\x25\xa7", 48);
@@ -1002,11 +1004,12 @@ selftests_sha512 (int extended, selftest_report_func_t report)
 {
   const char *what;
   const char *errtxt;
+  int fail_fips = fips_fail_digest_tests();
 
   what = "short string";
   errtxt = _gcry_hash_selftest_check_one
     (GCRY_MD_SHA512, 0,
-     "abc", 3,
+     fail_fips ? "abd" : "abc", 3,
      "\xDD\xAF\x35\xA1\x93\x61\x7A\xBA\xCC\x41\x73\x49\xAE\x20\x41\x31"
      "\x12\xE6\xFA\x4E\x89\xA9\x7E\xA2\x0A\x9E\xEE\xE6\x4B\x55\xD3\x9A"
      "\x21\x92\x99\x2A\x27\x4F\xC1\xA8\x36\xBA\x3C\x23\xA3\xFE\xEB\xBD"
@@ -1055,11 +1058,12 @@ selftests_sha512_224 (int extended, selftest_report_func_t report)
 {
   const char *what;
   const char *errtxt;
+  int fail_fips = fips_fail_digest_tests();
 
   what = "short string";
   errtxt = _gcry_hash_selftest_check_one
     (GCRY_MD_SHA512_224, 0,
-     "abc", 3,
+     fail_fips ? "abd" : "abc", 3,
      "\x46\x34\x27\x0F\x70\x7B\x6A\x54\xDA\xAE\x75\x30\x46\x08\x42\xE2"
      "\x0E\x37\xED\x26\x5C\xEE\xE9\xA4\x3E\x89\x24\xAA",
      28);
@@ -1103,11 +1107,12 @@ selftests_sha512_256 (int extended, selftest_report_func_t report)
 {
   const char *what;
   const char *errtxt;
+  int fail_fips = fips_fail_digest_tests();
 
   what = "short string";
   errtxt = _gcry_hash_selftest_check_one
     (GCRY_MD_SHA512_256, 0,
-     "abc", 3,
+     fail_fips ? "abd" : "abc", 3,
      "\x53\x04\x8E\x26\x81\x94\x1E\xF9\x9B\x2E\x29\xB7\x6B\x4C\x7D\xAB"
      "\xE4\xC2\xD0\xC6\x34\xFC\x6D\x46\xE0\xE2\xF1\x31\x07\xE7\xAF\x23",
      32);

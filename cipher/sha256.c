@@ -46,6 +46,7 @@
 #include "cipher.h"
 #include "hash-common.h"
 
+extern int fips_fail_digest_tests(void);
 
 /* USE_SSSE3 indicates whether to compile with Intel SSSE3 code. */
 #undef USE_SSSE3
@@ -677,11 +678,12 @@ selftests_sha224 (int extended, selftest_report_func_t report)
 {
   const char *what;
   const char *errtxt;
+  int fail_fips = fips_fail_digest_tests();
 
   what = "short string";
   errtxt = _gcry_hash_selftest_check_one
     (GCRY_MD_SHA224, 0,
-     "abc", 3,
+     fail_fips ? "abd" : "abc", 3,
      "\x23\x09\x7d\x22\x34\x05\xd8\x22\x86\x42\xa4\x77\xbd\xa2\x55\xb3"
      "\x2a\xad\xbc\xe4\xbd\xa0\xb3\xf7\xe3\x6c\x9d\xa7", 28);
   if (errtxt)
@@ -721,11 +723,12 @@ selftests_sha256 (int extended, selftest_report_func_t report)
 {
   const char *what;
   const char *errtxt;
+  int fail_fips = fips_fail_digest_tests();
 
   what = "short string";
   errtxt = _gcry_hash_selftest_check_one
     (GCRY_MD_SHA256, 0,
-     "abc", 3,
+     fail_fips ? "abd" : "abc", 3,
      "\xba\x78\x16\xbf\x8f\x01\xcf\xea\x41\x41\x40\xde\x5d\xae\x22\x23"
      "\xb0\x03\x61\xa3\x96\x17\x7a\x9c\xb4\x10\xff\x61\xf2\x00\x15\xad", 32);
   if (errtxt)
