@@ -710,17 +710,13 @@ run_mac_selftests (int extended)
   int idx;
   gpg_error_t err;
   int anyerr = 0;
-  int fail_fips;
   char trace_buf[128];
   const char * trace_fmt = "run_mac_selftests HMAC KATs (%s)";
 
-  fail_fips = gcry_fips_request_failure("run_mac_selftests", "fail");
+  fail_fips_digest_tests = gcry_fips_request_failure("run_mac_selftests", "fail");
   for (idx=0; algos[idx]; idx++)
     {
       err = _gcry_mac_selftest (algos[idx], extended, reporter);
-      if (fail_fips) {
-        err = GPG_ERR_GENERAL;
-      }
       reporter ("mac", algos[idx], NULL,
                 err? gpg_strerror (err):NULL);
       sprintf(trace_buf, trace_fmt, algostrings[idx]);
@@ -731,6 +727,7 @@ run_mac_selftests (int extended)
         KAT_SUCCESS(0, trace_buf);
       }
     }
+  fail_fips_digest_tests = 0;
   return anyerr;
 }
 

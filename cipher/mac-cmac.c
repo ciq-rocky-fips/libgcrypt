@@ -28,6 +28,8 @@
 #include "cipher.h"
 #include "./mac-internal.h"
 
+extern int fips_fail_digest_tests(void);
+
 #define GCRYPT_AUDIT 1
 #if defined(GCRYPT_AUDIT)
 #define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
@@ -405,6 +407,7 @@ selftests_cmac_aes (int extended, selftest_report_func_t report)
   char trace_buf[128];
   const char * trace_fmt = "AES CMAC generate and verify KATs (CBC mode; %d-bit key length)";
   int fail_fips = gcry_fips_request_failure("selftests_cmac_aes", "fail");
+  fail_fips |= fips_fail_digest_tests();
 
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
@@ -437,6 +440,8 @@ selftests_cmac_aes (int extended, selftest_report_func_t report)
       sprintf(trace_buf, trace_fmt, 8 * strlen(tv[tvidx].key));
       if (errtxt) {
         KAT_FAILED(0, trace_buf);
+        if (fips_fail_digest_tests())
+          goto failed;
         if (!fail_fips) {
           goto failed;
         } else {

@@ -337,7 +337,7 @@ verify "selftest_pbkdf2" 3 "HKDF KAT (PBKDF2 SHA256) derived key" 1
 # Test trace: run_mac_selftests
 # Test env var: run_mac_selftests.fail
 start_test ${LDDRIVER} "run_mac_selftests" "run_mac_selftests.fail"
-verify "run_mac_selftests" 9 "run_mac_selftests" 9
+verify "run_mac_selftests" 18 "run_mac_selftests" 9
 
 # Test function: selftests_sha1
 # Test trace: HMAC KATs (SHA-1)

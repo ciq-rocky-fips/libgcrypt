@@ -29,6 +29,8 @@
 #include "bufhelp.h"
 #include "cipher.h"
 
+extern int fips_fail_digest_tests(void);
+
 #define GCRYPT_AUDIT 1
 #if defined(GCRYPT_AUDIT)
 #define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
@@ -313,6 +315,7 @@ selftests_sha1 (int extended, selftest_report_func_t report)
     key[i] = i;
 
   fail_fips = gcry_fips_request_failure("selftests_sha1", "fail");
+  fail_fips |= fips_fail_digest_tests();
 
   errtxt = check_one (GCRY_MD_SHA1,
                       fail_fips ? "Sample A1" : "Sample #1", 9,
@@ -322,6 +325,8 @@ selftests_sha1 (int extended, selftest_report_func_t report)
 
   if (errtxt) {
     KAT_FAILED(0, "HMAC KATs (SHA-1), FIPS-198a, A.1");
+    if (fips_fail_digest_tests())
+      goto failed;
     if (!fail_fips) {
         goto failed;
     }
@@ -487,6 +492,7 @@ selftests_sha224 (int extended, selftest_report_func_t report)
   int fail_fips;
 
   fail_fips = gcry_fips_request_failure("selftests_sha224", "fail");
+  fail_fips |= fips_fail_digest_tests();
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
       char *data = (char *)tv[tvidx].data;
@@ -503,6 +509,8 @@ selftests_sha224 (int extended, selftest_report_func_t report)
                           tv[tvidx].expect, DIM (tv[tvidx].expect), 0);
       if (errtxt) {
         KAT_FAILED(0, "HMAC KATs (SHA-224)");
+        if (fips_fail_digest_tests())
+          goto failed;
         if (fail_fips) {
           continue;
         }
@@ -617,6 +625,7 @@ selftests_sha256 (int extended, selftest_report_func_t report)
   int fail_fips;
 
   fail_fips = gcry_fips_request_failure("selftests_sha256", "fail");
+  fail_fips |= fips_fail_digest_tests();
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
       char *data = (char *)tv[tvidx].data;
@@ -633,6 +642,8 @@ selftests_sha256 (int extended, selftest_report_func_t report)
                           tv[tvidx].expect, DIM (tv[tvidx].expect), 0);
       if (errtxt) {
         KAT_FAILED(0, "HMAC KATs (SHA-256)");
+        if (fips_fail_digest_tests())
+          goto failed;
         if (fail_fips) {
           continue;
         }
@@ -759,6 +770,7 @@ selftests_sha384 (int extended, selftest_report_func_t report)
   int fail_fips;
 
   fail_fips = gcry_fips_request_failure("selftests_sha384", "fail");
+  fail_fips |= fips_fail_digest_tests();
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
       char *data = (char *)tv[tvidx].data;
@@ -775,6 +787,8 @@ selftests_sha384 (int extended, selftest_report_func_t report)
                           tv[tvidx].expect, DIM (tv[tvidx].expect), 0);
       if (errtxt) {
         KAT_FAILED(0, "HMAC KATs (SHA-384)");
+        if (fips_fail_digest_tests())
+          goto failed;
         if (fail_fips) {
           continue;
         }
@@ -913,6 +927,7 @@ selftests_sha512 (int extended, selftest_report_func_t report)
   int fail_fips;
 
   fail_fips = gcry_fips_request_failure("selftests_sha512", "fail");
+  fail_fips |= fips_fail_digest_tests();
   for (tvidx=0; tv[tvidx].desc; tvidx++)
     {
       char *data = (char *)tv[tvidx].data;
@@ -929,6 +944,8 @@ selftests_sha512 (int extended, selftest_report_func_t report)
                           tv[tvidx].expect, DIM (tv[tvidx].expect), 0);
       if (errtxt) {
         KAT_FAILED(0, "HMAC KATs (SHA-512)");
+        if (fips_fail_digest_tests())
+          goto failed;
         if (fail_fips) {
           continue;
         }
@@ -1312,6 +1329,7 @@ selftests_sha3 (int hashalgo, int extended, selftest_report_func_t report)
   int fail_fips;
 
   fail_fips = gcry_fips_request_failure("selftests_sha3", "fail");
+  fail_fips |= fips_fail_digest_tests();
   for (tvidx=0; tvidx < DIM(tv); tvidx++)
     {
       char *data = (char *)tv[tvidx].data;
@@ -1358,6 +1376,8 @@ selftests_sha3 (int hashalgo, int extended, selftest_report_func_t report)
                           expect, nexpect, !!tv[tvidx].trunc);
       if (errtxt) {
         KAT_FAILED(0, trace_buf);
+        if (fips_fail_digest_tests())
+          goto failed;
         if (fail_fips) {
           continue;
         }
