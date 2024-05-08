@@ -50,6 +50,13 @@
 #define KAT_FAILED(x, y) ((void)0)
 #endif
 
+static int fail_fips_digest_tests;
+/* Accessor function for fips digest test fail probes. */
+int fips_fail_digest_tests(void)
+{
+  return fail_fips_digest_tests;
+}
+
 /* The states of the finite state machine used in fips mode.  */
 enum module_states
   {
@@ -579,13 +586,6 @@ run_cipher_selftests (int extended)
   return anyerr;
 }
 
-
-static int fail_fips_digest_tests;
-/* Accessor function for fips digest test fail probes. */
-int fips_fail_digest_tests(void)
-{
-	return fail_fips_digest_tests;
-}
 
 
 /* Run self-tests for all required hash algorithms.  Return 0 on
