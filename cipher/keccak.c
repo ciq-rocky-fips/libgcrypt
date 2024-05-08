@@ -26,6 +26,8 @@
 #include "cipher.h"
 #include "hash-common.h"
 
+extern int fips_fail_digest_tests(void);
+
 #define GCRYPT_AUDIT 1
 #if defined(GCRYPT_AUDIT)
 #define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
@@ -1413,6 +1415,7 @@ selftests_keccak (int algo, int extended, selftest_report_func_t report)
   }
 
   fail_fips = gcry_fips_request_failure("selftests_keccak", "shortstring");
+  fail_fips |= fips_fail_digest_tests();
   what = "short string";
   errtxt = _gcry_hash_selftest_check_one (algo, 0, fail_fips ? "abd" : "abc", 3, short_hash,
 					  hash_len);

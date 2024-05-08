@@ -401,7 +401,7 @@ verify "selftests_rsa" 2 "2048bit RSA, verify KAT" 1
 # Test trace: run_digest_selftests
 # Test env var: run_digest_selftests.fail
 start_test ${LDDRIVER} "run_digest_selftests" "run_digest_selftests.fail"
-verify "run_digest_selftests" 10 "run_digest_selftests " 10
+verify "run_digest_selftests" 26 "run_digest_selftests " 10
 
 # ECDSA PCT FIPS
 

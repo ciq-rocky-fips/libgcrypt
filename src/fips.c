@@ -478,6 +478,13 @@ run_cipher_selftests (int extended)
   return anyerr;
 }
 
+static int fail_fips_digest_tests;
+/* Accessor function for fips digest test fail probes. */
+int fips_fail_digest_tests(void)
+{
+	return fail_fips_digest_tests;
+}
+
 /* Run self-tests for all required hash algorithms.  Return 0 on
    success. */
 static int
@@ -521,9 +528,8 @@ run_digest_selftests (int extended)
   gpg_error_t err;
   int anyerr = 0;
   char trace_buf[128];  
-  int fail_fips;
 
-  fail_fips = gcry_fips_request_failure("run_digest_selftests", "fail");
+  fail_fips_digest_tests = gcry_fips_request_failure("run_digest_selftests", "fail");
   for (idx=0; algos[idx]; idx++)
     {
       switch (algos[idx])
@@ -550,9 +556,6 @@ run_digest_selftests (int extended)
       err = _gcry_md_selftest (algos[idx], extended, reporter);
       reporter ("digest", algos[idx], NULL,
                 err? gpg_strerror (err):NULL);
-      if (fail_fips) {
-        err = GPG_ERR_GENERAL;
-      }
       if (err) {
         KAT_FAILED(idx, trace_buf);
         anyerr = 1;
@@ -560,6 +563,7 @@ run_digest_selftests (int extended)
         KAT_SUCCESS(idx, trace_buf);
       }
     }
+  fail_fips_digest_tests = 0;
   return anyerr;
 }
 
