@@ -1512,6 +1512,10 @@ rsa_check_secret_key (gcry_sexp_t keyparms)
   if (rc)
     goto leave;
 
+  if (gcry_fips_request_failure("rsa_selftests", "check")) {
+    mpi_add_ui(sk.p, sk.p, 1);
+  }
+
   if (!check_secret_key (&sk))
     rc = GPG_ERR_BAD_SECKEY;
 
