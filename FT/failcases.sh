@@ -428,6 +428,12 @@ verify "selftests_ecdsa" 2 "ECDSA key generation PCT, verify" 1
 
 # RSA PCT FIPS
 
+#Test function: cipher/rsa.c:rsa_check_secret_key
+#Test trace: 2048bit RSA, key consistency FAILED
+#Test env var: rsa_selftests.check.
+start_test ${LDDRIVER} "rsa_selftests" "rsa_selftests.check"
+verify "rsa_selftests" 1 "2048bit RSA, key consistency" 1
+
 # Test function: cipher/rsa.c:test_keys_fips
 # Test trace: RSA key generation PCT fips (SHA-256; initial encrypt)
 # Test env var: rsa_test_keys_fips.intial_encrypt.
