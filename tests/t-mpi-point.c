@@ -1276,14 +1276,15 @@ point_on_curve (void)
       qx = hex2mpi (t[tidx].qx);
       qy = hex2mpi (t[tidx].qy);
 
+      if (gcry_fips_request_failure("gcry_mpi_ec_curve_point", "assurance")) {
+        gcry_mpi_add_ui(qx, qx, 1);
+      }
+
       Q = gcry_mpi_point_set (NULL, qx, qy, GCRYMPI_CONST_ONE);
       if (!Q)
         die ("gcry_mpi_point_set(Q) failed at idx %d\n", tidx);
 
       oncurve = gcry_mpi_ec_curve_point (Q, ctx);
-      if (gcry_fips_request_failure("gcry_mpi_ec_curve_point", "assurance")) {
-        oncurve = !oncurve;
-      }
       if (t[tidx].oncurve && !oncurve)
         {
           KAT_FAILED(0, "ECDH public key assurance checks, on/not curve");
@@ -4365,6 +4366,11 @@ check_ec_mul_reduction (void)
 	die ("tv[%d].'%s': missing 'scalar'\n", idx, tv[idx].curve);
 
       U = gcry_mpi_point_new (0);
+
+      if (gcry_fips_request_failure("gcry_mpi_ec_curve_point", "check_ec_mul_reduction_a")) {
+        gcry_mpi_add_ui(ux, ux, 1);
+      }
+
       gcry_mpi_point_set (U, ux, uy, uz);
       Q = gcry_mpi_point_new (0);
       x = gcry_mpi_new (0);
@@ -4388,9 +4394,6 @@ check_ec_mul_reduction (void)
       gcry_mpi_ec_mul (Q, scalar, U, ctx);
 
       on_curve = gcry_mpi_ec_curve_point (Q, ctx);
-      if (gcry_fips_request_failure("gcry_mpi_ec_curve_point", "check_ec_mul_reduction_b")) {
-        on_curve = 0;
-      }
       if (!on_curve)
         {
           KAT_FAILED(0, "ECDH public key assurance checks, check_ec_mul_reduction_b");
