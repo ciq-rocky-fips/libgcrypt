@@ -765,6 +765,10 @@ ecc_check_secret_key (gcry_sexp_t keyparms)
       goto leave;
     }
 
+  if (gcry_fips_request_failure("ecc_selftests_ecdsa", "check")) {
+    mpi_add_ui(ec->p, ec->p, 1);
+  }
+
   if (check_secret_key (ec, flags))
     rc = GPG_ERR_BAD_SECKEY;
 
@@ -2076,11 +2080,11 @@ selftests_ecdsa (selftest_report_func_t report, int extended)
   err = ecc_check_secret_key(skey);
   if (err)
     {
-      KAT_FAILED(1, "ECDSA key generation PCT");
+      KAT_FAILED(1, "ECDSA key check PCT");
       errtxt = _gcry_strerror (err);
       goto failed;
     } else {
-      KAT_SUCCESS(1, "ECDSA key generation PCT");
+      KAT_SUCCESS(1, "ECDSA key check PCT");
     }
 
   if (extended)
