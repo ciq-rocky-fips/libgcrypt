@@ -407,6 +407,13 @@ verify "run_digest_selftests" 26 "run_digest_selftests " 10
 
 #cipher/ecc.c:selftests_ecdsa
 #Test function: cipher/ecc.c:selftests_ecdsa
+#Test trace: ECDSA key check PCT
+#Test env var: ecc_selftests_ecdsa.check.
+start_test ${LDDRIVER} "selftests_ecdsa" "ecc_selftests_ecdsa.check"
+verify "selftests_ecdsa" 1 "ECDSA key check PCT" 1
+
+#cipher/ecc.c:selftests_ecdsa
+#Test function: cipher/ecc.c:selftests_ecdsa
 #Test trace: ECDSA key generation PCT, sign
 #Test env var: ecc_selftests_ecdsa.sign.
 start_test ${LDDRIVER} "selftests_ecdsa" "ecc_selftests_ecdsa.sign"
