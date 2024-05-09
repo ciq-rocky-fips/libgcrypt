@@ -28,15 +28,6 @@
 #include "mpi.h"
 #include "ec-context.h"
 
-#define GCRYPT_AUDIT 1
-#if defined(GCRYPT_AUDIT)
-#define KAT_SUCCESS(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s SUCCESS\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
-#define KAT_FAILED(x,y) do { FILE *fp; fp = fopen("/tmp/gcrypt_test.log", "a+"); if (fp != NULL) { fprintf(fp, "GCRYPT: %s:%d %d: %s FAILED\n", __FILE__, __LINE__, x, y); fclose(fp); } } while (0);
-#else
-#define KAT_SUCCESS(x, y) ((void)0)
-#define KAT_FAILED(x, y) ((void)0)
-#endif
-
 const char *
 gcry_strerror (gcry_error_t err)
 {
@@ -1077,12 +1068,8 @@ gcry_pk_random_override_new (gcry_ctx_t *r_ctx, const unsigned char *p, size_t l
 gcry_error_t
 gcry_pk_testkey (gcry_sexp_t key)
 {
-  if (!fips_is_operational ()) {
-    KAT_FAILED(0, "gcry_pk_testkey RSA key generation PCT (SHA-256; sign/verify, encrypt/decrypt) gcry_pk_testkey");
+  if (!fips_is_operational ())
     return gpg_error (fips_not_operational ());
-  } else {
-    KAT_SUCCESS(0, "gcry_pk_testkey RSA key generation PCT (SHA-256; sign/verify, encrypt/decrypt) gcry_pk_testkey");
-  }
   return gpg_error (_gcry_pk_testkey (key));
 }
 
