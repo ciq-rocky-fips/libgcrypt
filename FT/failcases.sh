@@ -317,13 +317,13 @@ verify "drbg_get_entropy" 2 "CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)" 1
 # Test trace: ECDSA sign KAT (P-256 curve, SHA2-256) signing
 # Test env var: ecc_selftest_sign.sign
 start_test ${LDDRIVER} "ecc_selftest_sign" "ecc_selftest_sign.sign"
-verify "ecc_selftest_sign" 2 "ECDSA sign KAT (P-256 curve, SHA2-256) signing" 1
+verify "ecc_selftest_sign" 1 "ECDSA sign KAT (P-256 curve, SHA2-256) signing" 1
 
 # Test function: cipher/ecc.c:selftest_sign
 # Test trace: ECDSA verify KAT (P-256 and K-233 curve, SHA2-256) verify failed
 # Test env var: ecc_selftest_sign.sign
 start_test ${LDDRIVER} "ecc_selftest_sign" "ecc_selftest_sign.verify"
-verify "ecc_selftest_sign" 2 "ECDSA verify KAT (P-256 curve, SHA2-256) verify failed" 1
+verify "ecc_selftest_sign" 1 "ECDSA verify KAT (P-256 curve, SHA2-256) verify failed" 1
 
 # Test function: selftest_pbkdf2
 # Test trace: HKDF KAT (PBKDF2 SHA256)
@@ -407,24 +407,17 @@ verify "run_digest_selftests" 26 "run_digest_selftests " 10
 
 #cipher/ecc.c:selftests_ecdsa
 #Test function: cipher/ecc.c:selftests_ecdsa
-#Test trace: ECDSA key check PCT
+#Test trace: ECDSA key check KAT
 #Test env var: ecc_selftests_ecdsa.check.
 start_test ${LDDRIVER} "selftests_ecdsa" "ecc_selftests_ecdsa.check"
-verify "selftests_ecdsa" 1 "ECDSA key check PCT" 1
-
-#cipher/ecc.c:selftests_ecdsa
-#Test function: cipher/ecc.c:selftests_ecdsa
-#Test trace: ECDSA key generation PCT, sign
-#Test env var: ecc_selftests_ecdsa.sign.
-start_test ${LDDRIVER} "selftests_ecdsa" "ecc_selftests_ecdsa.sign"
-verify "selftests_ecdsa" 1 "ECDSA key generation PCT, sign" 1
+verify "selftests_ecdsa" 1 "ECDSA key check KAT" 1
 
 # cipher/ecc.c:selftests_ecdsa
 # Test function: cipher/ecc.c:selftests_ecdsa
-# Test trace: ECDSA key generation PCT, sign
+# Test trace: ECDSA key KAT, sign
 # Test env var: ecc_selftests_ecdsa.sign.
 start_test ${LDDRIVER} "selftests_ecdsa" "ecc_selftests_ecdsa.verify"
-verify "selftests_ecdsa" 2 "ECDSA key generation PCT, verify" 1
+verify "selftests_ecdsa" 2 "ECDSA key KAT, verify" 1
 
 # RSA PCT FIPS
 
