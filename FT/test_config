@@ -11,6 +11,9 @@ export MAKE_LOCATION=`pwd`
 export CHECK_DRIVER="../tests/basic"
 export LDCHECK=./ld_check.sh
 
+export CHECK_PCT_DRIVER="../tests/keygen"
+export LDCHECK_PCT=./ld_check_pct.sh
+
 # Show expected failures as the tests run if 1. These come from the traces to the log.
 # This is the default. When the test passes, you will see something like:
 # ```

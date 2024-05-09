@@ -403,8 +403,6 @@ verify "selftests_rsa" 2 "2048bit RSA, verify KAT" 1
 start_test ${LDDRIVER} "run_digest_selftests" "run_digest_selftests.fail"
 verify "run_digest_selftests" 26 "run_digest_selftests " 10
 
-# ECDSA PCT FIPS
-
 #cipher/ecc.c:selftests_ecdsa
 #Test function: cipher/ecc.c:selftests_ecdsa
 #Test trace: ECDSA key check KAT
@@ -418,6 +416,11 @@ verify "selftests_ecdsa" 1 "ECDSA key check KAT" 1
 # Test env var: ecc_selftests_ecdsa.sign.
 start_test ${LDDRIVER} "selftests_ecdsa" "ecc_selftests_ecdsa.verify"
 verify "selftests_ecdsa" 2 "ECDSA key KAT, verify" 1
+
+# ECDSA PCT FIPS
+
+start_test ${LDCHECK_PCT} "ecc_test_keys_fips" "ecc_test_keys_fips.verify"
+verify "test_keys_fips" 1 "ECDSA key generation KAT" 1
 
 # RSA PCT FIPS
 
