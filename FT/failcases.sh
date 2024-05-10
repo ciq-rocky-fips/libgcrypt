@@ -294,9 +294,9 @@ verify "aes_cbc_128" 1 "AES-CBC-128 decrypt" 1
 # Test function: des.c:selftest
 # Test function: selftests_cmac_3des
 
-# Test function: _gcry_rngdrbg_healthcheck_one
-# Test trace: _gcry_rngdrbg_healthcheck_one DRBG KAT
-# Test env var: _gcry_rngdrbg_healthcheck_one.fail
+# Test function: _gcry_rngdrbg_cavs_test
+# Test trace: _gcry_rngdrbg_cavs_test DRBG KAT
+# Test env var: _gcry_rngdrbg_cavs_test.fail
 start_test ${LDDRIVER} "_gcry_rngdrbg_healthcheck_one" "_gcry_rngdrbg_healthcheck_one.fail"
 verify "_gcry_rngdrbg_healthcheck_one" 7 "_gcry_rngdrbg_healthcheck_one DRBG KAT" 7
 
