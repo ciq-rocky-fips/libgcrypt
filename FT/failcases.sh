@@ -314,12 +314,6 @@ verify "drbg_get_entropy" 2 "DRBG: entropy FAILED" 1
 verify "drbg_get_entropy" 2 "CTR_DRBG KAT (AES-CTR mode; 128/192/256-bit)" 1
 
 # Test function: cipher/ecc.c:selftest_sign
-# Test trace: ECDSA sign KAT (P-256 curve, SHA2-256) signing
-# Test env var: ecc_selftest_sign.sign
-start_test ${LDDRIVER} "ecc_selftest_sign" "ecc_selftest_sign.sign"
-verify "ecc_selftest_sign" 1 "ECDSA sign KAT (P-256 curve, SHA2-256) signing" 1
-
-# Test function: cipher/ecc.c:selftest_sign
 # Test trace: ECDSA verify KAT (P-256 and K-233 curve, SHA2-256) verify failed
 # Test env var: ecc_selftest_sign.sign
 start_test ${LDDRIVER} "ecc_selftest_sign" "ecc_selftest_sign.verify"

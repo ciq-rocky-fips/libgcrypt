@@ -1932,18 +1932,10 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
     }
 
   err = _gcry_pk_sign (&sig, data, skey);
-  if (gcry_fips_request_failure("ecc_selftest_sign", "sign")) {
-    err = GPG_ERR_GENERAL;
-    errtxt = "testing signing failed";
-  }
-  
   if (err)
     {
-      KAT_FAILED(1, "ECDSA sign KAT (P-256 curve, SHA2-256) signing");
       errtxt = "signing failed";
       goto leave;
-    } else {
-      KAT_SUCCESS(1, "ECDSA sign KAT (P-256 curve, SHA2-256) signing");
     }
 
   /* check against known signature */
