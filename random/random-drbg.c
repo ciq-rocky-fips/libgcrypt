@@ -2345,6 +2345,7 @@ _gcry_rngdrbg_cavs_test (struct gcry_drbg_test_vector *test, unsigned char *buf)
   int coreref = 0;
   int pr = 0;
   u32 flags;
+  unsigned char bad_entropy[256];
 
   ret = parse_flag_string (test->flagstr, &flags);
   if (ret)
@@ -2365,7 +2366,16 @@ _gcry_rngdrbg_cavs_test (struct gcry_drbg_test_vector *test, unsigned char *buf)
     pr = 1;
 
   test_data.testentropy = &testentropy;
-  drbg_string_fill (&testentropy, test->entropy, test->entropylen);
+  if (gcry_fips_request_failure("_gcry_rngdrbg_healthcheck_one", "fail")) {
+    if (test->entropylen > sizeof(bad_entropy)) {
+      abort();
+    }
+    memcpy(bad_entropy, test->entropy, test->entropylen);
+    bad_entropy[0] ^= 0x1;
+    drbg_string_fill (&testentropy, bad_entropy, test->entropylen);
+  } else {
+    drbg_string_fill (&testentropy, test->entropy, test->entropylen);
+  }
   drbg->test_data = &test_data;
   drbg_string_fill (&pers, test->pers, test->perslen);
   ret = drbg_instantiate (drbg, &pers, coreref, pr);
@@ -2448,11 +2458,6 @@ _gcry_rngdrbg_healthcheck_one (struct gcry_drbg_test_vector * test)
     return GPG_ERR_ENOMEM;
 
   ret = _gcry_rngdrbg_cavs_test (test, buf);
-
-  /* fail case testing */
-  if (gcry_fips_request_failure("_gcry_rngdrbg_healthcheck_one", "fail")) {
-    buf[0] ^= 0x1;
-  }
 
   /* FIXME: The next line is wrong.   */
   ret = memcmp (test->expected, buf, test->expectedlen);
