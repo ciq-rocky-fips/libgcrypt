@@ -237,34 +237,24 @@ test_keys_fips (gcry_sexp_t skey)
 
   /* Open MD context and feed the random data in */
   ec = _gcry_md_open (&hd, GCRY_MD_SHA256, 0);
-  if (gcry_fips_request_failure("rsa_test_keys_fips", "md_open")) {
-    ec = GPG_ERR_PUBKEY_ALGO;
-  }
   if (ec) {
-    KAT_FAILED(5, "RSA key generation PCT fips (SHA-256; md open)");
     goto leave;
-  } else {
-    KAT_SUCCESS(5, "RSA key generation PCT fips (SHA-256; md open)");
   }
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
 
   /* Use the RSA secret function to create a signature of the plaintext.  */
   ec = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL);
-  if (gcry_fips_request_failure("rsa_test_keys_fips", "sign")) {
-    ec = GPG_ERR_PUBKEY_ALGO;
-  }
   if (ec) {
-    KAT_FAILED(6, "RSA key generation PCT fips (SHA-256; sign)");
     goto leave;
-  } else {
-    KAT_SUCCESS(6, "RSA key generation PCT fips (SHA-256; sign)");
   }
 
+  if (gcry_fips_request_failure("rsa_test_keys_fips", "verify")) {
+    _gcry_md_reset(hd);
+    plaintext[0] ^= 0x1;
+    _gcry_md_write (hd, plaintext, sizeof(plaintext));
+  }
   /* Use the RSA public function to verify this signature.  */
   ec = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL);
-  if (gcry_fips_request_failure("rsa_test_keys_fips", "verify")) {
-    ec = GPG_ERR_PUBKEY_ALGO;
-  }
   if (ec) {
     KAT_FAILED(7, "RSA key generation PCT fips (SHA-256; verify should succeed)");
     goto leave;

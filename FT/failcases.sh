@@ -425,40 +425,10 @@ start_test ${LDDRIVER} "rsa_selftests" "rsa_selftests.check"
 verify "rsa_selftests" 1 "2048bit RSA, key consistency" 1
 
 # Test function: cipher/rsa.c:test_keys_fips
-# Test trace: RSA key generation PCT fips (SHA-256; initial encrypt)
-# Test env var: rsa_test_keys_fips.intial_encrypt.
-start_test ${LDCHECK} "rsa_test_keys_fips" "rsa_test_keys_fips.intial_encrypt"
-verify "rsa_test_keys_fips" 1 "RSA key generation PCT fips (SHA-256; initial encrypt)" 1
-
-# Test function: cipher/rsa.c:test_keys_fips
-# Test trace: RSA key generation PCT fips (SHA-256; initial decrypt)
-# Test env var: rsa_test_keys_fips.intial_decrypt.
-start_test ${LDCHECK} "rsa_test_keys_fips" "rsa_test_keys_fips.intial_decrypt"
-verify "rsa_test_keys_fips" 1 "RSA key generation PCT fips (SHA-256; initial decrypt)" 1
-
-# Test function: cipher/rsa.c:test_keys_fips
-# Test trace: RSA key generation PCT fips (SHA-256; extract)
-# Test env var: rsa_test_keys_fips.extract.
-start_test ${LDCHECK} "rsa_test_keys_fips" "rsa_test_keys_fips.extract"
-verify "rsa_test_keys_fips" 1 "RSA key generation PCT fips (SHA-256; extract)" 1
-
-# Test function: cipher/rsa.c:test_keys_fips
-# Test trace: RSA key generation PCT fips (SHA-256; strip)
-# Test env var: rsa_test_keys_fips.strip.
-start_test ${LDCHECK} "rsa_test_keys_fips" "rsa_test_keys_fips.strip"
-verify "rsa_test_keys_fips" 1 "RSA key generation PCT fips (SHA-256; strip)" 1
-
-# Test function: cipher/rsa.c:test_keys_fips
-# Test trace: RSA key generation PCT fips (SHA-256; md open)
-# Test env var: rsa_test_keys_fips.md_open.
-start_test ${LDCHECK} "rsa_test_keys_fips" "rsa_test_keys_fips.md_open"
-verify "rsa_test_keys_fips" 1 "RSA key generation PCT fips (SHA-256; md open)" 1
-
-# Test function: cipher/rsa.c:test_keys_fips
-# Test trace: RSA key generation PCT fips (SHA-256; md sign)
-# Test env var: rsa_test_keys_fips.md_open.
-start_test ${LDCHECK} "rsa_test_keys_fips" "rsa_test_keys_fips.sign"
-verify "rsa_test_keys_fips" 1 "RSA key generation PCT fips (SHA-256; sign)" 1
+# Test trace: RSA key generation PCT fips (SHA-256; decrypt)
+# Test env var: rsa_test_keys_fips.decrypt.
+start_test ${LDCHECK} "rsa_test_keys_fips" "rsa_test_keys_fips.decrypt"
+verify "rsa_test_keys_fips" 1 "RSA key generation PCT fips (SHA-256; decrypt)" 1
 
 # Test function: cipher/rsa.c:test_keys_fips
 # Test trace: RSA key generation PCT fips (SHA-256; md sign)
