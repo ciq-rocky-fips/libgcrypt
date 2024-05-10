@@ -964,11 +964,12 @@ twistededwards_math (void)
   if (gcry_mpi_cmp (w, a))
     fail ("failed assertion: I^2 mod p == p-1\n");
 
+  if (gcry_fips_request_failure("gcry_mpi_ec_curve_point", "twistededwards_math")) {
+    gcry_mpi_add_ui(G, G, 1);
+  }
+
   int on_curve;
   on_curve = gcry_mpi_ec_curve_point (G, ctx);
-  if (gcry_fips_request_failure("gcry_mpi_ec_curve_point", "twistededwards_math")) {
-    on_curve = 0;
-  }
   /* Check: G is on the curve */
   if (!on_curve) {
     KAT_FAILED(0, "ECDH public key assurance checks, twistededwards_math");
@@ -4378,9 +4379,6 @@ check_ec_mul_reduction (void)
 
       int on_curve;
       on_curve = gcry_mpi_ec_curve_point (U, ctx);
-      if (gcry_fips_request_failure("gcry_mpi_ec_curve_point", "check_ec_mul_reduction_a")) {
-        on_curve = 0;
-      }
       if (!on_curve)
         {
           KAT_FAILED(0, "ECDH public key assurance checks, check_ec_mul_reduction_a");
