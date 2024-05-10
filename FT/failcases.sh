@@ -420,7 +420,7 @@ verify "selftests_ecdsa" 2 "ECDSA key KAT, verify" 1
 # ECDSA PCT FIPS
 
 start_test ${LDCHECK_PCT} "ecc_test_keys_fips" "ecc_test_keys_fips.verify"
-verify "test_keys_fips" 1 "ECDSA key generation KAT" 1
+verify "test_keys_fips" 1 "ECDSA key generation PCT" 1
 
 # RSA PCT FIPS
 

@@ -332,30 +332,16 @@ test_keys_fips (gcry_sexp_t skey)
   /* Open MD context and feed the random data in */
   rc = _gcry_md_open (&hd, GCRY_MD_SHA256, 0);
   if (rc) {
-      KAT_FAILED(0, "ecc test_keys_fips: ECDSA key generation KAT");
       log_error ("ECDSA operation: failed to initialize MD context: %s\n", gpg_strerror (rc));
       goto leave;
-  } else {
-    KAT_SUCCESS(0, "ecc test_keys_fips:ECDSA key generation KAT");
   }
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
 
   /* Sign the data */
   rc = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL);
-  /* failure test */
-  if (gcry_fips_request_failure("ecc_test_keys_fips", "sign")) {
-    KAT_FAILED(0, "ecc test_keys_fips:ECDSA key generation KAT, sign");
-    rc = GPG_ERR_GENERAL;
-    return;
-  }
-  KAT_SUCCESS(0, "ecc test_keys_fips:ECDSA key generation KAT, sign");
-
   if (rc) {
-      KAT_FAILED(1, "ecc test_keys_fips:ECDSA key generation KAT");
       log_error ("ECDSA operation: signing failed: %s\n", gpg_strerror (rc));
 	  goto leave;
-  } else {
-    KAT_SUCCESS(1, "ecc test_keys_fips:ECDSA key generation KAT");
   }
 
   if (gcry_fips_request_failure("ecc_test_keys_fips", "verify")) {
@@ -367,11 +353,11 @@ test_keys_fips (gcry_sexp_t skey)
   /* Verify this signature.  */
   rc = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL);
   if (rc) {
-    KAT_FAILED(2, "ecc test_keys_fips:ECDSA key generation KAT");
+    KAT_FAILED(2, "ecc test_keys_fips:ECDSA key generation PCT");
     log_error ("ECDSA operation: verification failed: %s\n", gpg_strerror (rc));
     goto leave;
   } else {
-    KAT_SUCCESS(2, "ecc test_keys_fips:ECDSA key generation KAT");
+    KAT_SUCCESS(2, "ecc test_keys_fips:ECDSA key generation PCT");
   }
 
 
@@ -381,11 +367,8 @@ test_keys_fips (gcry_sexp_t skey)
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
   rc = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL);
   if (rc != GPG_ERR_BAD_SIGNATURE) {
-    KAT_FAILED(3, "ecc test_keys_fips:ECDSA key generation KAT");
     log_error ("ECDSA operation: signature verification worked on modified data\n");
     goto leave;
-  } else {
-    KAT_SUCCESS(3, "ecc test_keys_fips:ECDSA key generation KAT");
   }
 
 
