@@ -28,6 +28,7 @@
 #include "cipher.h"
 #include "pubkey-internal.h"
 #include "const-time.h"
+#include "bufhelp.h"
 
 
 /* Turn VALUE into an octet string and store it in an allocated buffer
@@ -199,7 +200,6 @@ gpg_err_code_t
 _gcry_rsa_pkcs1_decode_for_enc (unsigned char **r_result, size_t *r_resultlen,
                                 unsigned int nbits, gcry_mpi_t value)
 {
-  gcry_error_t err;
   unsigned char *frame = NULL;
   size_t nframe = (nbits+7) / 8;
   size_t n, n0;
@@ -207,6 +207,36 @@ _gcry_rsa_pkcs1_decode_for_enc (unsigned char **r_result, size_t *r_resultlen,
   unsigned int not_found = 1;
 
   *r_result = NULL;
+
+  {
+#ifdef WITH_MARVIN_WORKAROUND
+  /* Allocate more to fit the whole MPI and allow moving it later to the right place */
+  size_t alloc_len = value->nlimbs * BYTES_PER_MPI_LIMB;
+  if ( !(frame = xtrymalloc_secure (alloc_len)))
+    return gpg_err_code_from_syserror ();
+
+  /* shovel the MPI content to the buffer as it is */
+  unsigned char *p = frame;
+  for (int i = value->nlimbs - 1; i >= 0; i--)
+    {
+      mpi_limb_t *alimb = &value->d[i];
+#if BYTES_PER_MPI_LIMB == 4
+      buf_put_be32 (p, *alimb);
+      p += 4;
+#elif BYTES_PER_MPI_LIMB == 8
+      buf_put_be64 (p, *alimb);
+      p += 8;
+#else
+#     error please implement for this limb size.
+#endif
+    }
+  /* Remove leading zeroes, but not all! Keep the buffer to the nframe length!
+   * -- valid PKCS#1.5 padding will never have different lengths, than modulus */
+  memmov_independently (frame, frame + (alloc_len - nframe), nframe, alloc_len);
+  n = 0;
+  failed |= ct_not_equal_byte (frame[n++], 0x00);
+#else
+  gcry_error_t err;
 
   if ( !(frame = xtrymalloc_secure (nframe)))
     return gpg_err_code_from_syserror ();
@@ -235,6 +265,9 @@ _gcry_rsa_pkcs1_decode_for_enc (unsigned char **r_result, size_t *r_resultlen,
   n = 0;
   if (!frame[0])
     n++;
+#endif
+  }
+
   failed |= ct_not_equal_byte (frame[n++], 0x02);
 
   /* Find the terminating zero byte.  */
