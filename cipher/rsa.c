@@ -1535,7 +1535,11 @@ rsa_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
                                   plain, ctx.label, ctx.labellen);
       mpi_free (plain);
       plain = NULL;
+#ifdef WITH_MARVIN_WORKAROUND
+      rc_sexp = sexp_build (&result, NULL, "(value %c)", (int)unpadlen, unpad, (nbits + 7) / 8);
+#else
       rc_sexp = sexp_build (&result, NULL, "(value %b)", (int)unpadlen, unpad);
+#endif /* WITH_MARVIN_WORKAROUND */
       *r_plain = sexp_null_cond (result, ct_is_not_zero (rc));
       dummy = sexp_null_cond (result, ct_is_zero (rc));
       sexp_release (dummy);

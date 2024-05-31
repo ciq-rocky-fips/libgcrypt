@@ -192,6 +192,45 @@ memmov_independently (void *dst, const void *src, size_t len, size_t buflen)
 }
 
 
+static unsigned char *
+mpi_to_string(gcry_mpi_t value, size_t nframe)
+{
+  unsigned char *frame = NULL;
+  unsigned char *p;
+  size_t noff;
+  /* Allocate memory to fit the whole MPI limbs and allow moving it later to the right place */
+  size_t alloc_len = value->nlimbs * BYTES_PER_MPI_LIMB;
+
+  /* for too short input, we need to allocate at least modulus length (which might still be valid in case of OAEP) */
+  noff = (alloc_len < nframe) ? nframe - alloc_len : 0;
+  alloc_len = alloc_len + noff;
+
+  if ( !(frame = xtrymalloc_secure (alloc_len)))
+    return NULL;
+
+  if (noff)
+    memset (frame, 0, noff);
+  p = frame + noff;
+  /* shovel the MPI content to the buffer as it is */
+  for (int i = value->nlimbs - 1; i >= 0; i--)
+    {
+      mpi_limb_t *alimb = &value->d[i];
+#if BYTES_PER_MPI_LIMB == 4
+      buf_put_be32 (p, *alimb);
+      p += 4;
+#elif BYTES_PER_MPI_LIMB == 8
+      buf_put_be64 (p, *alimb);
+      p += 8;
+#else
+#     error please implement for this limb size.
+#endif
+    }
+  /* Move the MPI to the right place -- with the least significant bytes aligned to the modulus length
+   * -- this might keep some leading zeroes at the beginning of the buffer, but this might be valid for OAEP */
+  memmov_independently (frame, frame + (alloc_len - nframe), nframe, alloc_len);
+  return frame;
+}
+
 /* Decode a plaintext in VALUE assuming pkcs#1 block type 2 padding.
    NBITS is the size of the secret key.  On success the result is
    stored as a newly allocated buffer at R_RESULT and its valid length at
@@ -210,29 +249,10 @@ _gcry_rsa_pkcs1_decode_for_enc (unsigned char **r_result, size_t *r_resultlen,
 
   {
 #ifdef WITH_MARVIN_WORKAROUND
-  /* Allocate more to fit the whole MPI and allow moving it later to the right place */
-  size_t alloc_len = value->nlimbs * BYTES_PER_MPI_LIMB;
-  if ( !(frame = xtrymalloc_secure (alloc_len)))
+  frame = mpi_to_string(value, nframe);
+  if (frame == NULL)
     return gpg_err_code_from_syserror ();
 
-  /* shovel the MPI content to the buffer as it is */
-  unsigned char *p = frame;
-  for (int i = value->nlimbs - 1; i >= 0; i--)
-    {
-      mpi_limb_t *alimb = &value->d[i];
-#if BYTES_PER_MPI_LIMB == 4
-      buf_put_be32 (p, *alimb);
-      p += 4;
-#elif BYTES_PER_MPI_LIMB == 8
-      buf_put_be64 (p, *alimb);
-      p += 8;
-#else
-#     error please implement for this limb size.
-#endif
-    }
-  /* Remove leading zeroes, but not all! Keep the buffer to the nframe length!
-   * -- valid PKCS#1.5 padding will never have different lengths, than modulus */
-  memmov_independently (frame, frame + (alloc_len - nframe), nframe, alloc_len);
   n = 0;
   failed |= ct_not_equal_byte (frame[n++], 0x00);
 #else
@@ -265,7 +285,7 @@ _gcry_rsa_pkcs1_decode_for_enc (unsigned char **r_result, size_t *r_resultlen,
   n = 0;
   if (!frame[0])
     n++;
-#endif
+#endif /* WITH_MARVIN_WORKAROUND */
   }
 
   failed |= ct_not_equal_byte (frame[n++], 0x02);
@@ -709,14 +729,23 @@ _gcry_rsa_oaep_decode (unsigned char **r_result, size_t *r_resultlen,
      happen due to the leading zero in OAEP frames and due to the
      following random octets (seed^mask) which may have leading zero
      bytes.  This all is needed to cope with our leading zeroes
-     suppressing MPI implementation.  The code implictly implements
+     suppressing MPI implementation.  The code implicitly implements
      Step 1b (bail out if NFRAME != N).  */
+#ifdef WITH_MARVIN_WORKAROUND
+  frame = mpi_to_string(value, nkey);
+  if (frame == NULL)
+    {
+      xfree (lhash);
+      return gpg_err_code_from_syserror ();
+    }
+#else
   rc = octet_string_from_mpi (&frame, NULL, value, nkey);
   if (rc)
     {
       xfree (lhash);
       return GPG_ERR_ENCODING_PROBLEM;
     }
+#endif /* WITH_MARVIN_WORKAROUND */
   nframe = nkey;
 
   /* Step 1c: Check that the key is long enough.  */
@@ -731,7 +760,7 @@ _gcry_rsa_oaep_decode (unsigned char **r_result, size_t *r_resultlen,
      gcry_mpi_aprint above.  */
 
   /* Allocate space for SEED and DB.  */
-  seed = xtrymalloc_secure (nframe - 1);
+  seed = xtrymalloc_secure (nframe);
   if (!seed)
     {
       rc = gpg_err_code_from_syserror ();
