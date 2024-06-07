@@ -247,6 +247,8 @@ _gcry_rsa_pkcs1_decode_for_enc (unsigned char **r_result, size_t *r_resultlen,
 
   failed |= not_found;
   n0 += ct_is_zero (not_found); /* Skip the zero byte.  */
+  /* the valid padding is at least 8 bytes -- the plaintext needs to start at index 11 or later */
+  failed |= ct_lt_s (n0, 11);
 
   /* To avoid an extra allocation we reuse the frame buffer.  The only
      caller of this function will anyway free the result soon.  */

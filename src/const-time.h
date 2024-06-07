@@ -34,6 +34,12 @@ extern volatile unsigned int _gcry_ct_vone;
 #endif
 
 
+static inline size_t
+ct_lt_s (size_t a, size_t b)
+{
+  return ((a ^ ((a ^ b) | ((a - b) ^ b))) >> (sizeof(size_t) * 8 - 1));
+}
+
 /*
  * Return 0 if A is 0 and return 1 otherwise.
  */
