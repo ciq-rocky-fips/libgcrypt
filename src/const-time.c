@@ -77,8 +77,8 @@ _gcry_ct_memmov_cond (void *dst, const void *src, size_t len,
 		      unsigned long op_enable)
 {
   /* Note: dual mask with AND/OR used for EM leakage mitigation */
-  unsigned char mask1 = ct_ulong_gen_mask(op_enable);
-  unsigned char mask2 = ct_ulong_gen_inv_mask(op_enable);
+  volatile unsigned char mask1 = ct_ulong_gen_mask(op_enable);
+  volatile unsigned char mask2 = ct_ulong_gen_inv_mask(op_enable);
   unsigned char *b_dst = dst;
   const unsigned char *b_src = src;
   size_t i;
