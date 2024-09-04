@@ -291,12 +291,6 @@ _gcry_check_version (const char *req_version)
     return NULL;
 }
 
-char *
-_gcry_FIPS_version ()
-{
-  return "Rocky Linux 8 Libgcrypt Cryptographic Module Version rocky8.20240502";
-}
-
 static void
 print_config (const char *what, gpgrt_stream_t fp)
 {

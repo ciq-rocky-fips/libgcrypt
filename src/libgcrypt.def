@@ -297,6 +297,5 @@ EXPORTS
       gcry_kdf_compute          @259
       gcry_kdf_final            @260
       gcry_kdf_close            @261
-      gcry_FIPS_version         @262
 
 ;; end of file with public symbols for Windows.
