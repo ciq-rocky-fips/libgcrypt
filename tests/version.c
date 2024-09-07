@@ -63,6 +63,17 @@ test_get_config (void)
   else if ( strncmp (string, "version:", 8) )
     fail ("gcry_get_config(\"version\") returned wrong line\n");
 
+
+  xfree (string);
+  string = gcry_get_config (0, "fips-mode");  
+  if (!string)
+    fail ("gcry_get_config(\"fips-mode\") returned NULL: %s\n",
+          gpg_strerror (gpg_error_from_syserror ()));
+  else if ( strchr (string, '\n') )
+    fail ("gcry_get_config(\"fips-mode\") returned more than one line\n");
+  else if ( strncmp (string, "fips-mode:", 8) )
+    fail ("gcry_get_config(\"fips-mode\") returned wrong line\n");
+
   /* Test an item which is not the first.  */
   xfree (string);
   string = gcry_get_config (0, "cpu-arch");
