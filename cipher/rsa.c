@@ -402,28 +402,6 @@ rsa_check_keysize (unsigned int nbits)
 }
 
 
-/* Check the RSA key length is acceptable for signature verification
- *
- * FIPS allows signature verification with RSA keys of size
- * 1024, 1280, 1536 and 1792 in legacy mode, but this is up to the
- * calling application to decide if the signature is legacy and
- * should be accepted.
- */
-static gpg_err_code_t
-rsa_check_verify_keysize (unsigned int nbits)
-{
-  if (fips_mode ())
-    {
-      if ((nbits >= 1024 && (nbits % 256) == 0) || nbits >= 2048)
-        return GPG_ERR_NO_ERROR;
-
-      return GPG_ERR_INV_VALUE;
-    }
-
-  return GPG_ERR_NO_ERROR;
-}
-
-
 /****************
  * Generate a key pair with a key of size NBITS.
  * USE_E = 0 let Libcgrypt decide what exponent to use.
@@ -1669,7 +1647,7 @@ rsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   gcry_mpi_t result = NULL;
   unsigned int nbits = rsa_get_nbits (keyparms);
 
-  rc = rsa_check_verify_keysize (nbits);
+  rc = rsa_check_keysize (nbits);
   if (rc)
     return rc;
 
