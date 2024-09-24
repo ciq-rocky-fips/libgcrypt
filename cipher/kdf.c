@@ -160,6 +160,18 @@ _gcry_kdf_pkdf2 (const void *passphrase, size_t passphraselen,
     return GPG_ERR_INV_VALUE;
 #endif
 
+  /*
+   * FIPS prohibits MD5.
+   * We already prohibit MD5 from being instantiated
+   * so this isn't strictly needed, but it's belt-and-braces
+   * code.
+   */
+  if (fips_mode ()) {
+    if (hashalgo == GCRY_MD_MD5 || hashalgo == GCRY_MAC_HMAC_MD5) {
+      return GPG_ERR_DIGEST_ALGO;
+    }
+  }
+
   /* FIPS requires minimum passphrase length, see FIPS 140-3 IG D.N */
   if (fips_mode () && passphraselen < 8)
     return GPG_ERR_INV_VALUE;
@@ -256,15 +268,20 @@ _gcry_kdf_pkdf2 (const void *passphrase, size_t passphraselen,
    but certain KDF algorithm may use it differently.  {SALT,SALTLEN}
    is a salt as needed by most KDF algorithms.  ITERATIONS is a
    positive integer parameter to most KDFs.  0 is returned on success,
-   or an error code on failure.  */
+   or an error code on failure. If in fips mode and the operation
+   was a success then *fips_approved contains 1 if a FIPS-140-3
+   approved algorithm was used, 0 if not. */
+
 gpg_err_code_t
-_gcry_kdf_derive (const void *passphrase, size_t passphraselen,
-                  int algo, int subalgo,
-                  const void *salt, size_t saltlen,
-                  unsigned long iterations,
-                  size_t keysize, void *keybuffer)
+_gcry_kdf_derive_fips (const void *passphrase, size_t passphraselen,
+                       int algo, int subalgo,
+                       const void *salt, size_t saltlen,
+                       unsigned long iterations,
+                       size_t keysize, void *keybuffer,
+                       unsigned int *fips_approved_ptr)
 {
   gpg_err_code_t ec;
+  unsigned int fips_approved = 0;
 
   if (!passphrase)
     {
@@ -272,12 +289,11 @@ _gcry_kdf_derive (const void *passphrase, size_t passphraselen,
       goto leave;
     }
 
-  if (!keybuffer || !keysize)
+  if (!keybuffer || !keysize || !fips_approved_ptr)
     {
       ec = GPG_ERR_INV_VALUE;
       goto leave;
     }
-
 
   switch (algo)
     {
@@ -299,8 +315,12 @@ _gcry_kdf_derive (const void *passphrase, size_t passphraselen,
       if (!saltlen)
         ec = GPG_ERR_INV_VALUE;
       else
-        ec = _gcry_kdf_pkdf2 (passphrase, passphraselen, subalgo,
-                              salt, saltlen, iterations, keysize, keybuffer);
+        {
+          if (fips_mode ())
+            fips_approved = 1;
+          ec = _gcry_kdf_pkdf2 (passphrase, passphraselen, subalgo,
+                                salt, saltlen, iterations, keysize, keybuffer);
+        }
       break;
 
     case 41:
@@ -319,9 +339,11 @@ _gcry_kdf_derive (const void *passphrase, size_t passphraselen,
     }
 
  leave:
+  if (fips_approved_ptr != NULL)
+    *fips_approved_ptr = fips_approved;
   return ec;
 }
-
+ 
 #include "bufhelp.h"
 
 typedef struct argon2_context *argon2_ctx_t;
@@ -1037,25 +1059,28 @@ check_one (int algo, int hash_algo,
   unsigned char key[512]; /* hardcoded to avoid allocation */
   size_t keysize = expectlen;
   int rv;
+  unsigned int fips_allowed = 0;
 
   if (keysize > sizeof(key))
     return "invalid tests data";
 
-  rv = _gcry_kdf_derive (passphrase, passphraselen, algo,
+  rv = _gcry_kdf_derive_fips (passphrase, passphraselen, algo,
                          hash_algo, salt, saltlen, iterations,
-                         keysize, key);
+                         keysize, key, &fips_allowed);
   /* In fips mode we have special requirements for the input and
    * output parameters */
   if (fips_mode ())
     {
+      if (fips_allowed == 0)
+        return "gcry_kdf_derive_fips did not return fips_allowed in FIPS Mode";
       if (rv && (passphraselen < 8 || saltlen < 16 ||
                  iterations < 1000 || expectlen < 14))
         return NULL;
       else if (rv)
-        return "gcry_kdf_derive unexpectedly failed in FIPS Mode";
+        return "gcry_kdf_derive_fips unexpectedly failed in FIPS Mode";
     }
   else if (rv)
-    return "gcry_kdf_derive failed";
+    return "gcry_kdf_derive_fips failed";
 
   if (memcmp (key, expect, expectlen))
     return "does not match";
