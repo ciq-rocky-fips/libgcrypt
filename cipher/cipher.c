@@ -690,6 +690,31 @@ _gcry_cipher_open_internal (gcry_cipher_hd_t *handle,
             default:
               break;
             }
+
+          if (fips_mode ()) {
+            /* FIPS only allows the following cipher modes. */
+            switch (mode) {
+              case GCRY_CIPHER_MODE_ECB:
+              case GCRY_CIPHER_MODE_CBC:
+              case GCRY_CIPHER_MODE_CFB:
+              case GCRY_CIPHER_MODE_CFB8:
+              case GCRY_CIPHER_MODE_OFB:
+              case GCRY_CIPHER_MODE_CTR:
+              case GCRY_CIPHER_MODE_CCM:
+              case GCRY_CIPHER_MODE_XTS:
+              case GCRY_CIPHER_MODE_AESWRAP:
+              case GCRY_CIPHER_MODE_CMAC:
+                h->fips_approved = 1;
+                break;
+              default:
+                /*
+                 * All other modes we allow but
+                 * leave the handle in a
+                 * fips non approved mode.
+                 */
+                break;
+            }
+          }
         }
     }
 
