@@ -172,6 +172,7 @@ MARK_VISIBLEX (gcry_pk_hash_verify)
 MARK_VISIBLEX (gcry_pk_random_override_new)
 
 MARK_VISIBLEX (gcry_kdf_derive)
+MARK_VISIBLEX (gcry_kdf_derive_fips)
 MARK_VISIBLEX (gcry_kdf_open)
 MARK_VISIBLEX (gcry_kdf_compute)
 MARK_VISIBLEX (gcry_kdf_final)
@@ -416,6 +417,7 @@ MARK_VISIBLEX (_gcry_mpi_get_const)
 #define gcry_mac_ctl                _gcry_USE_THE_UNDERSCORED_FUNCTION
 
 #define gcry_kdf_derive             _gcry_USE_THE_UNDERSCORED_FUNCTION
+#define gcry_kdf_derive_fips        _gcry_USE_THE_UNDERSCORED_FUNCTION
 #define gcry_kdf_open               _gcry_USE_THE_UNDERSCORED_FUNCTION
 #define gcry_kdf_compute            _gcry_USE_THE_UNDERSCORED_FUNCTION
 #define gcry_kdf_final              _gcry_USE_THE_UNDERSCORED_FUNCTION
