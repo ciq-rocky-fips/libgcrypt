@@ -201,11 +201,12 @@ int _gcry_mac_map_name (const char *name) _GCRY_GCC_ATTR_PURE;
 #define _gcry_mac_reset(h)  _gcry_mac_ctl ((h), GCRYCTL_RESET, NULL, 0)
 
 
-gpg_err_code_t _gcry_kdf_derive (const void *passphrase, size_t passphraselen,
+gpg_err_code_t _gcry_kdf_derive_fips (const void *passphrase, size_t passphraselen,
                                  int algo, int subalgo,
                                  const void *salt, size_t saltlen,
                                  unsigned long iterations,
-                                 size_t keysize, void *keybuffer);
+                                 size_t keysize, void *keybuffer,
+                                 unsigned int *fips_approved_ptr);
 
 gpg_err_code_t _gcry_kdf_open (gcry_kdf_hd_t *hd, int algo, int subalgo,
                                const unsigned long *param,
