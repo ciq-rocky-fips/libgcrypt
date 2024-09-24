@@ -1616,6 +1616,14 @@ gpg_error_t gcry_kdf_derive (const void *passphrase, size_t passphraselen,
                              unsigned long iterations,
                              size_t keysize, void *keybuffer);
 
+/* Derive a key from a passphrase. Returns FIPS approval version.  */
+gpg_error_t gcry_kdf_derive_fips (const void *passphrase, size_t passphraselen,
+                                  int algo, int subalgo,
+                                  const void *salt, size_t saltlen,
+                                  unsigned long iterations,
+                                  size_t keysize, void *keybuffer,
+                                  unsigned int *fips_approved_ptr);
+
 /* Another API to derive a key from a passphrase.  */
 typedef struct gcry_kdf_handle *gcry_kdf_hd_t;
 

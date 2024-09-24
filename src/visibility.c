@@ -1360,17 +1360,31 @@ gcry_md_debug (gcry_md_hd_t hd, const char *suffix)
 }
 
 gpg_error_t
+gcry_kdf_derive_fips (const void *passphrase, size_t passphraselen,
+                 int algo, int hashalgo,
+                 const void *salt, size_t saltlen,
+                 unsigned long iterations,
+                 size_t keysize, void *keybuffer,
+                 unsigned int *fips_approved_ptr)
+{
+  if (!fips_is_operational ())
+    return gpg_error (fips_not_operational ());
+  return gpg_error (_gcry_kdf_derive_fips (passphrase, passphraselen, algo, hashalgo,
+                                      salt, saltlen, iterations,
+                                      keysize, keybuffer, fips_approved_ptr));
+}
+
+gpg_error_t
 gcry_kdf_derive (const void *passphrase, size_t passphraselen,
                  int algo, int hashalgo,
                  const void *salt, size_t saltlen,
                  unsigned long iterations,
                  size_t keysize, void *keybuffer)
 {
-  if (!fips_is_operational ())
-    return gpg_error (fips_not_operational ());
-  return gpg_error (_gcry_kdf_derive (passphrase, passphraselen, algo, hashalgo,
+  unsigned int fips_approved = 0;
+  return gpg_error (_gcry_kdf_derive_fips (passphrase, passphraselen, algo, hashalgo,
                                       salt, saltlen, iterations,
-                                      keysize, keybuffer));
+                                      keysize, keybuffer, &fips_approved));
 }
 
 gpg_error_t
