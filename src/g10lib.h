@@ -461,6 +461,7 @@ int _gcry_fips_indicator_md (va_list arg_ptr);
 int _gcry_fips_indicator_kdf (va_list arg_ptr);
 int _gcry_fips_indicator_function (va_list arg_ptr);
 int _gcry_fips_indicator_pk_flags (va_list arg_ptr);
+gpg_err_code_t validate_sexp_token(const byte *val, unsigned short len);
 
 int _gcry_fips_is_operational (void);
 
