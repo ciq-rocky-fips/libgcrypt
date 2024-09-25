@@ -351,9 +351,15 @@ _gcry_pk_encrypt (gcry_sexp_t *r_ciph, gcry_sexp_t s_data, gcry_sexp_t s_pkey)
     rc = GPG_ERR_PUBKEY_ALGO;
   else if (!spec->flags.fips && fips_mode ())
     rc = GPG_ERR_PUBKEY_ALGO;
-  else if (spec->encrypt)
+  else if (spec->encrypt) {
+    if (fips_mode()) {
+      rc = _gcry_sexp_validate_tokens(keyparms, &validate_sexp_token);
+      if (rc != 0) {
+        goto leave;
+      }
+    }
     rc = spec->encrypt (r_ciph, s_data, keyparms);
-  else
+  } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
  leave:
@@ -407,9 +413,15 @@ _gcry_pk_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t s_skey)
     rc = GPG_ERR_PUBKEY_ALGO;
   else if (!spec->flags.fips && fips_mode ())
     rc = GPG_ERR_PUBKEY_ALGO;
-  else if (spec->decrypt)
+  else if (spec->decrypt) {
+    if (fips_mode()) {
+      rc = _gcry_sexp_validate_tokens(keyparms, &validate_sexp_token);
+      if (rc != 0) {
+        goto leave;
+      }
+    }
     rc = spec->decrypt (r_plain, s_data, keyparms);
-  else
+  } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
  leave:
@@ -464,9 +476,15 @@ _gcry_pk_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_hash, gcry_sexp_t s_skey)
     rc = GPG_ERR_PUBKEY_ALGO;
   else if (!spec->flags.fips && fips_mode ())
     rc = GPG_ERR_PUBKEY_ALGO;
-  else if (spec->sign)
+  else if (spec->sign) {
+    if (fips_mode()) {
+      rc = _gcry_sexp_validate_tokens(keyparms, &validate_sexp_token);
+      if (rc != 0) {
+        goto leave;
+      }
+    }
     rc = spec->sign (r_sig, s_hash, keyparms);
-  else
+  } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
  leave:
@@ -601,9 +619,15 @@ _gcry_pk_sign_md (gcry_sexp_t *r_sig, const char *tmpl, gcry_md_hd_t hd_orig,
     rc = GPG_ERR_PUBKEY_ALGO;
   else if (!spec->flags.fips && fips_mode ())
     rc = GPG_ERR_PUBKEY_ALGO;
-  else if (spec->sign)
+  else if (spec->sign) {
+    if (fips_mode()) {
+      rc = _gcry_sexp_validate_tokens(keyparms, &validate_sexp_token);
+      if (rc != 0) {
+        goto leave;
+      }
+    }
     rc = spec->sign (r_sig, s_hash, keyparms);
-  else
+  } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
  leave:
@@ -635,9 +659,15 @@ _gcry_pk_verify (gcry_sexp_t s_sig, gcry_sexp_t s_hash, gcry_sexp_t s_pkey)
     rc = GPG_ERR_PUBKEY_ALGO;
   else if (!spec->flags.fips && fips_mode ())
     rc = GPG_ERR_PUBKEY_ALGO;
-  else if (spec->verify)
+  else if (spec->verify) {
+    if (fips_mode()) {
+      rc = _gcry_sexp_validate_tokens(keyparms, &validate_sexp_token);
+      if (rc != 0) {
+        goto leave;
+      }
+    }
     rc = spec->verify (s_sig, s_hash, keyparms);
-  else
+  } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
  leave:
@@ -711,9 +741,15 @@ _gcry_pk_verify_md (gcry_sexp_t s_sig, const char *tmpl, gcry_md_hd_t hd_orig,
     rc = GPG_ERR_PUBKEY_ALGO;
   else if (!spec->flags.fips && fips_mode ())
     rc = GPG_ERR_PUBKEY_ALGO;
-  else if (spec->verify)
+  else if (spec->verify) {
+    if (fips_mode()) {
+      rc = _gcry_sexp_validate_tokens(keyparms, &validate_sexp_token);
+      if (rc != 0) {
+        goto leave;
+      }
+    }
     rc = spec->verify (s_sig, s_hash, keyparms);
-  else
+  } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
  leave:
@@ -747,9 +783,15 @@ _gcry_pk_testkey (gcry_sexp_t s_key)
     rc = GPG_ERR_PUBKEY_ALGO;
   else if (!spec->flags.fips && fips_mode ())
     rc = GPG_ERR_PUBKEY_ALGO;
-  else if (spec->check_secret_key)
+  else if (spec->check_secret_key) {
+    if (fips_mode()) {
+      rc = _gcry_sexp_validate_tokens(keyparms, &validate_sexp_token);
+      if (rc != 0) {
+        goto leave;
+      }
+    }
     rc = spec->check_secret_key (keyparms);
-  else
+  } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
  leave:
@@ -835,9 +877,15 @@ _gcry_pk_genkey (gcry_sexp_t *r_key, gcry_sexp_t s_parms)
       goto leave;
     }
 
-  if (spec->generate)
+  if (spec->generate) {
+    if (fips_mode()) {
+      rc = _gcry_sexp_validate_tokens(list, &validate_sexp_token);
+      if (rc != 0) {
+        goto leave;
+      }
+    }
     rc = spec->generate (list, r_key);
-  else
+  } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
  leave:
@@ -1010,8 +1058,17 @@ _gcry_pk_get_curve (gcry_sexp_t key, int iterator, unsigned int *r_nbits)
     return NULL;
   if (!spec->flags.fips && fips_mode ())
     return NULL;
-  if (spec->get_curve)
+  if (spec->get_curve) {
+    if (fips_mode()) {
+      gcry_err_code_t rc = 0;
+      rc = _gcry_sexp_validate_tokens(keyparms, &validate_sexp_token);
+      if (rc != 0) {
+        sexp_release (keyparms);
+        return NULL;
+      }
+    }
     result = spec->get_curve (keyparms, iterator, r_nbits);
+  }
 
   sexp_release (keyparms);
   return result;
