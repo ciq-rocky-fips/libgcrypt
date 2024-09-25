@@ -344,6 +344,10 @@ gcry_sexp_t _gcry_sexp_prepend (const gcry_sexp_t a, const gcry_sexp_t n);
 gcry_sexp_t _gcry_sexp_find_token (gcry_sexp_t list,
                                    const char *tok, size_t toklen);
 int _gcry_sexp_length (const gcry_sexp_t list);
+
+gpg_err_code_t _gcry_sexp_validate_tokens(const gcry_sexp_t list,
+                                          gpg_err_code_t (*validate_func)(const byte *val, unsigned short len));
+
 gcry_sexp_t _gcry_sexp_nth (const gcry_sexp_t list, int number);
 gcry_sexp_t _gcry_sexp_car (const gcry_sexp_t list);
 gcry_sexp_t _gcry_sexp_cdr (const gcry_sexp_t list);
