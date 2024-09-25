@@ -483,6 +483,72 @@ static const char *valid_string_in_sexp[] = {
   "value"
 };
 
+static gpg_err_code_t check_pk_algo_name(const byte *val, unsigned short len)
+{
+  size_t i;
+  size_t array_len = sizeof(valid_string_in_sexp)/sizeof(valid_string_in_sexp[0]);
+  int rc = GPG_ERR_NOT_SUPPORTED;
+  const char *canonical_algo_name = NULL;
+  char *name = NULL;
+
+  /* Create a null-terminated string just in case. */
+  name = xmalloc(len + 1);
+  if (name == NULL) {
+    return GPG_ERR_ENOMEM;
+  }
+
+  memcpy(name, val, len);
+  name[len] = '\0';
+
+  canonical_algo_name = _gcry_pk_map_canonical_algo_name(name);
+  if (canonical_algo_name == NULL) {
+    /* This really isn't a pk algorithm name. */
+    rc = GPG_ERR_NOT_SUPPORTED;
+    goto out;
+  }
+
+  /*
+   * Case-insensitively search the array for the canonical name
+   * we obtained.
+   */
+  for (i = 0; i < array_len; i++) {
+    if (stricmp(canonical_algo_name, valid_string_in_sexp[i]) == 0) {
+      /* Found it - we're good to go. */
+      rc = GPG_ERR_NO_ERROR;
+      goto out;
+    }
+  }
+
+  rc = GPG_ERR_PUBKEY_ALGO;
+
+  out:
+    memset(name, '\0', len);
+    xfree(name);
+    return rc;
+}
+
+gpg_err_code_t validate_sexp_token(const byte *val, unsigned short len)
+{
+  size_t i;
+  size_t array_len = sizeof(valid_string_in_sexp)/sizeof(valid_string_in_sexp[0]);
+
+  for (i = 0; i < array_len; i++) {
+    size_t slen = strlen(valid_string_in_sexp[i]);
+
+    if (slen != len) {
+      continue;
+    }
+    if (memcmp(val, valid_string_in_sexp[i], slen) == 0) {
+      return GPG_ERR_NO_ERROR;
+    }
+  }
+  /*
+   * We didn't find it. Check if it's a non-canonical
+   * algorithm name.
+   */
+  return check_pk_algo_name(val, len);
+}
+
 static int
 compare_string (const void *v1, const void *v2)
 {
