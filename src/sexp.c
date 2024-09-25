@@ -548,6 +548,112 @@ _gcry_sexp_length (const gcry_sexp_t list)
   return length;
 }
 
+/*
+ * For FIPS mode we must restrict sexp tokens to a known list.
+ * Tokens must be the car. Walk an sexp and validate
+ * the tokens using a passed in compare function. Error out if
+ * the validation returns an error (token not allowed).
+ */
+
+gpg_err_code_t
+_gcry_sexp_validate_tokens(const gcry_sexp_t list,
+                           gpg_err_code_t (*validate_func)(const byte *val, unsigned short len))
+{
+  const byte *p;
+  DATALEN n;
+  int level = 0;
+  int prev_state = -1;
+
+  /* Sanity checks. */
+  if (!list) {
+    /* Ignore an empty list. */
+    return GPG_ERR_NO_ERROR;
+  }
+  if (validate_func == NULL) {
+    return GPG_ERR_INV_ARG;
+  }
+
+  p = list->d;
+
+  while (*p != ST_STOP) {
+    switch (*p) {
+      case ST_OPEN:
+        level++;
+        prev_state = ST_OPEN;
+        p++;
+        continue;
+
+      case ST_CLOSE:
+        level--;
+        if (level < 0) {
+          BUG();
+        }
+        prev_state = ST_CLOSE;
+        p++;
+        continue;
+
+      case ST_DATA:
+        if (prev_state == ST_CLOSE) {
+          BUG();
+        }
+        if (prev_state == ST_OPEN){
+          /* Start of a list. Check this token. */
+          gpg_err_code_t err;
+
+          p++; /* Move past the ST_DATA state. */
+
+          /* Copy the 2-byte data length into n, an unsigned short. */
+          memcpy(&n, p, sizeof(n));
+          /* And move past the data length. p now points at the value */
+          p += sizeof(n);
+
+          /* Check if this token should be allowed. */
+          err = (*validate_func)(p, n);
+          if (err != GPG_ERR_NO_ERROR) {
+#if 0
+/*
+ * DEBUG AID. It would be wonderful to have this in production, but
+ * I can't figure out how to do that yet.
+ */
+            {
+              char token_val[sizeof(unsigned short) + 1];
+              memcpy(token_val, p, n);
+              token_val[n] = '\0';
+              log_printf("Failed to validate token: \"%s\"\n", token_val);
+              _gcry_sexp_dump(list);
+            }
+#endif
+            return err;
+          }
+          /* Move past the compared value. */
+          p += n;
+        }
+        if (prev_state == ST_DATA) {
+          /* CDR of a list - just walk past this entry. */
+          p++; /* Move past the ST_DATA state. */
+
+          /* Copy the 2-byte data length into n, an unsigned short. */
+          memcpy(&n, p, sizeof(n));
+          /* And move past the data length. p now points at the value */
+          p += sizeof(n);
+          /* Move past the value - we don't care what it is. */
+          p += n;
+        }
+        prev_state = ST_DATA;
+        continue;
+
+      default:
+        BUG();
+      }
+    }
+
+  /* More sanity checks. */
+  if (level != 0) {
+    BUG();
+  }
+  return GPG_ERR_NO_ERROR;
+}
+
 
 /* Return the internal lengths offset of LIST.  That is the size of
    the buffer from the first ST_OPEN, which is returned at R_OFF, to
