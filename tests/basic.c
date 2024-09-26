@@ -4570,6 +4570,7 @@ _check_eax_cipher (unsigned int step)
         fprintf (stderr, "    checking EAX mode for %s [%i]\n",
                  gcry_cipher_algo_name (tv[i].algo),
                  tv[i].algo);
+
       err = gcry_cipher_open (&hde, tv[i].algo, GCRY_CIPHER_MODE_EAX, 0);
       if (!err)
         err = gcry_cipher_open (&hdd, tv[i].algo, GCRY_CIPHER_MODE_EAX, 0);
@@ -4577,6 +4578,42 @@ _check_eax_cipher (unsigned int step)
         {
           fail ("aes-eax, gcry_cipher_open failed: %s\n", gpg_strerror (err));
           return;
+        }
+
+      if (in_fips_mode)
+        {
+          /* But EAX mode is not. */
+          size_t nbytes = 0;
+          char buffer = 1;
+          err = gcry_cipher_info (hde, GCRYCTL_FIPS_CIPHER_MODE_APPROVED, &buffer, &nbytes);
+          if (err)
+            {
+              fail ("aes-eax, gcry_cipher_info failed: %s\n", gpg_strerror (err));
+              return;
+            }
+          if (nbytes != 1 || buffer == 1)
+            {
+              fail ("EAX mode for %s [%i] "
+                    "- reported as supported in fips !\n",
+                    gcry_cipher_algo_name (tv[i].algo),
+                    tv[i].algo);
+            }
+
+          nbytes = 0;
+          buffer = 1;
+          err = gcry_cipher_info (hdd, GCRYCTL_FIPS_CIPHER_MODE_APPROVED, &buffer, &nbytes);
+          if (err)
+            {
+              fail ("aes-eax, gcry_cipher_info failed: %s\n", gpg_strerror (err));
+              return;
+            }
+          if (nbytes != 1 || buffer == 1)
+            {
+              fail ("EAX mode for %s [%i] "
+                    "- reported as supported in fips !\n",
+                    gcry_cipher_algo_name (tv[i].algo),
+                    tv[i].algo);
+            }
         }
 
       keylen = gcry_cipher_get_algo_keylen(tv[i].algo);
@@ -5091,6 +5128,7 @@ check_siv_cipher (void)
 	fprintf (stderr, "    checking SIV mode for %s [%i]\n",
 		 gcry_cipher_algo_name (tv[i].algo),
 		 tv[i].algo);
+
       err = gcry_cipher_open (&hde, tv[i].algo, GCRY_CIPHER_MODE_SIV, 0);
       if (!err)
 	err = gcry_cipher_open (&hdd, tv[i].algo, GCRY_CIPHER_MODE_SIV, 0);
@@ -5099,6 +5137,42 @@ check_siv_cipher (void)
 	  fail ("aes-siv, gcry_cipher_open failed: %s\n", gpg_strerror (err));
 	  return;
 	}
+
+      if (in_fips_mode)
+        {
+          /* But SIV mode is not. */
+          size_t nbytes = 0;
+          char buffer = 1;
+          err = gcry_cipher_info (hde, GCRYCTL_FIPS_CIPHER_MODE_APPROVED, &buffer, &nbytes);
+          if (err)
+            {
+              fail ("aes-siv, gcry_cipher_info failed: %s\n", gpg_strerror (err));
+              return;
+            }
+          if (nbytes != 1 || buffer == 1)
+            {
+              fail ("SIV mode for %s [%i] "
+                    "- reported as supported in fips !\n",
+                    gcry_cipher_algo_name (tv[i].algo),
+                    tv[i].algo);
+            }
+
+          nbytes = 0;
+          buffer = 1;
+          err = gcry_cipher_info (hdd, GCRYCTL_FIPS_CIPHER_MODE_APPROVED, &buffer, &nbytes);
+          if (err)
+            {
+              fail ("aes-siv, gcry_cipher_info failed: %s\n", gpg_strerror (err));
+              return;
+            }
+          if (nbytes != 1 || buffer == 1)
+            {
+              fail ("SIV mode for %s [%i] "
+                    "- reported as supported in fips !\n",
+                    gcry_cipher_algo_name (tv[i].algo),
+                    tv[i].algo);
+            }
+        }
 
       keylen = gcry_cipher_get_algo_keylen (tv[i].algo) * 2;
       if (!keylen)
@@ -6159,6 +6233,7 @@ check_gcm_siv_cipher (void)
 	fprintf (stderr, "    checking GCM-SIV mode for %s [%i]\n",
 		 gcry_cipher_algo_name (tv[i].algo),
 		 tv[i].algo);
+
       err = gcry_cipher_open (&hde, tv[i].algo, GCRY_CIPHER_MODE_GCM_SIV, 0);
       if (!err)
 	err = gcry_cipher_open (&hdd, tv[i].algo, GCRY_CIPHER_MODE_GCM_SIV, 0);
@@ -6167,6 +6242,42 @@ check_gcm_siv_cipher (void)
           fail ("aes-gcm-siv, gcry_cipher_open failed: %s\n", gpg_strerror (err));
 	  return;
 	}
+
+      if (in_fips_mode)
+        {
+          /* But GCM-SIV mode is not. */
+          size_t nbytes = 0;
+          char buffer = 1;
+          err = gcry_cipher_info (hde, GCRYCTL_FIPS_CIPHER_MODE_APPROVED, &buffer, &nbytes);
+          if (err)
+            {
+              fail ("aes-gcm-siv, gcry_cipher_info failed: %s\n", gpg_strerror (err));
+              return;
+            }
+          if (nbytes != 1 || buffer == 1)
+            {
+              fail ("GCM-SIV mode for %s [%i] "
+                    "- reported as supported in fips !\n",
+                    gcry_cipher_algo_name (tv[i].algo),
+                    tv[i].algo);
+            }
+
+          nbytes = 0;
+          buffer = 1;
+          err = gcry_cipher_info (hdd, GCRYCTL_FIPS_CIPHER_MODE_APPROVED, &buffer, &nbytes);
+          if (err)
+            {
+              fail ("aes-gcm-siv, gcry_cipher_info failed: %s\n", gpg_strerror (err));
+              return;
+            }
+          if (nbytes != 1 || buffer == 1)
+            {
+              fail ("GCM-SIV mode for %s [%i] "
+                    "- reported as supported in fips !\n",
+                    gcry_cipher_algo_name (tv[i].algo),
+                    tv[i].algo);
+            }
+        }
 
       keylen = gcry_cipher_get_algo_keylen (tv[i].algo);
       if (!keylen)
@@ -7969,6 +8080,16 @@ do_check_ocb_cipher (int inplace)
           if (gpg_err_code (err) != GPG_ERR_NOT_SUPPORTED)
             fail ("cipher-ocb, gcry_control did not fail as expected (tv %d): %s\n",
                   tidx, gpg_strerror (err));
+          xfree (nonce);
+          xfree (aad);
+          xfree (plain);
+          xfree (ciph);
+          if (verbose)
+            fprintf (stderr, "    Skipping OCB mode for %s [%i] (tv %d) "
+                             "- not supported in fips\n",
+                 gcry_cipher_algo_name (tv[tidx].algo), tv[tidx].algo, tidx);
+
+          continue;
         }
 
       err = gcry_cipher_open (&hde, tv[tidx].algo, GCRY_CIPHER_MODE_OCB, 0);
@@ -8254,6 +8375,7 @@ check_ocb_cipher_largebuf_split (int algo, int keylen, const char *tagexpect,
       if (gpg_err_code (err) != GPG_ERR_NOT_SUPPORTED)
         fail ("cipher-ocb, gcry_control did not fail as expected (large, algo %d): %s\n",
               algo, gpg_strerror (err));
+      goto out_free;
     }
 
   err = gcry_cipher_open (&hde, algo, GCRY_CIPHER_MODE_OCB, 0);
@@ -8476,6 +8598,7 @@ check_ocb_cipher_checksum (int algo, int keylen)
       if (gpg_err_code (err) != GPG_ERR_NOT_SUPPORTED)
         fail ("cipher-ocb, gcry_control did not fail as expected (checksum, algo %d): %s\n",
               algo, gpg_strerror (err));
+      goto out_free;
     }
 
   err = gcry_cipher_open (&hde, algo, GCRY_CIPHER_MODE_OCB, 0);
@@ -8754,6 +8877,11 @@ check_ocb_cipher_splitaad (void)
           if (gpg_err_code (err) != GPG_ERR_NOT_SUPPORTED)
             fail ("cipher-ocb-splitaad, gcry_control did not fail as expected: %s\n",
                   gpg_strerror (err));
+          xfree (aad[0]);
+          xfree (aad[1]);
+          xfree (aad[2]);
+          xfree (aad[3]);
+          continue;
         }
 
       err = gcry_cipher_open (&hde, GCRY_CIPHER_AES, GCRY_CIPHER_MODE_OCB, 0);
