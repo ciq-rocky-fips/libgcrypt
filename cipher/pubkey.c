@@ -678,7 +678,7 @@ _gcry_pk_verify (gcry_sexp_t s_sig, gcry_sexp_t s_hash, gcry_sexp_t s_pkey)
 
 gcry_err_code_t
 _gcry_pk_verify_md (gcry_sexp_t s_sig, const char *tmpl, gcry_md_hd_t hd_orig,
-                    gcry_sexp_t s_pkey, gcry_ctx_t ctx)
+                    gcry_sexp_t s_pkey, gcry_ctx_t ctx, int selftest)
 {
   gcry_err_code_t rc;
   gcry_pk_spec_t *spec;

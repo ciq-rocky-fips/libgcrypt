@@ -202,7 +202,7 @@ test_keys_fips (gcry_sexp_t skey)
     goto leave;
 
   /* Use the RSA public function to verify this signature.  */
-  ec = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL);
+  ec = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL, 1);
   if (ec)
     goto leave;
 
@@ -210,7 +210,7 @@ test_keys_fips (gcry_sexp_t skey)
   _gcry_md_reset(hd);
   plaintext[sizeof plaintext / 2] ^= 1;
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
-  ec = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL);
+  ec = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL, 1);
   if (ec != GPG_ERR_BAD_SIGNATURE)
     goto leave; /* Signature verification worked on modified data  */
 
@@ -1848,7 +1848,7 @@ selftest_hash_sign_2048 (gcry_sexp_t pkey, gcry_sexp_t skey)
       goto leave;
     }
 
-  err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL);
+  err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL, 1);
   if (err)
     {
       errtxt = "verify failed";
@@ -1857,7 +1857,7 @@ selftest_hash_sign_2048 (gcry_sexp_t pkey, gcry_sexp_t skey)
 
   _gcry_md_reset(hd);
   _gcry_md_write (hd, sample_data_bad, sizeof(sample_data_bad));
-  err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL);
+  err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL, 1);
   if (gcry_err_code (err) != GPG_ERR_BAD_SIGNATURE)
     {
       errtxt = "bad signature not detected";
