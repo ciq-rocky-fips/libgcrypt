@@ -15493,7 +15493,7 @@ check_pubkey_sign (int n, gcry_sexp_t skey, gcry_sexp_t pkey, int algo,
 	" (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#)\n"
         " (random-override #4253647587980912233445566778899019283747#))\n",
 	GCRY_PK_RSA,
-	0 },
+	0, FLAG_NOFIPS },
       { "(data\n (flags pss)\n"
 	" (hash-algo sha1)\n"
 	" (value #11223344556677889900AA#))\n",
@@ -15504,7 +15504,7 @@ check_pubkey_sign (int n, gcry_sexp_t skey, gcry_sexp_t pkey, int algo,
 	" (value #11223344556677889900AA#)\n"
         " (random-override #4253647587980912233445566778899019283747#))\n",
 	GCRY_PK_RSA,
-	0 },
+	0, FLAG_NOFIPS },
       { "(data\n (flags pss)\n"
 	" (hash-algo sha256)\n"
 	" (value #11223344556677889900AABBCCDDEEFF#)\n"
@@ -15512,7 +15512,7 @@ check_pubkey_sign (int n, gcry_sexp_t skey, gcry_sexp_t pkey, int algo,
         " (random-override #42536475879809122334455667788990192837465564738291"
                            "00122334455667#))\n",
 	GCRY_PK_RSA,
-	0 },
+	0, FLAG_NOFIPS },
       { "(data\n (flags pss)\n"
 	" (hash-algo sha256)\n"
 	" (value #11223344556677889900AABBCCDDEEFF#)\n"
@@ -15579,6 +15579,7 @@ check_pubkey_sign_ecdsa (int n, gcry_sexp_t skey, gcry_sexp_t pkey,
   int dataidx;
   static const struct
   {
+    int flags;
     unsigned int nbits;
     const char *data;
     int expected_rc;
@@ -15586,7 +15587,8 @@ check_pubkey_sign_ecdsa (int n, gcry_sexp_t skey, gcry_sexp_t pkey,
     int dummy;
   } datas[] =
     {
-      { 192,
+      { 0,
+        192,
         "(data (flags raw)\n"
         " (value #00112233445566778899AABBCCDDEEFF0001020304050607#))",
         0,
@@ -15594,7 +15596,8 @@ check_pubkey_sign_ecdsa (int n, gcry_sexp_t skey, gcry_sexp_t pkey,
         " (value #80112233445566778899AABBCCDDEEFF0001020304050607#))",
         0
       },
-      { 256,
+      { 0,
+        256,
         "(data (flags raw)\n"
         " (value #00112233445566778899AABBCCDDEEFF"
         /* */    "000102030405060708090A0B0C0D0E0F#))",
@@ -15604,7 +15607,8 @@ check_pubkey_sign_ecdsa (int n, gcry_sexp_t skey, gcry_sexp_t pkey,
         /* */    "000102030405060708090A0B0C0D0E0F#))",
         0
       },
-      { 256,
+      { 0,
+        256,
         "(data (flags raw)\n"
         " (hash sha256 #00112233445566778899AABBCCDDEEFF"
         /* */          "000102030405060708090A0B0C0D0E0F#))",
@@ -15614,7 +15618,8 @@ check_pubkey_sign_ecdsa (int n, gcry_sexp_t skey, gcry_sexp_t pkey,
         /* */          "000102030405060708090A0B0C0D0E0F#))",
         0
       },
-      { 256,
+      { FLAG_NOFIPS,
+        256,
         "(data (flags gost)\n"
         " (value #00112233445566778899AABBCCDDEEFF"
         /* */    "000102030405060708090A0B0C0D0E0F#))",
@@ -15624,7 +15629,8 @@ check_pubkey_sign_ecdsa (int n, gcry_sexp_t skey, gcry_sexp_t pkey,
         /* */    "000102030405060708090A0B0C0D0E0F#))",
         0
       },
-      { 512,
+      { FLAG_NOFIPS,
+        512,
         "(data (flags gost)\n"
         " (value #00112233445566778899AABBCCDDEEFF"
         /* */    "000102030405060708090A0B0C0D0E0F"
@@ -15638,7 +15644,8 @@ check_pubkey_sign_ecdsa (int n, gcry_sexp_t skey, gcry_sexp_t pkey,
         /* */    "000102030405060708090A0B0C0D0E0F#))",
         0
       },
-      { 256,
+      { FLAG_NOFIPS,
+        256,
         "(data (flags sm2)\n"
         " (hash sm3 #112233445566778899AABBCCDDEEFF00"
         /* */       "123456789ABCDEF0123456789ABCDEF0#))",
@@ -15648,7 +15655,7 @@ check_pubkey_sign_ecdsa (int n, gcry_sexp_t skey, gcry_sexp_t pkey,
         /* */       "9A87E6FC682D48BB5D42E3D9B9EFFE76#))",
         0
       },
-      { 0, NULL }
+      { 0, 0, NULL }
     };
 
   nbits = gcry_pk_get_nbits (skey);
@@ -15673,7 +15680,7 @@ check_pubkey_sign_ecdsa (int n, gcry_sexp_t skey, gcry_sexp_t pkey,
         die ("converting data failed: %s\n", gpg_strerror (rc));
 
       rc = gcry_pk_sign (&sig, hash, skey);
-      if (in_fips_mode && (flags & FLAG_NOFIPS))
+      if (in_fips_mode && ((flags & FLAG_NOFIPS) || datas[dataidx].flags & FLAG_NOFIPS))
         {
           if (!rc)
             fail ("gcry_pk_sign did not fail as expected in FIPS mode\n");
@@ -15710,6 +15717,7 @@ check_pubkey_crypt (int n, gcry_sexp_t skey, gcry_sexp_t pkey, int algo,
   int dataidx;
   static const struct
   {
+    int flags;
     int algo;    /* If not 0 run test only if ALGO matches.  */
     const char *data;
     const char *hint;
@@ -15719,42 +15727,54 @@ check_pubkey_crypt (int n, gcry_sexp_t skey, gcry_sexp_t pkey, int algo,
     int special;
   } datas[] =
     {
-      {	GCRY_PK_RSA,
+      {
+	0,
+	GCRY_PK_RSA,
         "(data\n (flags pkcs1)\n"
 	" (value #11223344556677889900AA#))\n",
 	NULL,
 	0,
 	0,
 	0 },
-      {	GCRY_PK_RSA,
+      {
+	0,
+	GCRY_PK_RSA,
         "(data\n (flags pkcs1)\n"
 	" (value #11223344556677889900AA#))\n",
 	"(flags pkcs1)",
 	1,
 	0,
 	0 },
-      { GCRY_PK_RSA,
+      {
+	0,
+	GCRY_PK_RSA,
         "(data\n (flags oaep)\n"
 	" (value #11223344556677889900AA#))\n",
 	"(flags oaep)",
 	1,
 	0,
 	0 },
-      { GCRY_PK_RSA,
+      {
+	0,
+	GCRY_PK_RSA,
         "(data\n (flags oaep)\n (hash-algo sha1)\n"
 	" (value #11223344556677889900AA#))\n",
 	"(flags oaep)(hash-algo sha1)",
 	1,
 	0,
 	0 },
-      { GCRY_PK_RSA,
+      {
+	FLAG_NOFIPS,
+	GCRY_PK_RSA,
         "(data\n (flags oaep)\n (hash-algo sha1)\n (label \"test\")\n"
 	" (value #11223344556677889900AA#))\n",
 	"(flags oaep)(hash-algo sha1)(label \"test\")",
 	1,
 	0,
 	0 },
-      { GCRY_PK_RSA,
+      {
+	FLAG_NOFIPS,
+	GCRY_PK_RSA,
         "(data\n (flags oaep)\n (hash-algo sha1)\n (label \"test\")\n"
 	" (value #11223344556677889900AA#)\n"
         " (random-override #4253647587980912233445566778899019283747#))\n",
@@ -15762,59 +15782,80 @@ check_pubkey_crypt (int n, gcry_sexp_t skey, gcry_sexp_t pkey, int algo,
 	1,
 	0,
 	0 },
-      {	0,
+      {
+	0,
+	0,
         "(data\n (flags )\n" " (value #11223344556677889900AA#))\n",
 	NULL,
 	1,
 	0,
+	0,
 	0 },
-      {	0,
+      {
+	0,
+	0,
         "(data\n (flags )\n" " (value #0090223344556677889900AA#))\n",
 	NULL,
 	1,
 	0,
-	0 },
-      { 0,
+	0,
+        0 },
+      {
+	0,
+	0,
         "(data\n (flags raw)\n" " (value #11223344556677889900AA#))\n",
 	NULL,
 	1,
 	0,
-	0 },
-      { GCRY_PK_RSA,
+	0,
+        0 },
+      {
+	0,
+	GCRY_PK_RSA,
         "(data\n (flags pkcs1)\n"
 	" (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#))\n",
 	NULL,
 	0,
 	GPG_ERR_CONFLICT,
-	0},
-      { 0,
+	0,
+        0},
+      {
+	0,
+	0,
         "(data\n (flags raw foo)\n"
 	" (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#))\n",
 	NULL,
 	0,
 	GPG_ERR_INV_FLAG,
-	0},
-      { 0,
+	0,
+        0},
+      {
+	0,
+	0,
         "(data\n (flags raw)\n"
 	" (value #11223344556677889900AA#))\n",
 	"(flags oaep)",
 	1,
 	0,
 	GPG_ERR_ENCODING_PROBLEM, 1 },
-      { GCRY_PK_RSA,
+      {
+        0,
+	GCRY_PK_RSA,
         "(data\n (flags oaep)\n"
 	" (value #11223344556677889900AA#))\n",
 	"(flags pkcs1)",
 	1,
 	0,
 	GPG_ERR_ENCODING_PROBLEM, 1 },
-      {	0,
+      {
+	0,
+	0,
         "(data\n (flags pss)\n"
 	" (value #11223344556677889900AA#))\n",
 	NULL,
 	0,
 	GPG_ERR_CONFLICT },
-      { 0, NULL }
+      { 0, 0, NULL }
     };
 
   (void)n;
@@ -15834,7 +15875,7 @@ check_pubkey_crypt (int n, gcry_sexp_t skey, gcry_sexp_t pkey, int algo,
 	die ("converting data failed: %s\n", gpg_strerror (rc));
 
       rc = gcry_pk_encrypt (&ciph, data, pkey);
-      if (in_fips_mode && (flags & FLAG_NOFIPS))
+      if (in_fips_mode && ((flags & FLAG_NOFIPS) || (datas[dataidx].flags & FLAG_NOFIPS)))
         {
           if (!rc)
             fail ("gcry_pk_encrypt did not fail as expected in FIPS mode\n");
