@@ -1818,6 +1818,23 @@ cipher_bench_one (int algo, struct bench_cipher_mode *pmode)
   if (mode.mode == GCRY_CIPHER_MODE_OCB && blklen != GCRY_OCB_BLOCK_LEN)
     return;
 
+  if (in_fips_mode) {
+    switch (mode.mode) {
+      case GCRY_CIPHER_MODE_ECB:
+      case GCRY_CIPHER_MODE_CBC:
+      case GCRY_CIPHER_MODE_CFB:
+      case GCRY_CIPHER_MODE_CFB8:
+      case GCRY_CIPHER_MODE_OFB:
+      case GCRY_CIPHER_MODE_CTR:
+      case GCRY_CIPHER_MODE_CCM:
+      case GCRY_CIPHER_MODE_XTS:
+      case GCRY_CIPHER_MODE_AESWRAP:
+        break;
+      default:
+        return;
+    }
+  }
+
   bench_print_mode (14, mode.name);
 
   obj.ops = mode.ops;
