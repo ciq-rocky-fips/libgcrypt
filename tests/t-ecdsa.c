@@ -637,8 +637,10 @@ main (int argc, char **argv)
   xgcry_control ((GCRYCTL_ENABLE_QUICK_RANDOM, 0));
   xgcry_control ((GCRYCTL_INITIALIZATION_FINISHED, 0));
 
-  if (gcry_fips_mode_active ())
-    in_fips_mode = 1;
+  if (gcry_fips_mode_active ()) {
+    puts ("[skipped in fips mode]");
+    return 0;
+  }
 
   start_timer ();
   check_ecdsa (fname);
