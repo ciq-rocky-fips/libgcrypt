@@ -786,7 +786,7 @@ ecc_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms, int self
     ctx.hash_algo = GCRY_MD_NONE;
 
   /* Extract the data.  */
-  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
+  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx, selftest);
   if (rc)
     goto leave;
   if (DBG_CIPHER)
@@ -898,7 +898,7 @@ ecc_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms, int s
     ctx.hash_algo = GCRY_MD_NONE;
 
   /* Extract the data.  */
-  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
+  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx, selftest);
   if (rc)
     goto leave;
   if (DBG_CIPHER)
@@ -1032,7 +1032,7 @@ ecc_encrypt_raw (gcry_sexp_t *r_ciph, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   /*
    * Extract the data.
    */
-  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
+  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx, 0);
   if (rc)
     goto leave;
 

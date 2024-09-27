@@ -826,7 +826,7 @@ elg_encrypt (gcry_sexp_t *r_ciph, gcry_sexp_t s_data, gcry_sexp_t keyparms)
                                    elg_get_nbits (keyparms));
 
   /* Extract the data.  */
-  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
+  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx, 0);
   if (rc)
     goto leave;
   if (DBG_CIPHER)
@@ -984,7 +984,7 @@ elg_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms, int self
                                    elg_get_nbits (keyparms));
 
   /* Extract the data.  */
-  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
+  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx, 0);
   if (rc)
     goto leave;
   if (DBG_CIPHER)
@@ -1049,7 +1049,7 @@ elg_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms, int s
                                    elg_get_nbits (s_keyparms));
 
   /* Extract the data.  */
-  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
+  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx, 0);
   if (rc)
     goto leave;
   if (DBG_CIPHER)

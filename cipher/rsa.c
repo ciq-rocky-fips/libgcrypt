@@ -1352,7 +1352,7 @@ rsa_encrypt (gcry_sexp_t *r_ciph, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_ENCRYPT, nbits);
 
   /* Extract the data.  */
-  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
+  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx, 0);
   if (rc)
     goto leave;
   if (DBG_CIPHER)
@@ -1548,7 +1548,7 @@ rsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms, int self
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_SIGN, nbits);
 
   /* Extract the data.  */
-  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
+  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx, selftest);
   if (rc)
     goto leave;
   if (DBG_CIPHER)
@@ -1654,7 +1654,7 @@ rsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms, int sel
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_VERIFY, nbits);
 
   /* Extract the data.  */
-  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
+  rc = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx, selftest);
   if (rc)
     goto leave;
   if (DBG_CIPHER)
