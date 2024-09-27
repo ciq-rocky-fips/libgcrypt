@@ -73,6 +73,14 @@ static const char *ecc_names[] =
     NULL,
   };
 
+static const char *ecc_names_fips[] =
+  {
+    "ecc",
+    "ecdsa",
+    "ecdh",
+    NULL,
+  };
+
 
 /* Sample NIST P-256 key from RFC 6979 A.2.5 */
 static const char sample_public_key_secp256[] =
@@ -2046,6 +2054,15 @@ run_selftests (int algo, int extended, selftest_report_func_t report)
   if (algo != GCRY_PK_ECC)
     return GPG_ERR_PUBKEY_ALGO;
 
+  if (fips_mode()) {
+    /*
+     * Remove the following aliases from the allowed aliases list.
+     * "eddsa",
+     * "gost",
+     * "sm2"
+     */
+    _gcry_pubkey_spec_ecc.aliases = ecc_names_fips;
+  }
   return selftests_ecdsa (report, extended);
 }
 
