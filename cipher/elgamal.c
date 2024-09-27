@@ -1035,7 +1035,7 @@ elg_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms, int self
 
 
 static gcry_err_code_t
-elg_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
+elg_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms, int selftest)
 {
   gcry_err_code_t rc;
   struct pk_encoding_ctx ctx;

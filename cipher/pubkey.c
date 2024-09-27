@@ -666,7 +666,7 @@ _gcry_pk_verify (gcry_sexp_t s_sig, gcry_sexp_t s_hash, gcry_sexp_t s_pkey)
         goto leave;
       }
     }
-    rc = spec->verify (s_sig, s_hash, keyparms);
+    rc = spec->verify (s_sig, s_hash, keyparms, 0);
   } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
@@ -748,7 +748,7 @@ _gcry_pk_verify_md (gcry_sexp_t s_sig, const char *tmpl, gcry_md_hd_t hd_orig,
         goto leave;
       }
     }
-    rc = spec->verify (s_sig, s_hash, keyparms);
+    rc = spec->verify (s_sig, s_hash, keyparms, selftest);
   } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
