@@ -857,18 +857,21 @@ check_openpgp (void)
 
   for (tvidx=0; tvidx < DIM(tv); tvidx++)
     {
+      unsigned int fips_approved = 0;
+
       if (tv[tvidx].disabled)
         continue;
-      /* MD5 isn't supported in fips mode */
+      /* MD5 as a hash algorithm isn't supported in fips mode */
       if (in_fips_mode && tv[tvidx].hashalgo == GCRY_MD_MD5)
         continue;
       if (verbose)
         fprintf (stderr, "checking S2K test vector %d\n", tvidx);
       assert (tv[tvidx].dklen <= sizeof outbuf);
-      err = gcry_kdf_derive (tv[tvidx].p, tv[tvidx].plen,
+      err = gcry_kdf_derive_fips (tv[tvidx].p, tv[tvidx].plen,
                              tv[tvidx].algo, tv[tvidx].hashalgo,
                              tv[tvidx].salt, tv[tvidx].saltlen,
-                             tv[tvidx].c, tv[tvidx].dklen, outbuf);
+                             tv[tvidx].c, tv[tvidx].dklen, outbuf,
+                             &fips_approved);
       if (err)
         fail ("s2k test %d failed: %s\n", tvidx, gpg_strerror (err));
       else if (memcmp (outbuf, tv[tvidx].dk, tv[tvidx].dklen))
@@ -878,6 +881,21 @@ check_openpgp (void)
           for (i=0; i < tv[tvidx].dklen; i++)
             fprintf (stderr, " %02x", outbuf[i]);
           putc ('\n', stderr);
+        }
+      if (in_fips_mode && tv[tvidx].algo == GCRY_KDF_SIMPLE_S2K)
+        {
+          if (fips_approved == 1)
+            fail ("s2k test %d GCRY_KDF_SIMPLE_S2K returned fips_approved = 1\n", tvidx);
+        }
+      if (in_fips_mode && tv[tvidx].algo == GCRY_KDF_SALTED_S2K)
+        {
+          if (fips_approved == 1)
+            fail ("s2k test %d GCRY_KDF_SALTED_S2K returned fips_approved = 1\n", tvidx);
+        }
+      if (in_fips_mode && tv[tvidx].algo == GCRY_KDF_ITERSALTED_S2K)
+        {
+          if (fips_approved == 1)
+            fail ("s2k test %d GCRY_KDF_ITERSALTED_S2K returned fips_approved = 1\n", tvidx);
         }
     }
 }
