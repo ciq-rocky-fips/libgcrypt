@@ -216,6 +216,29 @@ _gcry_pk_algo_name (int algo)
 }
 
 
+/*
+ * Return the canonical name of the public key algorithm,
+ * or NULL if it doesn't exist. We're not checking if it's
+ * enabled or fips available here, we just want the canonical
+ * name.
+ */
+
+const char *_gcry_pk_map_canonical_algo_name (const char *name)
+{
+  gcry_pk_spec_t *spec;
+
+  if (name == NULL) {
+    return NULL;
+  }
+
+  spec = spec_from_name(name);
+  if (spec) {
+    return spec->name;
+  }
+  return NULL;
+}
+
+
 /****************
  * A USE of 0 means: don't care.
  */
