@@ -733,11 +733,14 @@ main (int argc, char **argv)
   xgcry_control ((GCRYCTL_ENABLE_QUICK_RANDOM, 0));
 
   if (run_oaep)
-    check_oaep ();
+    if (!in_fips_mode)
+      check_oaep ();
   if (run_pss)
-    check_pss ();
+    if (!in_fips_mode)
+      check_pss ();
   if (run_v15c)
-    check_v15crypt ();
+    if (!in_fips_mode)
+      check_v15crypt ();
   if (run_v15s)
     check_v15sign ();
 
