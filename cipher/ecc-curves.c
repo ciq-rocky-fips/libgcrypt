@@ -1261,7 +1261,7 @@ mpi_ec_setup_elliptic_curve (mpi_ec_t ec, int flags,
 
 gpg_err_code_t
 _gcry_mpi_ec_internal_new (mpi_ec_t *r_ec, int *r_flags, const char *name_op,
-                           gcry_sexp_t keyparam, const char *curvename)
+                           gcry_sexp_t keyparam, const char *curvename, int selftest)
 {
   gpg_err_code_t errc;
   elliptic_curve_t E;

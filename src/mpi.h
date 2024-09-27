@@ -320,7 +320,7 @@ gpg_err_code_t _gcry_mpi_ec_new (gcry_ctx_t *r_ctx,
 gpg_err_code_t _gcry_mpi_ec_internal_new (mpi_ec_t *r_ec, int *r_flags,
                                           const char *name_op,
                                           gcry_sexp_t keyparam,
-                                          const char *curvename);
+                                          const char *curvename, int selftest);
 
 
 
