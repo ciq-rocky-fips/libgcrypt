@@ -156,7 +156,7 @@ _gcry_pk_util_parse_flaglist (gcry_sexp_t list,
         case 7:
           if (!memcmp (s, "rfc6979", 7))
             {
-              if (in_fips_mode) {
+              if (in_fips_mode && !selftest) {
                 rc = GPG_ERR_INV_FLAG;
                 break;
               }
