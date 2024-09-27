@@ -101,6 +101,7 @@ gpg_err_code_t _gcry_pk_ctl (int cmd, void *buffer, size_t buflen);
 gpg_err_code_t _gcry_pk_algo_info (int algo, int what,
                                    void *buffer, size_t *nbytes);
 const char *_gcry_pk_algo_name (int algorithm) _GCRY_GCC_ATTR_PURE;
+const char *_gcry_pk_map_canonical_algo_name (const char *name);
 int _gcry_pk_map_name (const char* name) _GCRY_GCC_ATTR_PURE;
 unsigned int _gcry_pk_get_nbits (gcry_sexp_t key) _GCRY_GCC_ATTR_PURE;
 unsigned char *_gcry_pk_get_keygrip (gcry_sexp_t key, unsigned char *array);
