@@ -1341,13 +1341,13 @@ selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
   errtxt = NULL;
 
 
-  err = _gcry_pk_verify (sig, data, pkey);
+  err = _gcry_pk_verify (sig, data, pkey, 0);
   if (err)
     {
       errtxt = "verify failed";
       goto leave;
     }
-  err = _gcry_pk_verify (sig, data_bad, pkey);
+  err = _gcry_pk_verify (sig, data_bad, pkey, 0);
   if (gcry_err_code (err) != GPG_ERR_BAD_SIGNATURE)
     {
       errtxt = "bad signature not detected";

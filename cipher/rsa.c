@@ -1940,13 +1940,13 @@ selftest_sign_2048 (gcry_sexp_t pkey, gcry_sexp_t skey)
       goto leave;
     }
 
-  err = _gcry_pk_verify (sig, data, pkey);
+  err = _gcry_pk_verify (sig, data, pkey, 1);
   if (err)
     {
       errtxt = "verify failed";
       goto leave;
     }
-  err = _gcry_pk_verify (sig, data_bad, pkey);
+  err = _gcry_pk_verify (sig, data_bad, pkey, 1);
   if (gcry_err_code (err) != GPG_ERR_BAD_SIGNATURE)
     {
       errtxt = "bad signature not detected";

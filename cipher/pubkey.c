@@ -645,7 +645,7 @@ _gcry_pk_sign_md (gcry_sexp_t *r_sig, const char *tmpl, gcry_md_hd_t hd_orig,
    as an S-Exp, sig is a S-Exp as returned from gcry_pk_sign and data
    must be an S-Exp like the one in sign too.  */
 gcry_err_code_t
-_gcry_pk_verify (gcry_sexp_t s_sig, gcry_sexp_t s_hash, gcry_sexp_t s_pkey)
+_gcry_pk_verify (gcry_sexp_t s_sig, gcry_sexp_t s_hash, gcry_sexp_t s_pkey, int selftest)
 {
   gcry_err_code_t rc;
   gcry_pk_spec_t *spec;
@@ -666,7 +666,7 @@ _gcry_pk_verify (gcry_sexp_t s_sig, gcry_sexp_t s_hash, gcry_sexp_t s_pkey)
         goto leave;
       }
     }
-    rc = spec->verify (s_sig, s_hash, keyparms, 0);
+    rc = spec->verify (s_sig, s_hash, keyparms, selftest);
   } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 

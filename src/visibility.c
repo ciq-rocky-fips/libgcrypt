@@ -1047,7 +1047,7 @@ gcry_pk_verify (gcry_sexp_t sigval, gcry_sexp_t data, gcry_sexp_t pkey)
 {
   if (!fips_is_operational ())
     return gpg_error (fips_not_operational ());
-  return gpg_error (_gcry_pk_verify (sigval, data, pkey));
+  return gpg_error (_gcry_pk_verify (sigval, data, pkey, 0));
 }
 
 gcry_error_t

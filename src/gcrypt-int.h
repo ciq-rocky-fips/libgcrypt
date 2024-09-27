@@ -94,7 +94,7 @@ gpg_err_code_t _gcry_pk_decrypt (gcry_sexp_t *result,
 gpg_err_code_t _gcry_pk_sign (gcry_sexp_t *result,
                               gcry_sexp_t data, gcry_sexp_t skey, int selftest);
 gpg_err_code_t _gcry_pk_verify (gcry_sexp_t sigval,
-                                gcry_sexp_t data, gcry_sexp_t pkey);
+                                gcry_sexp_t data, gcry_sexp_t pkey, int selftest);
 gpg_err_code_t _gcry_pk_testkey (gcry_sexp_t key);
 gpg_err_code_t _gcry_pk_genkey (gcry_sexp_t *r_key, gcry_sexp_t s_parms);
 gpg_err_code_t _gcry_pk_ctl (int cmd, void *buffer, size_t buflen);
