@@ -62,6 +62,7 @@ _gcry_pk_util_parse_flaglist (gcry_sexp_t list,
   int encoding = PUBKEY_ENC_UNKNOWN;
   int flags = 0;
   int igninvflag = 0;
+  int in_fips_mode = fips_mode();
 
   for (i = list ? sexp_length (list)-1 : 0; i > 0; i--)
     {
@@ -84,8 +85,12 @@ _gcry_pk_util_parse_flaglist (gcry_sexp_t list,
             }
           else if (!memcmp (s, "sm2", 3))
             {
-                encoding = PUBKEY_ENC_RAW;
-                flags |= PUBKEY_FLAG_SM2 | PUBKEY_FLAG_RAW_FLAG;
+              if (in_fips_mode) {
+                rc = GPG_ERR_INV_FLAG;
+                break;
+              }
+              encoding = PUBKEY_ENC_RAW;
+              flags |= PUBKEY_FLAG_SM2 | PUBKEY_FLAG_RAW_FLAG;
             }
           else if (!igninvflag)
             rc = GPG_ERR_INV_FLAG;
@@ -93,7 +98,9 @@ _gcry_pk_util_parse_flaglist (gcry_sexp_t list,
 
         case 4:
           if (!memcmp (s, "comp", 4))
-            flags |= PUBKEY_FLAG_COMP;
+            {
+              flags |= PUBKEY_FLAG_COMP;
+            }
           else if (!memcmp (s, "oaep", 4) && encoding == PUBKEY_ENC_UNKNOWN)
             {
               encoding = PUBKEY_ENC_OAEP;
@@ -101,6 +108,10 @@ _gcry_pk_util_parse_flaglist (gcry_sexp_t list,
             }
           else if (!memcmp (s, "gost", 4))
             {
+              if (in_fips_mode) {
+                rc = GPG_ERR_INV_FLAG;
+                break;
+              }
               encoding = PUBKEY_ENC_RAW;
               flags |= PUBKEY_FLAG_GOST;
             }
@@ -111,6 +122,10 @@ _gcry_pk_util_parse_flaglist (gcry_sexp_t list,
         case 5:
           if (!memcmp (s, "eddsa", 5))
             {
+              if (in_fips_mode) {
+                rc = GPG_ERR_INV_FLAG;
+                break;
+              }
               encoding = PUBKEY_ENC_RAW;
               flags |= PUBKEY_FLAG_EDDSA;
               flags |= PUBKEY_FLAG_DJB_TWEAK;
@@ -121,32 +136,50 @@ _gcry_pk_util_parse_flaglist (gcry_sexp_t list,
               flags |= PUBKEY_FLAG_FIXEDLEN;
             }
           else if (!memcmp (s, "param", 5))
-            flags |= PUBKEY_FLAG_PARAM;
+            {
+              flags |= PUBKEY_FLAG_PARAM;
+            }
           else if (!igninvflag)
             rc = GPG_ERR_INV_FLAG;
           break;
 
         case 6:
           if (!memcmp (s, "nocomp", 6))
-            flags |= PUBKEY_FLAG_NOCOMP;
+            {
+              flags |= PUBKEY_FLAG_NOCOMP;
+            }
           else if (!igninvflag)
             rc = GPG_ERR_INV_FLAG;
           break;
 
         case 7:
           if (!memcmp (s, "rfc6979", 7))
-            flags |= PUBKEY_FLAG_RFC6979;
+            {
+              if (in_fips_mode) {
+                rc = GPG_ERR_INV_FLAG;
+                break;
+              }
+              flags |= PUBKEY_FLAG_RFC6979;
+            }
           else if (!memcmp (s, "noparam", 7))
             ; /* Ignore - it is the default.  */
           else if (!memcmp (s, "prehash", 7))
-            flags |= PUBKEY_FLAG_PREHASH;
+            {
+              flags |= PUBKEY_FLAG_PREHASH;
+            }
           else if (!igninvflag)
             rc = GPG_ERR_INV_FLAG;
           break;
 
         case 8:
           if (!memcmp (s, "use-x931", 8))
-            flags |= PUBKEY_FLAG_USE_X931;
+            {
+              if (in_fips_mode) {
+                rc = GPG_ERR_INV_FLAG;
+                break;
+              }
+              flags |= PUBKEY_FLAG_USE_X931;
+            }
           else if (!igninvflag)
             rc = GPG_ERR_INV_FLAG;
           break;
@@ -159,6 +192,10 @@ _gcry_pk_util_parse_flaglist (gcry_sexp_t list,
             }
           else if (!memcmp (s, "djb-tweak", 9))
             {
+              if (in_fips_mode) {
+                rc = GPG_ERR_INV_FLAG;
+                break;
+              }
               encoding = PUBKEY_ENC_RAW;
               flags |= PUBKEY_FLAG_DJB_TWEAK;
             }
@@ -168,27 +205,49 @@ _gcry_pk_util_parse_flaglist (gcry_sexp_t list,
 
         case 10:
           if (!memcmp (s, "igninvflag", 10))
-            igninvflag = 1;
+            {
+              if (in_fips_mode) {
+                rc = GPG_ERR_INV_FLAG;
+                break;
+              }
+              igninvflag = 1;
+            }
           else if (!memcmp (s, "no-keytest", 10))
-            flags |= PUBKEY_FLAG_NO_KEYTEST;
+            {
+              flags |= PUBKEY_FLAG_NO_KEYTEST;
+            }
           else if (!igninvflag)
-            rc = GPG_ERR_INV_FLAG;
+            {
+              rc = GPG_ERR_INV_FLAG;
+            }
           break;
 
         case 11:
           if (!memcmp (s, "no-blinding", 11))
-            flags |= PUBKEY_FLAG_NO_BLINDING;
+            {
+              if (in_fips_mode) {
+                rc = GPG_ERR_INV_FLAG;
+                break;
+              }
+              flags |= PUBKEY_FLAG_NO_BLINDING;
+            }
           else if (!memcmp (s, "use-fips186", 11))
-            flags |= PUBKEY_FLAG_USE_FIPS186;
+            {
+              flags |= PUBKEY_FLAG_USE_FIPS186;
+            }
           else if (!igninvflag)
             rc = GPG_ERR_INV_FLAG;
           break;
 
         case 13:
           if (!memcmp (s, "use-fips186-2", 13))
-            flags |= PUBKEY_FLAG_USE_FIPS186_2;
+            {
+              flags |= PUBKEY_FLAG_USE_FIPS186_2;
+            }
           else if (!memcmp (s, "transient-key", 13))
-            flags |= PUBKEY_FLAG_TRANSIENT_KEY;
+            {
+              flags |= PUBKEY_FLAG_TRANSIENT_KEY;
+            }
           else if (!igninvflag)
             rc = GPG_ERR_INV_FLAG;
           break;
@@ -437,12 +496,29 @@ _gcry_pk_util_preparse_sigval (gcry_sexp_t s_sig, const char **algo_names,
     }
   if (r_eccflags)
     {
-      if (!strcmp (name, "eddsa"))
+      int in_fips_mode = fips_mode();
+
+      if (!strcmp (name, "eddsa")) {
+        if (in_fips_mode) {
+          rc = GPG_ERR_PUBKEY_ALGO;
+          goto leave;
+        }
         *r_eccflags = PUBKEY_FLAG_EDDSA;
-      if (!strcmp (name, "gost"))
+      }
+      if (!strcmp (name, "gost")) {
+        if (in_fips_mode) {
+          rc = GPG_ERR_PUBKEY_ALGO;
+          goto leave;
+        }
         *r_eccflags = PUBKEY_FLAG_GOST;
-      if (!strcmp (name, "sm2"))
+      }
+      if (!strcmp (name, "sm2")) {
+        if (in_fips_mode) {
+          rc = GPG_ERR_PUBKEY_ALGO;
+          goto leave;
+        }
         *r_eccflags = PUBKEY_FLAG_SM2;
+      }
     }
 
   *r_parms = l2;
@@ -488,6 +564,7 @@ _gcry_pk_util_preparse_encval (gcry_sexp_t sexp, const char **algo_names,
   size_t n;
   int parsed_flags = 0;
   int i;
+  int in_fips_mode = fips_mode();
 
   *r_parms = NULL;
 
@@ -554,6 +631,10 @@ _gcry_pk_util_preparse_encval (gcry_sexp_t sexp, const char **algo_names,
 	  l2 = sexp_find_token (l1, "label", 0);
 	  if (l2)
 	    {
+              if (in_fips_mode) {
+                rc = GPG_ERR_INV_FLAG;
+                goto leave;
+              }
 	      s = sexp_nth_data (l2, 1, &n);
 	      if (!s)
 		rc = GPG_ERR_NO_OBJ;
@@ -767,6 +848,11 @@ _gcry_pk_util_data_to_mpi (gcry_sexp_t input, gcry_mpi_t *ret_mpi,
       list = sexp_find_token (ldata, "label", 0);
       if (list)
         {
+          if (in_fips_mode) {
+            rc = GPG_ERR_INV_FLAG;
+            sexp_release (list);
+            goto leave;
+          }
           s = sexp_nth_data (list, 1, &n);
           if (!s)
             rc = GPG_ERR_NO_OBJ;
@@ -847,6 +933,11 @@ _gcry_pk_util_data_to_mpi (gcry_sexp_t input, gcry_mpi_t *ret_mpi,
           list = sexp_find_token (ldata, "label", 0);
           if (list)
             {
+              if (in_fips_mode) {
+                rc = GPG_ERR_INV_FLAG;
+                sexp_release (list);
+                goto leave;
+              }
               s = sexp_nth_data (list, 1, &n);
               if (!s)
                 rc = GPG_ERR_NO_OBJ;
@@ -884,6 +975,11 @@ _gcry_pk_util_data_to_mpi (gcry_sexp_t input, gcry_mpi_t *ret_mpi,
           list = sexp_find_token (ldata, "label", 0);
           if (list)
             {
+              if (in_fips_mode) {
+                rc = GPG_ERR_INV_FLAG;
+                sexp_release (list);
+                goto leave;
+              }
               s = sexp_nth_data (list, 1, &n);
               if (!s)
                 rc = GPG_ERR_NO_OBJ;
@@ -1119,6 +1215,11 @@ _gcry_pk_util_data_to_mpi (gcry_sexp_t input, gcry_mpi_t *ret_mpi,
 	  list = sexp_find_token (ldata, "label", 0);
 	  if (list)
 	    {
+              if (in_fips_mode) {
+                rc = GPG_ERR_INV_FLAG;
+                sexp_release (list);
+                goto leave;
+              }
 	      s = sexp_nth_data (list, 1, &n);
 	      if (!s)
 		rc = GPG_ERR_NO_OBJ;
