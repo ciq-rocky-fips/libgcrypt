@@ -340,7 +340,11 @@ check_keys (gcry_sexp_t pkey, gcry_sexp_t skey, unsigned int nbits_data,
   x = gcry_mpi_new (nbits_data);
   gcry_mpi_randomize (x, nbits_data, GCRY_WEAK_RANDOM);
 
-  rc = gcry_sexp_build (&plain, NULL,
+  if (in_fips_mode)
+    rc = gcry_sexp_build (&plain, NULL,
+                        "(data (flags raw) (value %m))", x);
+  else
+    rc = gcry_sexp_build (&plain, NULL,
                         "(data (flags raw no-blinding) (value %m))", x);
   gcry_mpi_release (x);
   if (rc)
