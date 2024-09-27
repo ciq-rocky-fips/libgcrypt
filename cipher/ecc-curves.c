@@ -1067,7 +1067,7 @@ mpi_ec_get_elliptic_curve (elliptic_curve_t *E, int *r_flags,
         {
           int flags = 0;
 
-          errc = _gcry_pk_util_parse_flaglist (l1, &flags, NULL);
+          errc = _gcry_pk_util_parse_flaglist (l1, &flags, NULL, selftest);
           sexp_release (l1);
           l1 = NULL;
           if (errc)

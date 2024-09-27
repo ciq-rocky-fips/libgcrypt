@@ -1210,7 +1210,7 @@ rsa_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
   l1 = sexp_find_token (genparms, "flags", 0);
   if (l1)
     {
-      ec = _gcry_pk_util_parse_flaglist (l1, &flags, NULL);
+      ec = _gcry_pk_util_parse_flaglist (l1, &flags, NULL, 0);
       sexp_release (l1);
       if (ec)
         return ec;
