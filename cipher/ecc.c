@@ -339,7 +339,7 @@ test_keys_fips (gcry_sexp_t skey)
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
 
   /* Sign the data */
-  rc = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL);
+  rc = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL, 1);
   if (rc)
     {
       log_error ("ECDSA operation: signing failed: %s\n", gpg_strerror (rc));
@@ -1797,7 +1797,7 @@ selftest_hash_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
       goto leave;
     }
 
-  err = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL);
+  err = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL, 1);
   if (err)
     {
       errtxt = "signing failed";

@@ -197,7 +197,7 @@ test_keys_fips (gcry_sexp_t skey)
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
 
   /* Use the RSA secret function to create a signature of the plaintext.  */
-  ec = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL);
+  ec = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL, 1);
   if (ec)
     goto leave;
 
@@ -1821,7 +1821,7 @@ selftest_hash_sign_2048 (gcry_sexp_t pkey, gcry_sexp_t skey)
 
   _gcry_md_write (hd, sample_data, sizeof(sample_data));
 
-  err = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL);
+  err = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL, 1);
   if (err)
     {
       errtxt = "signing failed";
