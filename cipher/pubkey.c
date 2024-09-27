@@ -483,7 +483,7 @@ _gcry_pk_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_hash, gcry_sexp_t s_skey)
         goto leave;
       }
     }
-    rc = spec->sign (r_sig, s_hash, keyparms);
+    rc = spec->sign (r_sig, s_hash, keyparms, 0);
   } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
@@ -626,7 +626,7 @@ _gcry_pk_sign_md (gcry_sexp_t *r_sig, const char *tmpl, gcry_md_hd_t hd_orig,
         goto leave;
       }
     }
-    rc = spec->sign (r_sig, s_hash, keyparms);
+    rc = spec->sign (r_sig, s_hash, keyparms, selftest);
   } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 

@@ -753,7 +753,7 @@ ecc_check_secret_key (gcry_sexp_t keyparms)
 
 
 static gcry_err_code_t
-ecc_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
+ecc_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms, int selftest)
 {
   gcry_err_code_t rc;
   struct pk_encoding_ctx ctx;
