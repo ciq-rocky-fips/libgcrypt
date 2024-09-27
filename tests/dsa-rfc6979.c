@@ -980,8 +980,10 @@ main (int argc, char **argv)
     die ("version mismatch; pgm=%s, library=%s\n",
          GCRYPT_VERSION,gcry_check_version (NULL));
   xgcry_control ((GCRYCTL_INITIALIZATION_FINISHED, 0));
-  if (gcry_fips_mode_active ())
-    in_fips_mode = 1;
+  if (gcry_fips_mode_active ()) {
+    puts ("[skipped in fips mode]");
+    return 0;
+  }
   if (debug)
     xgcry_control ((GCRYCTL_SET_DEBUG_FLAGS, 1u, 0));
   /* No valuable keys are create, so we can speed up our RNG. */
