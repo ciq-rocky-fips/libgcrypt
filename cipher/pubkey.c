@@ -460,7 +460,7 @@ _gcry_pk_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t s_skey)
   Note that (hash algo) in R_SIG is not used.
 */
 gcry_err_code_t
-_gcry_pk_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_hash, gcry_sexp_t s_skey)
+_gcry_pk_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_hash, gcry_sexp_t s_skey, int selftest)
 {
   gcry_err_code_t rc;
   gcry_pk_spec_t *spec;
@@ -483,7 +483,7 @@ _gcry_pk_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_hash, gcry_sexp_t s_skey)
         goto leave;
       }
     }
-    rc = spec->sign (r_sig, s_hash, keyparms, 0);
+    rc = spec->sign (r_sig, s_hash, keyparms, selftest);
   } else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 

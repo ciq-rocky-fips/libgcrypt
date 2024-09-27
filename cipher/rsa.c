@@ -1913,7 +1913,7 @@ selftest_sign_2048 (gcry_sexp_t pkey, gcry_sexp_t skey)
       goto leave;
     }
 
-  err = _gcry_pk_sign (&sig, data, skey);
+  err = _gcry_pk_sign (&sig, data, skey, 1);
   if (err)
     {
       errtxt = "signing failed";

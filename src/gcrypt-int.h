@@ -92,7 +92,7 @@ gpg_err_code_t _gcry_pk_encrypt (gcry_sexp_t *result,
 gpg_err_code_t _gcry_pk_decrypt (gcry_sexp_t *result,
                                  gcry_sexp_t data, gcry_sexp_t skey);
 gpg_err_code_t _gcry_pk_sign (gcry_sexp_t *result,
-                              gcry_sexp_t data, gcry_sexp_t skey);
+                              gcry_sexp_t data, gcry_sexp_t skey, int selftest);
 gpg_err_code_t _gcry_pk_verify (gcry_sexp_t sigval,
                                 gcry_sexp_t data, gcry_sexp_t pkey);
 gpg_err_code_t _gcry_pk_testkey (gcry_sexp_t key);
