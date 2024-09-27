@@ -277,6 +277,13 @@ one_test_sexp (const char *n, const char *e, const char *d,
   /* SaltVal = 00 means no salt.  */
   if (!(buflen2 == 1 && ((char *)buffer2)[0] == 0))
     {
+      if (in_fips_mode) {
+        /*
+         * We don't allow this in FIPS.
+         * Only test no salt values.
+         */
+        goto leave;
+      }
       err = gcry_pk_random_override_new (&ctx, buffer2, buflen2);
       if (err)
         {
