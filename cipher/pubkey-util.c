@@ -776,6 +776,7 @@ _gcry_pk_util_data_to_mpi (gcry_sexp_t input, gcry_mpi_t *ret_mpi,
   const char *s;
   int unknown_flag = 0;
   int parsed_flags = 0;
+  int in_fips_mode = fips_mode();
 
   *ret_mpi = NULL;
   ldata = sexp_find_token (input, "data", 0);
@@ -1061,6 +1062,12 @@ _gcry_pk_util_data_to_mpi (gcry_sexp_t input, gcry_mpi_t *ret_mpi,
           list = sexp_find_token (ldata, "random-override", 0);
           if (list)
             {
+              if (in_fips_mode)
+                {
+                  rc = GPG_ERR_INV_SEXP;
+                  sexp_release (list);
+                  goto leave;
+                }
               s = sexp_nth_data (list, 1, &n);
               if (!s)
                 rc = GPG_ERR_NO_OBJ;
@@ -1242,6 +1249,12 @@ _gcry_pk_util_data_to_mpi (gcry_sexp_t input, gcry_mpi_t *ret_mpi,
           list = sexp_find_token (ldata, "random-override", 0);
           if (list)
             {
+              if (in_fips_mode)
+                {
+                  rc = GPG_ERR_INV_SEXP;
+                  sexp_release (list);
+                  goto leave;
+                }
               s = sexp_nth_data (list, 1, &n);
               if (!s)
                 rc = GPG_ERR_NO_OBJ;
@@ -1341,6 +1354,12 @@ _gcry_pk_util_data_to_mpi (gcry_sexp_t input, gcry_mpi_t *ret_mpi,
       list = sexp_find_token (ldata, "random-override", 0);
       if (list)
         {
+          if (in_fips_mode)
+            {
+              rc = GPG_ERR_INV_SEXP;
+              sexp_release (list);
+              goto leave;
+            }
           s = sexp_nth_data (list, 1, &n);
           if (!s)
             rc = GPG_ERR_NO_OBJ;
