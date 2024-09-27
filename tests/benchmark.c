@@ -947,6 +947,14 @@ cipher_bench ( const char *algoname )
       if (in_fips_mode && modes[modeidx].mode == GCRY_CIPHER_MODE_GCM)
         continue;
 
+      /* OCB is not available in FIPS mode */
+      if (in_fips_mode && modes[modeidx].mode == GCRY_CIPHER_MODE_OCB)
+        continue;
+
+      /* EAX is not available in FIPS mode */
+      if (in_fips_mode && modes[modeidx].mode == GCRY_CIPHER_MODE_EAX)
+        continue;
+
       if (modes[modeidx].req_blocksize > 0
           && blklen != modes[modeidx].req_blocksize)
         {
