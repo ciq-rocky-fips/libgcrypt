@@ -2164,6 +2164,15 @@ returned for modes which do not support a tag.  @var{buffer} must be
 given as NULL.  On success the result is stored @var{nbytes}.  The
 taglen is returned in bytes.
 
+@item GCRYCTL_FIPS_CIPHER_MODE_APPROVED:
+Return a one-byte value specifying if a cipher handle is using
+a FIPS-140-3 approved mode. @var{buffer} must be a pointer to
+one byte. On success the result is stored in @var{buffer}.
+A value of 1 means the handle is in FIPS-140-3 approved mode,
+a value of 0 means the handle is NOT in FIPS-140-3 approved mode.
+On success @var{nbytes} returns 1, the length of the value stored
+in @var{buffer}.
+
 @end table
 @c end constants for gcry_cipher_info
 
