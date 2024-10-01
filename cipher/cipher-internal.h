@@ -228,6 +228,8 @@ struct gcry_cipher_handle
 
   int mode;
   unsigned int flags;
+  /* Set to 1 if this handle is in FIPS approved mode. */
+  unsigned int fips_approved:1;
 
   struct {
     unsigned int key:1; /* Set to 1 if a key has been set.  */
