@@ -1786,6 +1786,17 @@ _gcry_cipher_info (gcry_cipher_hd_t h, int cmd, void *buffer, size_t *nbytes)
         }
       break;
 
+    case GCRYCTL_FIPS_CIPHER_MODE_APPROVED:
+      if (!h || !buffer || !nbytes)
+        rc = GPG_ERR_INV_ARG;
+      else
+        {
+          unsigned char mode = h->fips_approved ? 1 : 0;
+          memcpy (buffer, &mode, 1);
+          *nbytes = 1;
+        }
+      break;
+
     default:
       rc = GPG_ERR_INV_OP;
     }
