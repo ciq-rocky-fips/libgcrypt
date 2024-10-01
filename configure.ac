@@ -55,8 +55,8 @@ AC_INIT([mym4_package],[mym4_version],[https://bugs.gnupg.org])
 #   (Interfaces removed:    CURRENT++, AGE=0, REVISION=0)
 #   (Interfaces added:      CURRENT++, AGE++, REVISION=0)
 #   (No interfaces changed:                   REVISION++)
-LIBGCRYPT_LT_CURRENT=24
-LIBGCRYPT_LT_AGE=4
+LIBGCRYPT_LT_CURRENT=25
+LIBGCRYPT_LT_AGE=5
 LIBGCRYPT_LT_REVISION=0
 ################################################
 
