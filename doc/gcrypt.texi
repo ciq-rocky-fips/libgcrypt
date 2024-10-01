@@ -4514,12 +4514,28 @@ returned as number of octets.
 @acronym{Libgcypt} provides a general purpose function to derive keys
 from strings.
 
-@deftypefun gpg_error_t gcry_kdf_derive ( @
+@deftypefun gpg_error_t gcry_kdf_derive( @
             @w{const void *@var{passphrase}}, @w{size_t @var{passphraselen}}, @
             @w{int @var{algo}}, @w{int @var{subalgo}}, @
             @w{const void *@var{salt}}, @w{size_t @var{saltlen}}, @
             @w{unsigned long @var{iterations}}, @
-            @w{size_t @var{keysize}}, @w{void *@var{keybuffer}} )
+            @w{size_t @var{keysize}}, @w{void *@var{keybuffer}})
+
+Deprecated function to derive a key from a passphrase. Cannot
+return FIPS approved state when in FIPS mode. Arguments and
+behavior are identical to the gcry_kdf_derive_fips function,
+with the omission of the final FIPS_APPROVED_PTR parameter.
+
+@end deftypefun
+
+
+@deftypefun gpg_error_t gcry_kdf_derive_fips ( @
+            @w{const void *@var{passphrase}}, @w{size_t @var{passphraselen}}, @
+            @w{int @var{algo}}, @w{int @var{subalgo}}, @
+            @w{const void *@var{salt}}, @w{size_t @var{saltlen}}, @
+            @w{unsigned long @var{iterations}}, @
+            @w{size_t @var{keysize}}, @w{void *@var{keybuffer}}, @
+            @w{unsigned int *@var{fips_approved_ptr}})
 
 
 Derive a key from a passphrase.  @var{keysize} gives the requested
@@ -4532,6 +4548,8 @@ by the KDF algorithms; this is usually a hash algorithm but certain
 KDF algorithms may use it differently.  @var{salt} is a salt of length
 @var{saltlen} octets, as needed by most KDF algorithms.
 @var{iterations} is a positive integer parameter to most KDFs.
+@var{fips_approved_ptr} when in FIPS-140-3 mode points to a value
+of 1 if the KDF algorithm is approved, 0 if not.
 
 @noindent
 On success 0 is returned; on failure an error code.
@@ -4543,28 +4561,29 @@ Currently supported KDFs (parameter @var{algo}):
 @item GCRY_KDF_SIMPLE_S2K
 The OpenPGP simple S2K algorithm (cf. RFC4880).  Its use is strongly
 deprecated.  @var{salt} and @var{iterations} are not needed and may be
-passed as @code{NULL}/@code{0}.
+passed as @code{NULL}/@code{0}. Not FIPS-140-3 approved.
 
 @item GCRY_KDF_SALTED_S2K
 The OpenPGP salted S2K algorithm (cf. RFC4880).  Usually not used.
 @var{iterations} is not needed and may be passed as @code{0}.  @var{saltlen}
-must be given as 8.
+must be given as 8. Not FIPS-140-3 approved.
 
 @item GCRY_KDF_ITERSALTED_S2K
 The OpenPGP iterated+salted S2K algorithm (cf. RFC4880).  This is the
 default for most OpenPGP applications.  @var{saltlen} must be given as
 8.  Note that OpenPGP defines a special encoding of the
 @var{iterations}; however this function takes the plain decoded
-iteration count.
+iteration count. Not FIPS-140-3 approved.
 
 @item GCRY_KDF_PBKDF2
 The PKCS#5 Passphrase Based Key Derivation Function number 2.
+FIPS-140-3 approved.
 
 @item GCRY_KDF_SCRYPT
 The SCRYPT Key Derivation Function.  The subalgorithm is used to specify
 the CPU/memory cost parameter N, and the number of iterations
 is used for the parallelization parameter p.  The block size is fixed
-at 8 in the current implementation.
+at 8 in the current implementation. Not FIPS-140-3 approved.
 
 @end table
 @end deftypefun
