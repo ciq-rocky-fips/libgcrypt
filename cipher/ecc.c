@@ -917,7 +917,7 @@ ecc_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms, int f
   /*
    * Extract the signature value.
    */
-  rc = _gcry_pk_util_preparse_sigval (s_sig, ecc_names, &l1, &sigflags);
+  rc = _gcry_pk_util_preparse_sigval (s_sig, ecc_names, &l1, &sigflags, fips_strict);
   if (rc)
     goto leave;
   rc = sexp_extract_param (l1, NULL, (sigflags & PUBKEY_FLAG_EDDSA)? "/rs":"rs",
