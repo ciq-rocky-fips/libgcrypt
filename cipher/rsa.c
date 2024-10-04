@@ -1667,7 +1667,7 @@ rsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms, int fip
     }
 
   /* Extract the signature value.  */
-  rc = _gcry_pk_util_preparse_sigval (s_sig, rsa_names, &l1, NULL);
+  rc = _gcry_pk_util_preparse_sigval (s_sig, rsa_names, &l1, NULL, fips_strict);
   if (rc)
     goto leave;
   rc = sexp_extract_param (l1, NULL, "s", &sig, NULL);
