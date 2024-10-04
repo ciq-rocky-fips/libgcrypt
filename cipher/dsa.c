@@ -819,7 +819,7 @@ dsa_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
   l1 = sexp_find_token (genparms, "flags", 0);
   if (l1)
     {
-      rc = _gcry_pk_util_parse_flaglist (l1, &flags, NULL);
+      rc = _gcry_pk_util_parse_flaglist (l1, &flags, NULL, 0);
       sexp_release (l1);
       if (rc)
         return rc;\
