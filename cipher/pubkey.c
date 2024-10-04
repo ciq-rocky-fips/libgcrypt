@@ -602,7 +602,15 @@ _gcry_pk_sign_md (gcry_sexp_t *r_sig, const char *tmpl, gcry_md_hd_t hd_orig,
   else if (!spec->flags.fips && fips_mode ())
     rc = GPG_ERR_PUBKEY_ALGO;
   else if (spec->sign)
-    rc = spec->sign (r_sig, s_hash, keyparms);
+    {
+      if (fips_mode())
+        {
+          rc = _gcry_sexp_validate_tokens(keyparms, &validate_sexp_token);
+          if (rc != 0)
+            goto leave;
+        }
+      rc = spec->sign (r_sig, s_hash, keyparms);
+    }
   else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
@@ -712,7 +720,15 @@ _gcry_pk_verify_md (gcry_sexp_t s_sig, const char *tmpl, gcry_md_hd_t hd_orig,
   else if (!spec->flags.fips && fips_mode ())
     rc = GPG_ERR_PUBKEY_ALGO;
   else if (spec->verify)
-    rc = spec->verify (s_sig, s_hash, keyparms);
+    {
+      if (fips_mode())
+        {
+          rc = _gcry_sexp_validate_tokens(keyparms, &validate_sexp_token);
+          if (rc != 0)
+            goto leave;
+        }
+      rc = spec->verify (s_sig, s_hash, keyparms);
+    }
   else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
@@ -836,7 +852,15 @@ _gcry_pk_genkey (gcry_sexp_t *r_key, gcry_sexp_t s_parms)
     }
 
   if (spec->generate)
-    rc = spec->generate (list, r_key);
+    {
+      if (fips_mode())
+        {
+          rc = _gcry_sexp_validate_tokens(list, &validate_sexp_token);
+          if (rc != 0)
+            goto leave;
+        }
+      rc = spec->generate (list, r_key);
+    }
   else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
