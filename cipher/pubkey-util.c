@@ -63,7 +63,7 @@ _gcry_pk_util_parse_flaglist (gcry_sexp_t list,
   int encoding = PUBKEY_ENC_UNKNOWN;
   int flags = 0;
   int igninvflag = 0;
-  int in_fips_mode = fips_mode();
+  int in_fips_mode = (fips_mode() && fips_strict);
 
   for (i = list ? sexp_length (list)-1 : 0; i > 0; i--)
     {
@@ -481,7 +481,7 @@ _gcry_pk_util_preparse_sigval (gcry_sexp_t s_sig, const char **algo_names,
     }
   if (r_eccflags)
     {
-      int in_fips_mode = fips_mode();
+      int in_fips_mode = (fips_mode() && fips_strict);
 
       if (!strcmp (name, "eddsa"))
         {
@@ -767,7 +767,7 @@ _gcry_pk_util_data_to_mpi (gcry_sexp_t input, gcry_mpi_t *ret_mpi,
   const char *s;
   int unknown_flag = 0;
   int parsed_flags = 0;
-  int in_fips_mode = fips_mode();
+  int in_fips_mode = (fips_mode() && fips_strict);
 
   *ret_mpi = NULL;
   ldata = sexp_find_token (input, "data", 0);
