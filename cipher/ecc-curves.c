@@ -1045,7 +1045,8 @@ point_from_keyparam (gcry_mpi_point_t *r_a,
 
 static gpg_err_code_t
 mpi_ec_get_elliptic_curve (elliptic_curve_t *E, int *r_flags,
-                           gcry_sexp_t keyparam, const char *curvename)
+                           gcry_sexp_t keyparam, const char *curvename,
+                           int fips_strict)
 {
   gpg_err_code_t errc;
   unsigned int nbits;
@@ -1270,7 +1271,7 @@ _gcry_mpi_ec_internal_new (mpi_ec_t *r_ec, int *r_flags, const char *name_op,
   *r_ec = NULL;
 
   memset (&E, 0, sizeof E);
-  errc = mpi_ec_get_elliptic_curve (&E, r_flags, keyparam, curvename);
+  errc = mpi_ec_get_elliptic_curve (&E, r_flags, keyparam, curvename, fips_strict);
   if (errc)
     goto leave;
 
@@ -1352,11 +1353,12 @@ _gcry_mpi_ec_new (gcry_ctx_t *r_ctx,
   gcry_ctx_t ctx = NULL;
   int flags = 0;
   mpi_ec_t ec;
+  int fips_strict = 1;
 
   *r_ctx = NULL;
 
   memset (&E, 0, sizeof E);
-  errc = mpi_ec_get_elliptic_curve (&E, &flags, keyparam, curvename);
+  errc = mpi_ec_get_elliptic_curve (&E, &flags, keyparam, curvename, fips_strict);
   if (errc)
     goto leave;
 
