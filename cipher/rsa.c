@@ -186,6 +186,7 @@ test_keys_fips (gcry_sexp_t skey)
   const char *data_tmpl = "(data (flags pkcs1) (hash %s %b))";
   gcry_md_hd_t hd = NULL;
   int ec;
+  int fips_strict = 0;
 
   /* Create a random plaintext.  */
   _gcry_randomize (plaintext, sizeof plaintext, GCRY_WEAK_RANDOM);
@@ -197,7 +198,7 @@ test_keys_fips (gcry_sexp_t skey)
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
 
   /* Use the RSA secret function to create a signature of the plaintext.  */
-  ec = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL);
+  ec = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL, fips_strict);
   if (ec)
     goto leave;
 
@@ -1811,6 +1812,7 @@ selftest_hash_sign_2048 (gcry_sexp_t pkey, gcry_sexp_t skey)
     "e5cc64e3aee2ba2862d04348ea71f65454f74f9fd1e3108005cc367ca41585a4";
   gcry_mpi_t ref_mpi = NULL;
   gcry_mpi_t sig_mpi = NULL;
+  int fips_strict = 0;
 
   err = _gcry_md_open (&hd, md_algo, 0);
   if (err)
@@ -1821,7 +1823,7 @@ selftest_hash_sign_2048 (gcry_sexp_t pkey, gcry_sexp_t skey)
 
   _gcry_md_write (hd, sample_data, sizeof(sample_data));
 
-  err = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL);
+  err = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL, fips_strict);
   if (err)
     {
       errtxt = "signing failed";
