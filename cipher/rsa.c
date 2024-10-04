@@ -1196,6 +1196,7 @@ rsa_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
   gcry_sexp_t l1;
   gcry_sexp_t swap_info = NULL;
   int testparms = 0;
+  int fips_strict = 1;
 
   memset (&sk, 0, sizeof sk);
 
@@ -1211,7 +1212,7 @@ rsa_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
   l1 = sexp_find_token (genparms, "flags", 0);
   if (l1)
     {
-      ec = _gcry_pk_util_parse_flaglist (l1, &flags, NULL);
+      ec = _gcry_pk_util_parse_flaglist (l1, &flags, NULL, fips_strict);
       sexp_release (l1);
       if (ec)
         return ec;

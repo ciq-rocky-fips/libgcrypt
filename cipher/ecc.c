@@ -1430,7 +1430,7 @@ compute_keygrip (gcry_md_hd_t md, gcry_sexp_t keyparms)
   l1 = sexp_find_token (keyparms, "flags", 0);
   if (l1)
     {
-      rc = _gcry_pk_util_parse_flaglist (l1, &flags, NULL);
+      rc = _gcry_pk_util_parse_flaglist (l1, &flags, NULL, fips_strict);
       if (rc)
         goto leave;
     }
