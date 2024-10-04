@@ -325,6 +325,7 @@ test_keys_fips (gcry_sexp_t skey)
   gcry_sexp_t sig = NULL;
   char plaintext[128];
   int rc;
+  int fips_strict = 0; /* Selftest must allow rfc6979. */
 
   /* Create a random plaintext.  */
   _gcry_randomize (plaintext, sizeof plaintext, GCRY_WEAK_RANDOM);
@@ -339,7 +340,7 @@ test_keys_fips (gcry_sexp_t skey)
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
 
   /* Sign the data */
-  rc = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL);
+  rc = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL, fips_strict);
   if (rc)
     {
       log_error ("ECDSA operation: signing failed: %s\n", gpg_strerror (rc));
@@ -1777,6 +1778,7 @@ selftest_hash_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
   gcry_mpi_t calculated_r = NULL;
   gcry_mpi_t calculated_s = NULL;
   int cmp;
+  int fips_strict = 0; /* Selftest must allow rfc6979. */
 
   err = _gcry_md_open (&hd, md_algo, 0);
   if (err)
@@ -1797,7 +1799,7 @@ selftest_hash_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
       goto leave;
     }
 
-  err = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL);
+  err = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL, fips_strict);
   if (err)
     {
       errtxt = "signing failed";
