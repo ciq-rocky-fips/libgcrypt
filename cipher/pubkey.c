@@ -644,7 +644,7 @@ _gcry_pk_verify (gcry_sexp_t s_sig, gcry_sexp_t s_hash, gcry_sexp_t s_pkey)
   else if (!spec->flags.fips && fips_mode ())
     rc = GPG_ERR_PUBKEY_ALGO;
   else if (spec->verify)
-    rc = spec->verify (s_sig, s_hash, keyparms);
+    rc = spec->verify (s_sig, s_hash, keyparms, 0);
   else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
@@ -727,7 +727,7 @@ _gcry_pk_verify_md (gcry_sexp_t s_sig, const char *tmpl, gcry_md_hd_t hd_orig,
           if (rc != 0)
             goto leave;
         }
-      rc = spec->verify (s_sig, s_hash, keyparms);
+      rc = spec->verify (s_sig, s_hash, keyparms, fips_strict);
     }
   else
     rc = GPG_ERR_NOT_IMPLEMENTED;

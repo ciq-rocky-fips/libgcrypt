@@ -75,7 +75,8 @@ typedef gcry_err_code_t (*gcry_pk_sign_t) (gcry_sexp_t *r_sig,
 /* Type for the pk_verify function.  */
 typedef gcry_err_code_t (*gcry_pk_verify_t) (gcry_sexp_t s_sig,
                                              gcry_sexp_t s_data,
-                                             gcry_sexp_t keyparms);
+                                             gcry_sexp_t keyparms,
+                                             int fips_strict);
 
 /* Type for the pk_get_nbits function.  */
 typedef unsigned (*gcry_pk_get_nbits_t) (gcry_sexp_t keyparms);
