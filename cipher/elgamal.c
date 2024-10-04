@@ -971,7 +971,7 @@ elg_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 
 
 static gcry_err_code_t
-elg_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
+elg_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms, int fips_strict)
 {
   gcry_err_code_t rc;
   struct pk_encoding_ctx ctx;
