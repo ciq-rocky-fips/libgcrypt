@@ -119,7 +119,7 @@ gcry_err_code_t _gcry_pk_sign_md (gcry_sexp_t *r_sig, const char *tmpl,
                                   gcry_ctx_t ctx, int fips_strict);
 gcry_err_code_t _gcry_pk_verify_md (gcry_sexp_t s_sig, const char *tmpl,
                                     gcry_md_hd_t hd, gcry_sexp_t s_pkey,
-                                    gcry_ctx_t ctx);
+                                    gcry_ctx_t ctx, int fips_strict);
 gpg_err_code_t _gcry_pk_random_override_new (gcry_ctx_t *r_ctx,
                                              const unsigned char *p,
                                              size_t len);
