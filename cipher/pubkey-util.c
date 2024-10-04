@@ -53,7 +53,8 @@ pss_verify_cmp (void *opaque, gcry_mpi_t tmp)
    or an error code. */
 gpg_err_code_t
 _gcry_pk_util_parse_flaglist (gcry_sexp_t list,
-                              int *r_flags, enum pk_encoding *r_encoding)
+                              int *r_flags, enum pk_encoding *r_encoding,
+                              int fips_strict)
 {
   gpg_err_code_t rc = 0;
   const char *s;
@@ -554,6 +555,11 @@ _gcry_pk_util_preparse_encval (gcry_sexp_t sexp, const char **algo_names,
   size_t n;
   int parsed_flags = 0;
   int i;
+  /*
+   * Only called from encrypt operations, which are
+   * implicitly fips disallowed anyway.
+   */
+  int fips_strict = 0;
 
   *r_parms = NULL;
 
@@ -585,7 +591,7 @@ _gcry_pk_util_preparse_encval (gcry_sexp_t sexp, const char **algo_names,
       const char *s;
 
       /* There is a flags element - process it.  */
-      rc = _gcry_pk_util_parse_flaglist (l2, &parsed_flags, &ctx->encoding);
+      rc = _gcry_pk_util_parse_flaglist (l2, &parsed_flags, &ctx->encoding, fips_strict);
       if (rc)
         goto leave;
       if (ctx->encoding == PUBKEY_ENC_PSS)
@@ -780,7 +786,8 @@ _gcry_pk_util_data_to_mpi (gcry_sexp_t input, gcry_mpi_t *ret_mpi,
     if (lflags)
       {
         if (_gcry_pk_util_parse_flaglist (lflags,
-                                          &parsed_flags, &ctx->encoding))
+                                          &parsed_flags, &ctx->encoding,
+                                          fips_strict))
           unknown_flag = 1;
         sexp_release (lflags);
       }
