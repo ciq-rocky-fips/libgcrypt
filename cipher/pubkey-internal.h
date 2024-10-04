@@ -31,7 +31,8 @@ gpg_err_code_t _gcry_pk_util_get_rsa_use_e (gcry_sexp_t list,
 gpg_err_code_t _gcry_pk_util_preparse_sigval (gcry_sexp_t s_sig,
                                               const char **algo_names,
                                               gcry_sexp_t *r_parms,
-                                              int *r_eccflags);
+                                              int *r_eccflags,
+                                              int fips_strict);
 gpg_err_code_t _gcry_pk_util_preparse_encval (gcry_sexp_t sexp,
                                               const char **algo_names,
                                               gcry_sexp_t *r_parms,

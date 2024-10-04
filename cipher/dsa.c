@@ -1171,7 +1171,7 @@ dsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms, int f
     log_mpidump ("dsa_verify data", data);
 
   /* Extract the signature value.  */
-  rc = _gcry_pk_util_preparse_sigval (s_sig, dsa_names, &l1, NULL);
+  rc = _gcry_pk_util_preparse_sigval (s_sig, dsa_names, &l1, NULL, fips_strict);
   if (rc)
     goto leave;
   rc = _gcry_sexp_extract_param (l1, NULL, "rs", &sig_r, &sig_s, NULL);
