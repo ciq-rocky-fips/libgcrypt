@@ -578,8 +578,9 @@ ecc_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
   gcry_mpi_t base = NULL;
   gcry_mpi_t public = NULL;
   int flags = 0;
+  int fips_strict = 1;
 
-  rc = _gcry_mpi_ec_internal_new (&ec, &flags, "ecgen curve", genparms, NULL);
+  rc = _gcry_mpi_ec_internal_new (&ec, &flags, "ecgen curve", genparms, NULL, fips_strict);
   if (rc)
     goto leave;
 
@@ -729,11 +730,12 @@ ecc_check_secret_key (gcry_sexp_t keyparms)
   gcry_err_code_t rc;
   int flags = 0;
   mpi_ec_t ec = NULL;
+  int fips_strict = 1; /* CHECKME_FIPS */
 
   /*
    * Extract the key.
    */
-  rc = _gcry_mpi_ec_internal_new (&ec, &flags, "ecc_testkey", keyparms, NULL);
+  rc = _gcry_mpi_ec_internal_new (&ec, &flags, "ecc_testkey", keyparms, NULL, fips_strict);
   if (rc)
     goto leave;
   if (!ec->p || !ec->a || !ec->b || !ec->G || !ec->n || !ec->Q || !ec->d)
@@ -770,7 +772,7 @@ ecc_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms, int fips
   /*
    * Extract the key.
    */
-  rc = _gcry_mpi_ec_internal_new (&ec, &flags, "ecc_sign", keyparms, NULL);
+  rc = _gcry_mpi_ec_internal_new (&ec, &flags, "ecc_sign", keyparms, NULL, fips_strict);
   if (rc)
     goto leave;
   if (!ec->p || !ec->a || !ec->b || !ec->G || !ec->n || !ec->d)
@@ -874,7 +876,7 @@ ecc_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms, int f
    * Extract the key.
    */
   rc = _gcry_mpi_ec_internal_new (&ec, &flags, "ecc_verify",
-                                  s_keyparms, NULL);
+                                  s_keyparms, NULL, fips_strict);
   if (rc)
     goto leave;
   if (!ec->p || !ec->a || !ec->b || !ec->G || !ec->n || !ec->Q)
@@ -1009,6 +1011,7 @@ ecc_encrypt_raw (gcry_sexp_t *r_ciph, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   mpi_ec_t ec = NULL;
   int flags = 0;
   int no_error_on_infinity;
+  int fips_strict = 0;
 
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_ENCRYPT,
                                    (nbits = ecc_get_nbits (keyparms)));
@@ -1016,7 +1019,7 @@ ecc_encrypt_raw (gcry_sexp_t *r_ciph, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   /*
    * Extract the key.
    */
-  rc = _gcry_mpi_ec_internal_new (&ec, &flags, "ecc_encrypt", keyparms, NULL);
+  rc = _gcry_mpi_ec_internal_new (&ec, &flags, "ecc_encrypt", keyparms, NULL, fips_strict);
   if (rc)
     goto leave;
 
@@ -1181,6 +1184,7 @@ ecc_decrypt_raw (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   gcry_mpi_t r = NULL;
   int flags = 0;
   int enable_specific_point_validation;
+  int fips_strict = 0;
 
   point_init (&kG);
   point_init (&R);
@@ -1191,7 +1195,7 @@ ecc_decrypt_raw (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   /*
    * Extract the key.
    */
-  rc = _gcry_mpi_ec_internal_new (&ec, &flags, "ecc_decrypt", keyparms, NULL);
+  rc = _gcry_mpi_ec_internal_new (&ec, &flags, "ecc_decrypt", keyparms, NULL, fips_strict);
   if (rc)
     goto leave;
 
@@ -1415,6 +1419,7 @@ compute_keygrip (gcry_md_hd_t md, gcry_sexp_t keyparms)
   const unsigned char *raw;
   unsigned int n;
   int maybe_uncompress;
+  int fips_strict = 0; /* CHECKME_FIPS */
 
   /* Clear the values first.  */
   for (idx=0; idx < N_COMPONENTS; idx++)
@@ -1558,7 +1563,7 @@ compute_keygrip (gcry_md_hd_t md, gcry_sexp_t keyparms)
            * can do computations.  We have them in VALUES but it is
            * possible that the caller provided them as opaque MPIs. */
           rc = _gcry_mpi_ec_internal_new (&ec, &flags, "ecc_keygrip",
-                                          keyparms, NULL);
+                                          keyparms, NULL, fips_strict);
           if (rc)
             goto leave;
           if (!ec->p || !ec->a || !ec->b || !ec->G || !ec->n)
