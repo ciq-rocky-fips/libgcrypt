@@ -477,7 +477,7 @@ _gcry_pk_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_hash, gcry_sexp_t s_skey)
 
 gcry_err_code_t
 _gcry_pk_sign_md (gcry_sexp_t *r_sig, const char *tmpl, gcry_md_hd_t hd_orig,
-                  gcry_sexp_t s_skey, gcry_ctx_t ctx)
+                  gcry_sexp_t s_skey, gcry_ctx_t ctx, int fips_strict)
 {
   gcry_err_code_t rc;
   gcry_pk_spec_t *spec;
