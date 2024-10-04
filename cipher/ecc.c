@@ -348,7 +348,7 @@ test_keys_fips (gcry_sexp_t skey)
     }
 
   /* Verify this signature.  */
-  rc = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL);
+  rc = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL, fips_strict);
   if (rc)
     {
       log_error ("ECDSA operation: verification failed: %s\n", gpg_strerror (rc));
@@ -359,7 +359,7 @@ test_keys_fips (gcry_sexp_t skey)
   _gcry_md_reset(hd);
   plaintext[sizeof plaintext / 2] ^= 1;
   _gcry_md_write (hd, plaintext, sizeof(plaintext));
-  rc = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL);
+  rc = _gcry_pk_verify_md (sig, data_tmpl, hd, skey, NULL, fips_strict);
   if (rc != GPG_ERR_BAD_SIGNATURE)
     {
       log_error ("ECDSA operation: signature verification worked on modified data\n");
@@ -1845,7 +1845,7 @@ selftest_hash_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
   errtxt = NULL;
 
   /* verify generated signature */
-  err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL);
+  err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL, fips_strict);
   if (err)
     {
       errtxt = "verify failed";
@@ -1854,7 +1854,7 @@ selftest_hash_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
 
   _gcry_md_reset(hd);
   _gcry_md_write (hd, sample_data_bad, strlen(sample_data_bad));
-  err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL);
+  err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL, fips_strict);
   if (gcry_err_code (err) != GPG_ERR_BAD_SIGNATURE)
     {
       errtxt = "bad signature not detected";
