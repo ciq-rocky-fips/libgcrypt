@@ -42,7 +42,7 @@ prepare_ec (mpi_ec_t *r_ec, const char *name)
   if (!strcmp (name, "Curve25519"))
     flags = PUBKEY_FLAG_DJB_TWEAK;
 
-  return _gcry_mpi_ec_internal_new (r_ec, &flags, "ecc_mul_point", NULL, name);
+  return _gcry_mpi_ec_internal_new (r_ec, &flags, "ecc_mul_point", NULL, name, 1);
 }
 
 unsigned int
