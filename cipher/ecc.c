@@ -100,6 +100,79 @@ static const char sample_secret_key_secp256[] =
   /**/  "60FED4BA255A9D31C961EB74C6356D68C049B8923B61FA6CE669622E60F29FB6"
   /**/  "7903FE1008B8BC99A41AE9E95628BC64F2F1B20C2D7E9F5177A3C294D4462299#)))";
 
+/* Keys for "raw" (non-rfc6979) ecdsa.
+ * Data scraped from test file tests/t-ecdsa.inp:
+
+[P-256,SHA-256]
+
+Msg = 5905238877c77421f73e43ee3da6f2d9e2ccad5fc942dcec0cbd25482935fa
+      af416983fe165b1a045ee2bcd2e6dca3bdf46c4310a7461f9a37960ca672d3
+      feb5473e253605fb1ddfd28065b53cb5858a8ad28175bf9bd386a5e471ea7a
+      65c17cc934a9d791e91491eb3754d03799790fe2d308d16146d5c9b0d0debd
+      97d79ce8
+d = 519b423d715f8b581f4fa8ee59f4771a5b44c8130b4e3eacca54a56dda72b464
+Qx = 1ccbe91c075fc7f4f033bfa248db8fccd3565de94bbfb12f3c59ff46c271bf83
+Qy = ce4014c68811f9a21a1fdb2c0e6113e06db7ca93b7404e78dc7ccd5ca89a4ca9
+k = 94a1bbb14b906a61a280f245f9e93c7f3b4a6247824f5d33b9670787642a68de
+R = f3ac8061b514795b8843e3d6629527ed2afd6b1f6a555a7acabb5e6f79c8c2ac
+S = 8bf77819ca05a6b2786c76262bf7371cef97b218e96f175a3ccdda2acc058903
+*
+* s-exp:
+*
+Private key:
+[open]
+  [data="private-key"]
+  [open]
+    [data="ecc"]
+    [open]
+      [data="curve"]
+      [data="secp256r1"]
+    [close]
+    [open]
+      [data="q"]
+      [data="\x04\x1c\xcb\xe9\x1c\x07_\xc7\xf4\xf03\xbf\xa2H\xdb\x8f\xcc\xd3V]\xe9K\xbf\xb1/<Y\xffF\xc2q\xbf\x83\xce@\x14\xc6\x88\x11\xf9\xa2\x1a\x1f\xdb,\x0ea\x13\xe0m\xb7\xca\x93\xb7@Nx\xdc|\xcd\\xa8\x9aL\xa9"]
+    [close]
+    [open]
+      [data="d"]
+      [data="Q\x9bB=q_\x8bX\x1fO\xa8\xeeY\xf4w\x1a[D\xc8\x13\vN>\xac\xcaT\xa5m\xdar\xb4d"]
+    [close]
+  [close]
+[close]
+
+Public key:
+[open]
+  [data="public-key"]
+  [open]
+    [data="ecc"]
+    [open]
+      [data="curve"]
+      [data="secp256r1"]
+    [close]
+    [open]
+      [data="q"]
+      [data="\x04\x1c\xcb\xe9\x1c\x07_\xc7\xf4\xf03\xbf\xa2H\xdb\x8f\xcc\xd3V]\xe9K\xbf\xb1/<Y\xffF\xc2q\xbf\x83\xce@\x14\xc6\x88\x11\xf9\xa2\x1a\x1f\xdb,\x0ea\x13\xe0m\xb7\xca\x93\xb7@Nx\xdc|\xcd\\xa8\x9aL\xa9"]
+    [close]
+  [close]
+[close]
+
+*/
+
+static const char sample_secret_key_for_raw_secp256[] =
+  "(private-key"
+  " (ecc"
+  "  (curve secp256r1)"
+  "  (d #519b423d715f8b581f4fa8ee59f4771a5b44c8130b4e3eacca54a56dda72b464#)"
+  "  (q #04"
+  /**/  "1CCBE91C075FC7F4F033BFA248DB8FCCD3565DE94BBFB12F3C59FF46C271BF83"
+  /**/  "CE4014C68811F9A21A1FDB2C0E6113E06DB7CA93B7404E78DC7CCD5CA89A4CA9#)))";
+
+static const char sample_public_key_for_raw_secp256[] =
+  "(public-key"
+  " (ecc"
+  "  (curve secp256r1)"
+  "  (q #04"
+  /**/  "1CCBE91C075FC7F4F033BFA248DB8FCCD3565DE94BBFB12F3C59FF46C271BF83"
+  /**/  "CE4014C68811F9A21A1FDB2C0E6113E06DB7CA93B7404E78DC7CCD5CA89A4CA9#)))";
 
 /* Registered progress function and its callback value. */
 static void (*progress_cb) (void *, const char*, int, int, int);
@@ -1879,6 +1952,161 @@ selftest_hash_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
   return errtxt;
 }
 
+static const char *
+selftest_hash_sign_raw (gcry_sexp_t pkey, gcry_sexp_t skey)
+{
+  int md_algo = GCRY_MD_SHA256;
+  gcry_md_hd_t hd = NULL;
+  const char *data_tmpl = "(data(flags raw)(hash %s %b)(label "
+                          "#94a1bbb14b906a61a280f245f9e93c7f3b4a6247824f5d33b9670787642a68de#))";
+  const unsigned char sample_data[] = {
+0x59, 0x05, 0x23, 0x88, 0x77, 0xc7, 0x74, 0x21,
+0xf7, 0x3e, 0x43, 0xee, 0x3d, 0xa6, 0xf2, 0xd9,
+0xe2, 0xcc, 0xad, 0x5f, 0xc9, 0x42, 0xdc, 0xec,
+0x0c, 0xbd, 0x25, 0x48, 0x29, 0x35, 0xfa, 0xaf,
+0x41, 0x69, 0x83, 0xfe, 0x16, 0x5b, 0x1a, 0x04,
+0x5e, 0xe2, 0xbc, 0xd2, 0xe6, 0xdc, 0xa3, 0xbd,
+0xf4, 0x6c, 0x43, 0x10, 0xa7, 0x46, 0x1f, 0x9a,
+0x37, 0x96, 0x0c, 0xa6, 0x72, 0xd3, 0xfe, 0xb5,
+0x47, 0x3e, 0x25, 0x36, 0x05, 0xfb, 0x1d, 0xdf,
+0xd2, 0x80, 0x65, 0xb5, 0x3c, 0xb5, 0x85, 0x8a,
+0x8a, 0xd2, 0x81, 0x75, 0xbf, 0x9b, 0xd3, 0x86,
+0xa5, 0xe4, 0x71, 0xea, 0x7a, 0x65, 0xc1, 0x7c,
+0xc9, 0x34, 0xa9, 0xd7, 0x91, 0xe9, 0x14, 0x91,
+0xeb, 0x37, 0x54, 0xd0, 0x37, 0x99, 0x79, 0x0f,
+0xe2, 0xd3, 0x08, 0xd1, 0x61, 0x46, 0xd5, 0xc9,
+0xb0, 0xd0, 0xde, 0xbd, 0x97, 0xd7, 0x9c, 0xe8};
+
+  /* Flip one bit in the first byte. */
+  const char sample_data_bad[] = {
+0x58, 0x05, 0x23, 0x88, 0x77, 0xc7, 0x74, 0x21,
+0xf7, 0x3e, 0x43, 0xee, 0x3d, 0xa6, 0xf2, 0xd9,
+0xe2, 0xcc, 0xad, 0x5f, 0xc9, 0x42, 0xdc, 0xec,
+0x0c, 0xbd, 0x25, 0x48, 0x29, 0x35, 0xfa, 0xaf,
+0x41, 0x69, 0x83, 0xfe, 0x16, 0x5b, 0x1a, 0x04,
+0x5e, 0xe2, 0xbc, 0xd2, 0xe6, 0xdc, 0xa3, 0xbd,
+0xf4, 0x6c, 0x43, 0x10, 0xa7, 0x46, 0x1f, 0x9a,
+0x37, 0x96, 0x0c, 0xa6, 0x72, 0xd3, 0xfe, 0xb5,
+0x47, 0x3e, 0x25, 0x36, 0x05, 0xfb, 0x1d, 0xdf,
+0xd2, 0x80, 0x65, 0xb5, 0x3c, 0xb5, 0x85, 0x8a,
+0x8a, 0xd2, 0x81, 0x75, 0xbf, 0x9b, 0xd3, 0x86,
+0xa5, 0xe4, 0x71, 0xea, 0x7a, 0x65, 0xc1, 0x7c,
+0xc9, 0x34, 0xa9, 0xd7, 0x91, 0xe9, 0x14, 0x91,
+0xeb, 0x37, 0x54, 0xd0, 0x37, 0x99, 0x79, 0x0f,
+0xe2, 0xd3, 0x08, 0xd1, 0x61, 0x46, 0xd5, 0xc9,
+0xb0, 0xd0, 0xde, 0xbd, 0x97, 0xd7, 0x9c, 0xe8};
+
+  const char signature_r[] =
+    "f3ac8061b514795b8843e3d6629527ed2afd6b1f6a555a7acabb5e6f79c8c2ac";
+  const char signature_s[] =
+    "8bf77819ca05a6b2786c76262bf7371cef97b218e96f175a3ccdda2acc058903";
+
+  const char *errtxt = NULL;
+  gcry_error_t err;
+  gcry_sexp_t sig = NULL;
+  gcry_sexp_t l1 = NULL;
+  gcry_sexp_t l2 = NULL;
+  gcry_mpi_t r = NULL;
+  gcry_mpi_t s = NULL;
+  gcry_mpi_t calculated_r = NULL;
+  gcry_mpi_t calculated_s = NULL;
+  int cmp;
+  int fips_strict = 0; /* Selftest must allow label. */
+
+  err = _gcry_md_open (&hd, md_algo, 0);
+  if (err)
+    {
+      errtxt = "gcry_md_open failed";
+      goto leave;
+    }
+
+  _gcry_md_write (hd, sample_data, sizeof(sample_data));
+
+  err = _gcry_mpi_scan (&r, GCRYMPI_FMT_HEX, signature_r, 0, NULL);
+  if (!err)
+    err = _gcry_mpi_scan (&s, GCRYMPI_FMT_HEX, signature_s, 0, NULL);
+
+  if (err)
+    {
+      errtxt = "converting data failed";
+      goto leave;
+    }
+
+  err = _gcry_pk_sign_md (&sig, data_tmpl, hd, skey, NULL, fips_strict);
+  if (err)
+    {
+      errtxt = "signing failed";
+      goto leave;
+    }
+
+  /* check against known signature */
+  errtxt = "signature validity failed";
+  l1 = _gcry_sexp_find_token (sig, "sig-val", 0);
+  if (!l1)
+    goto leave;
+  l2 = _gcry_sexp_find_token (l1, "ecdsa", 0);
+  if (!l2)
+    goto leave;
+
+  sexp_release (l1);
+  l1 = l2;
+
+  l2 = _gcry_sexp_find_token (l1, "r", 0);
+  if (!l2)
+    goto leave;
+  calculated_r = _gcry_sexp_nth_mpi (l2, 1, GCRYMPI_FMT_USG);
+  if (!calculated_r)
+    goto leave;
+
+  sexp_release (l2);
+  l2 = _gcry_sexp_find_token (l1, "s", 0);
+  if (!l2)
+    goto leave;
+  calculated_s = _gcry_sexp_nth_mpi (l2, 1, GCRYMPI_FMT_USG);
+  if (!calculated_s)
+    goto leave;
+
+  errtxt = "known sig check failed";
+
+  cmp = _gcry_mpi_cmp (r, calculated_r);
+  if (cmp)
+    goto leave;
+  cmp = _gcry_mpi_cmp (s, calculated_s);
+  if (cmp)
+    goto leave;
+
+  errtxt = NULL;
+
+  /* verify generated signature */
+  err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL, fips_strict);
+  if (err)
+    {
+      errtxt = "verify failed";
+      goto leave;
+    }
+
+  _gcry_md_reset(hd);
+  _gcry_md_write (hd, sample_data_bad, sizeof(sample_data_bad));
+  err = _gcry_pk_verify_md (sig, data_tmpl, hd, pkey, NULL, fips_strict);
+  if (gcry_err_code (err) != GPG_ERR_BAD_SIGNATURE)
+    {
+      errtxt = "bad signature not detected";
+      goto leave;
+    }
+
+
+ leave:
+  _gcry_md_close (hd);
+  sexp_release (sig);
+  sexp_release (l1);
+  sexp_release (l2);
+  mpi_release (r);
+  mpi_release (s);
+  mpi_release (calculated_r);
+  mpi_release (calculated_s);
+  return errtxt;
+}
+
 
 static const char *
 selftest_sign (gcry_sexp_t pkey, gcry_sexp_t skey)
@@ -2038,6 +2266,27 @@ selftests_ecdsa (selftest_report_func_t report, int extended)
 
   what = "digest sign";
   errtxt = selftest_hash_sign (pkey, skey);
+  if (errtxt)
+    goto failed;
+
+  sexp_release(pkey);
+  sexp_release(skey);
+
+  what = "raw digest parse keys";
+
+  err = sexp_sscan (&skey, NULL, sample_secret_key_for_raw_secp256,
+                    strlen (sample_secret_key_for_raw_secp256));
+  if (!err)
+    err = sexp_sscan (&pkey, NULL, sample_public_key_for_raw_secp256,
+                      strlen (sample_public_key_for_raw_secp256));
+  if (err)
+    {
+      errtxt = _gcry_strerror (err);
+      goto failed;
+    }
+
+  what = "digest sign raw";
+  errtxt = selftest_hash_sign_raw (pkey, skey);
   if (errtxt)
     goto failed;
 
