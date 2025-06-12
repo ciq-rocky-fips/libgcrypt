@@ -77,6 +77,7 @@ static const struct
     { "NIST P-521", "1.3.132.0.35" },
     { "NIST P-521", "nistp521"   },          /* rfc5656.  */
 
+#ifdef ENABLE_BRAINPOOL
     { "brainpoolP160r1", "1.3.36.3.3.2.8.1.1.1" },
     { "brainpoolP192r1", "1.3.36.3.3.2.8.1.1.3" },
     { "brainpoolP224r1", "1.3.36.3.3.2.8.1.1.5" },
@@ -84,6 +85,7 @@ static const struct
     { "brainpoolP320r1", "1.3.36.3.3.2.8.1.1.9" },
     { "brainpoolP384r1", "1.3.36.3.3.2.8.1.1.11"},
     { "brainpoolP512r1", "1.3.36.3.3.2.8.1.1.13"},
+#endif /* ENABLE_BRAINPOOL */
 
     { "GOST2001-test", "1.2.643.2.2.35.0" },
     { "GOST2001-CryptoPro-A", "1.2.643.2.2.35.1" },
@@ -297,6 +299,7 @@ static const ecc_domain_parms_t domain_parms[] =
       1
     },
 
+#ifdef ENABLE_BRAINPOOL
     { "brainpoolP160r1", 160, 0,
       MPI_EC_WEIERSTRASS, ECC_DIALECT_STANDARD,
       "0xe95e4a5f737059dc60dfc7ad95b3d8139515620f",
@@ -391,6 +394,7 @@ static const ecc_domain_parms_t domain_parms[] =
       "b2dcde494a5f485e5bca4bd88a2763aed1ca2b2fa8f0540678cd1e0f3ad80892",
       1
     },
+#endif /* ENABLE_BRAINPOOL */
     {
       "GOST2001-test", 256, 0,
       MPI_EC_WEIERSTRASS, ECC_DIALECT_STANDARD,

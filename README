@@ -123,6 +123,9 @@
                      the list used with the current build the program
                      tests/version may be used.
 
+     --disable-brainpool
+                     Do not build in support for Brainpool curves.
+
      --disable-endian-check
                      Don't let configure test for the endianness but
                      try to use the OS provided macros at compile
