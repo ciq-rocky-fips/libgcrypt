@@ -193,6 +193,15 @@ _gcry_pk_util_parse_flaglist (gcry_sexp_t list,
             rc = GPG_ERR_INV_FLAG;
           break;
 
+#ifdef WITH_MARVIN_WORKAROUND
+        case 21:
+          if (!memcmp (s, "no-implicit-rejection", 21))
+            flags |= PUBKEY_FLAG_NO_IMPLICIT_REJECTION;
+          else if (!igninvflag)
+            rc = GPG_ERR_INV_FLAG;
+          break;
+#endif /* WITH_MARVIN_WORKAROUND */
+
         default:
           if (!igninvflag)
             rc = GPG_ERR_INV_FLAG;

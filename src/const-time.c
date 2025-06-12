@@ -77,12 +77,36 @@ _gcry_ct_memmov_cond (void *dst, const void *src, size_t len,
 		      unsigned long op_enable)
 {
   /* Note: dual mask with AND/OR used for EM leakage mitigation */
-  unsigned char mask1 = ct_ulong_gen_mask(op_enable);
-  unsigned char mask2 = ct_ulong_gen_inv_mask(op_enable);
+  volatile unsigned char mask1 = ct_ulong_gen_mask(op_enable);
+  volatile unsigned char mask2 = ct_ulong_gen_inv_mask(op_enable);
   unsigned char *b_dst = dst;
   const unsigned char *b_src = src;
   size_t i;
 
   for (i = 0; i < len; i++)
     b_dst[i] = (b_dst[i] & mask2) | (b_src[i] & mask1);
+}
+
+/*
+ * Copy LEN bytes from memory area SRC to memory area DST. The
+ * bytes are read up to the BUFFER_LEN size to keep the operation
+ * not dependent on the message length (both SRC and DST buffers
+ * need to have this size!).
+ */
+void
+_gcry_ct_memcpy (void *dst, const void *src, size_t len, size_t buffer_len)
+{
+  volatile unsigned char mask_a, mask_b;
+  unsigned char *b_dst = dst;
+  const unsigned char *b_src = src;
+  unsigned int writing;
+  size_t i;
+
+  for (i = 0; i < buffer_len; i++)
+    {
+      writing = ct_lt (i, len);
+      mask_b = ct_uchar_gen_inv_mask (writing);
+      mask_a = ct_uchar_gen_mask (writing);
+      b_dst[i] = (b_src[i] & mask_a) | (b_dst[i] & mask_b);
+    }
 }

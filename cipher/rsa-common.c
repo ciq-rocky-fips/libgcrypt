@@ -28,6 +28,7 @@
 #include "cipher.h"
 #include "pubkey-internal.h"
 #include "const-time.h"
+#include "bufhelp.h"
 
 
 /* Turn VALUE into an octet string and store it in an allocated buffer
@@ -191,6 +192,45 @@ memmov_independently (void *dst, const void *src, size_t len, size_t buflen)
 }
 
 
+static unsigned char *
+mpi_to_string(gcry_mpi_t value, size_t nframe)
+{
+  unsigned char *frame = NULL;
+  unsigned char *p;
+  size_t noff;
+  /* Allocate memory to fit the whole MPI limbs and allow moving it later to the right place */
+  size_t alloc_len = value->nlimbs * BYTES_PER_MPI_LIMB;
+
+  /* for too short input, we need to allocate at least modulus length (which might still be valid in case of OAEP) */
+  noff = (alloc_len < nframe) ? nframe - alloc_len : 0;
+  alloc_len = alloc_len + noff;
+
+  if ( !(frame = xtrymalloc_secure (alloc_len)))
+    return NULL;
+
+  if (noff)
+    memset (frame, 0, noff);
+  p = frame + noff;
+  /* shovel the MPI content to the buffer as it is */
+  for (int i = value->nlimbs - 1; i >= 0; i--)
+    {
+      mpi_limb_t *alimb = &value->d[i];
+#if BYTES_PER_MPI_LIMB == 4
+      buf_put_be32 (p, *alimb);
+      p += 4;
+#elif BYTES_PER_MPI_LIMB == 8
+      buf_put_be64 (p, *alimb);
+      p += 8;
+#else
+#     error please implement for this limb size.
+#endif
+    }
+  /* Move the MPI to the right place -- with the least significant bytes aligned to the modulus length
+   * -- this might keep some leading zeroes at the beginning of the buffer, but this might be valid for OAEP */
+  memmov_independently (frame, frame + (alloc_len - nframe), nframe, alloc_len);
+  return frame;
+}
+
 /* Decode a plaintext in VALUE assuming pkcs#1 block type 2 padding.
    NBITS is the size of the secret key.  On success the result is
    stored as a newly allocated buffer at R_RESULT and its valid length at
@@ -199,7 +239,6 @@ gpg_err_code_t
 _gcry_rsa_pkcs1_decode_for_enc (unsigned char **r_result, size_t *r_resultlen,
                                 unsigned int nbits, gcry_mpi_t value)
 {
-  gcry_error_t err;
   unsigned char *frame = NULL;
   size_t nframe = (nbits+7) / 8;
   size_t n, n0;
@@ -207,6 +246,17 @@ _gcry_rsa_pkcs1_decode_for_enc (unsigned char **r_result, size_t *r_resultlen,
   unsigned int not_found = 1;
 
   *r_result = NULL;
+
+  {
+#ifdef WITH_MARVIN_WORKAROUND
+  frame = mpi_to_string(value, nframe);
+  if (frame == NULL)
+    return gpg_err_code_from_syserror ();
+
+  n = 0;
+  failed |= ct_not_equal_byte (frame[n++], 0x00);
+#else
+  gcry_error_t err;
 
   if ( !(frame = xtrymalloc_secure (nframe)))
     return gpg_err_code_from_syserror ();
@@ -235,6 +285,9 @@ _gcry_rsa_pkcs1_decode_for_enc (unsigned char **r_result, size_t *r_resultlen,
   n = 0;
   if (!frame[0])
     n++;
+#endif /* WITH_MARVIN_WORKAROUND */
+  }
+
   failed |= ct_not_equal_byte (frame[n++], 0x02);
 
   /* Find the terminating zero byte.  */
@@ -247,6 +300,8 @@ _gcry_rsa_pkcs1_decode_for_enc (unsigned char **r_result, size_t *r_resultlen,
 
   failed |= not_found;
   n0 += ct_is_zero (not_found); /* Skip the zero byte.  */
+  /* the valid padding is at least 8 bytes -- the plaintext needs to start at index 11 or later */
+  failed |= ct_lt_s (n0, 11);
 
   /* To avoid an extra allocation we reuse the frame buffer.  The only
      caller of this function will anyway free the result soon.  */
@@ -261,6 +316,187 @@ _gcry_rsa_pkcs1_decode_for_enc (unsigned char **r_result, size_t *r_resultlen,
 
   return (0U - failed) & GPG_ERR_ENCODING_PROBLEM;
 }
+
+
+#ifdef WITH_MARVIN_WORKAROUND
+#define SHA256_LEN 32
+static gcry_err_code_t
+rsa_prf(unsigned char *out, size_t out_len, const char *label, size_t label_len, unsigned char *kdk, size_t nbits)
+{
+  gcry_err_code_t rc = GPG_ERR_NO_ERROR;
+  size_t pos;
+  uint16_t iter = 0;
+  unsigned char be_iter[2];
+  unsigned char be_bitlen[2];
+  gcry_md_hd_t hd;
+  gcry_error_t err;
+
+  be_bitlen[0] = (nbits >> 8) & 0xff;
+  be_bitlen[1] = nbits & 0xff;
+
+  err = _gcry_md_open (&hd, GCRY_MD_SHA256, GCRY_MD_FLAG_HMAC);
+  if (err)
+    {
+      return GPG_ERR_INTERNAL;
+    }
+  err = _gcry_md_setkey (hd, kdk, SHA256_LEN);
+  if (err)
+    {
+      _gcry_md_close (hd);
+      return GPG_ERR_INTERNAL;
+    }
+  for (pos = 0; pos < out_len; pos += SHA256_LEN, iter++)
+    {
+      unsigned char *tmp;
+
+      _gcry_md_reset(hd);
+
+      be_iter[0] = (iter >> 8) & 0xff;
+      be_iter[1] = iter & 0xff;
+      _gcry_md_write (hd, be_iter, sizeof (be_iter));
+      _gcry_md_write (hd, label, label_len);
+      _gcry_md_write (hd, be_bitlen, sizeof (be_bitlen));
+
+      tmp = _gcry_md_read(hd, 0);
+      if (pos + SHA256_LEN > out_len)
+        {
+          memcpy(out + pos, tmp, out_len - pos);
+        }
+      else
+        {
+          memcpy(out + pos, tmp, SHA256_LEN);
+        }
+    }
+  _gcry_md_close (hd);
+  return rc;
+}
+
+
+/* Decode a plaintext in VALUE assuming pkcs#1 block type 2 padding.
+   NBITS is the size of the secret key.  On success the result is
+   stored as a newly allocated buffer at R_RESULT and its valid length at
+   R_RESULTLEN.  On error R_RESULT contains bogus value of random length.
+   For more information, see description of Implicit Rejection in Marvin paper
+   https://people.redhat.com/~hkario/marvin/marvin-attack-paper.pdf */
+#define MAX_LEN_GEN_TRIES 128
+gpg_err_code_t
+_gcry_rsa_pkcs1_decode_for_enc_implicit_rejection (unsigned char **r_result,
+                                                   size_t *r_resultlen,
+                                                   unsigned int nbits,
+                                                   gcry_mpi_t value,
+                                                   unsigned char *kdk)
+{
+  unsigned char *frame = NULL;
+  size_t nframe = (nbits+7) / 8;
+  size_t n, n0;
+  unsigned int failed = 0;
+  unsigned int not_found = 1;
+  int i, j;
+  uint16_t len_mask;
+  uint16_t max_sep_offset;
+  unsigned char *synthetic = NULL;
+  unsigned long synthethic_length;
+  uint16_t len_candidate;
+  unsigned char candidate_lengths[MAX_LEN_GEN_TRIES * sizeof(len_candidate)];
+  int synth_msg_index = 0, msg_index;
+
+  *r_result = NULL;
+
+  synthetic = xtrymalloc(nframe);
+  if (synthetic == NULL)
+    {
+      free (synthetic);
+      return gpg_err_code_from_syserror ();
+    }
+
+  if (rsa_prf(synthetic, nframe, "message", 7, kdk, nframe * 8) < 0)
+    {
+      xfree (synthetic);
+      return GPG_ERR_INTERNAL;
+    }
+
+  /* decide how long the random message should be */
+  if (rsa_prf(candidate_lengths, sizeof(candidate_lengths),
+              "length", 6, kdk, MAX_LEN_GEN_TRIES * sizeof(len_candidate) * 8) < 0)
+    {
+      xfree (synthetic);
+      return GPG_ERR_INTERNAL;
+    }
+
+  len_mask = max_sep_offset = nframe - 2 - 8;
+  len_mask |= len_mask >> 1;
+  len_mask |= len_mask >> 2;
+  len_mask |= len_mask >> 4;
+  len_mask |= len_mask >> 8;
+
+  synthethic_length = 0;
+  for (i = 0; i < MAX_LEN_GEN_TRIES * (int)sizeof(len_candidate);
+        i += sizeof(len_candidate))
+    {
+      len_candidate = (candidate_lengths[i] << 8) | candidate_lengths[i + 1];
+      len_candidate &= len_mask;
+
+      synthethic_length = ct_ulong_select(
+          len_candidate, synthethic_length,
+          ct_lt(len_candidate, max_sep_offset));
+    }
+
+  synth_msg_index = nframe - synthethic_length;
+
+  /* we have alternative message ready, check the real one */
+  /* mostly copy from _gcry_rsa_pkcs1_decode_for_enc */
+  frame = mpi_to_string(value, nframe);
+  if (frame == NULL)
+    {
+      xfree (synthetic);
+      return gpg_err_code_from_syserror ();
+    }
+
+  /* FRAME = 0x00 || 0x02 || PS || 0x00 || M */
+  n = 0;
+  failed |= ct_not_equal_byte (frame[n++], 0x00);
+  failed |= ct_not_equal_byte (frame[n++], 0x02);
+
+  /* Find the terminating zero byte.  */
+  n0 = n;
+  for (; n < nframe; n++)
+    {
+      not_found &= ct_not_equal_byte (frame[n], 0x00);
+      n0 += not_found;
+    }
+
+  failed |= not_found;
+  n0 += ct_is_zero (not_found); /* Skip the zero byte.  */
+  /* the valid padding is at least 8 bytes -- the plaintext needs to start at index 11 or later */
+  failed |= ct_lt_s (n0, 11);
+
+  msg_index = ct_ulong_select (synth_msg_index, n0, failed);
+
+  /* To avoid the need memmove (O(N*log(N))), we use separate buffer where we move either
+   * of the messages. We can now also use the msg_index safely as its timing is not
+   * possible to distinguish valid and invalid padding */
+  for (i = msg_index, j = 0; i < nframe && j < nframe; i++, j++)
+    {
+      frame[j] = ct_uchar_select (synthetic[i], frame[i], failed);
+    }
+
+  *r_resultlen = j;
+  *r_result = frame;
+
+  if (DBG_CIPHER)
+    {
+      if (!failed)
+        log_printhex ("value extracted from PKCS#1 block type 2 encoded data",
+                    frame, nframe - n0);
+      else
+        log_printhex ("Synthetic value from implicit rejection",
+                    synthetic, synthethic_length);
+    }
+
+  xfree (synthetic);
+  return 0;
+}
+#endif /* WITH_MARVIN_WORKAROUND */
 
 
 /* Encode {VALUE,VALUELEN} for an NBITS keys and hash algorithm ALGO
@@ -674,14 +910,23 @@ _gcry_rsa_oaep_decode (unsigned char **r_result, size_t *r_resultlen,
      happen due to the leading zero in OAEP frames and due to the
      following random octets (seed^mask) which may have leading zero
      bytes.  This all is needed to cope with our leading zeroes
-     suppressing MPI implementation.  The code implictly implements
+     suppressing MPI implementation.  The code implicitly implements
      Step 1b (bail out if NFRAME != N).  */
+#ifdef WITH_MARVIN_WORKAROUND
+  frame = mpi_to_string(value, nkey);
+  if (frame == NULL)
+    {
+      xfree (lhash);
+      return gpg_err_code_from_syserror ();
+    }
+#else
   rc = octet_string_from_mpi (&frame, NULL, value, nkey);
   if (rc)
     {
       xfree (lhash);
       return GPG_ERR_ENCODING_PROBLEM;
     }
+#endif /* WITH_MARVIN_WORKAROUND */
   nframe = nkey;
 
   /* Step 1c: Check that the key is long enough.  */
@@ -696,7 +941,7 @@ _gcry_rsa_oaep_decode (unsigned char **r_result, size_t *r_resultlen,
      gcry_mpi_aprint above.  */
 
   /* Allocate space for SEED and DB.  */
-  seed = xtrymalloc_secure (nframe - 1);
+  seed = xtrymalloc_secure (nframe);
   if (!seed)
     {
       rc = gpg_err_code_from_syserror ();
