@@ -1769,6 +1769,146 @@ selftest (void)
   return r;
 }
 
+/* XTS vectors copied from GNUTLS. */
+static const char *
+selftest_fips_xts (int cipher, int requested_mode)
+{
+	static const struct aes128_xts_vectors
+	{
+		int cipher;
+		unsigned int keysize;
+		const unsigned char key[64];
+		const unsigned char iv[16];
+		unsigned int len;
+		const unsigned char plaintext[32];
+		const unsigned char ciphertext[32];
+	} tv[3] = {
+		{
+		/* cipher */
+		GCRY_CIPHER_AES128,
+		/* keysize */
+		32,
+		/* key */
+		"\xa1\xb9\x0c\xba\x3f\x06\xac\x35\x3b\x2c\x34\x38\x76\x08\x17\x62"
+		"\x09\x09\x23\x02\x6e\x91\x77\x18\x15\xf2\x9d\xab\x01\x93\x2f\x2f",
+		/* iv */
+		"\x4f\xae\xf7\x11\x7c\xda\x59\xc6\x6e\x4b\x92\x01\x3e\x76\x8a\xd5",
+		/* len */
+		16,
+		/* plaintext */
+		"\xeb\xab\xce\x95\xb1\x4d\x3c\x8d\x6f\xb3\x50\x39\x07\x90\x31\x1c",
+		/* ciphertext */
+		"\x77\x8a\xe8\xb4\x3c\xb9\x8d\x5a\x82\x50\x81\xd5\xbe\x47\x1c\x63"
+		},
+		{
+		/* cipher */
+		GCRY_CIPHER_AES128,
+		/* keysize */
+		32,
+		/* key */
+		"\x75\x03\x72\xc3\xd8\x2f\x63\x38\x28\x67\xbe\x66\x62\xac\xfa\x4a"
+		"\x25\x9b\xe3\xfa\x9b\xc6\x62\xa1\x15\x4f\xfa\xae\xd8\xb4\x48\xa5",
+		/* iv */
+		"\x93\xa2\x92\x54\xc4\x7e\x42\x60\x66\x96\x21\x30\x7d\x4f\x5c\xd3",
+		/* len */
+		32,
+		/* plaintext */
+		"\xd8\xe3\xa5\x65\x59\xa4\x36\xce\x0d\x8b\x21\x2c\x80\xa8\x8b\x23"
+		"\xaf\x62\xb0\xe5\x98\xf2\x08\xe0\x3c\x1f\x2e\x9f\xa5\x63\xa5\x4b",
+		/* ciphertext */
+		"\x49\x5f\x78\x55\x53\x5e\xfd\x13\x34\x64\xdc\x9a\x9a\xbf\x8a\x0f"
+		"\x28\xfa\xcb\xce\x21\xbd\x3c\x22\x17\x8e\xc4\x89\xb7\x99\xe4\x91"
+		},
+		{
+		/* cipher */
+		GCRY_CIPHER_AES256,
+		/* keysize */
+		64,
+		/* key */
+		"\x1e\xa6\x61\xc5\x8d\x94\x3a\x0e\x48\x01\xe4\x2f\x4b\x09\x47\x14"
+		"\x9e\x7f\x9f\x8e\x3e\x68\xd0\xc7\x50\x52\x10\xbd\x31\x1a\x0e\x7c"
+		"\xd6\xe1\x3f\xfd\xf2\x41\x8d\x8d\x19\x11\xc0\x04\xcd\xa5\x8d\xa3"
+		"\xd6\x19\xb7\xe2\xb9\x14\x1e\x58\x31\x8e\xea\x39\x2c\xf4\x1b\x08",
+		/* iv */
+		"\xad\xf8\xd9\x26\x27\x46\x4a\xd2\xf0\x42\x8e\x84\xa9\xf8\x75\x64",
+		/* len */
+		32,
+		/* plaintext */
+		"\x2e\xed\xea\x52\xcd\x82\x15\xe1\xac\xc6\x47\xe8\x10\xbb\xc3\x64"
+		"\x2e\x87\x28\x7f\x8d\x2e\x57\xe3\x6c\x0a\x24\xfb\xc1\x2a\x20\x2e",
+		/* ciphertext */
+		"\xcb\xaa\xd0\xe2\xf6\xce\xa3\xf5\x0b\x37\xf9\x34\xd4\x6a\x9b\x13"
+		"\x0b\x9d\x54\xf0\x7e\x34\xf3\x6a\xf7\x93\xe8\x6f\x73\xc6\xd7\xdb"
+		}
+	};
+
+	unsigned char scratch[32];
+	gpg_error_t err;
+	unsigned int tvi;
+	gcry_cipher_hd_t hdenc = NULL;
+	gcry_cipher_hd_t hddec = NULL;
+
+#define Fail(a) do {           \
+		_gcry_cipher_close (hdenc);  \
+		_gcry_cipher_close (hddec);  \
+		return a;                    \
+	} while (0)
+
+	for (tvi = 0; tvi < DIM(tv); tvi++) {
+		if (cipher != tv[tvi].cipher)
+			continue;
+		/* Setup. */
+		err = _gcry_cipher_open (&hdenc, cipher, requested_mode, 0);
+		if (err)
+			Fail ("open enc");
+		err = _gcry_cipher_open (&hddec, cipher, requested_mode, 0);
+		if (err)
+			Fail ("open dec");
+		/* Set keys. */
+		err = _gcry_cipher_setkey (hdenc, tv[tvi].key, tv[tvi].keysize);
+		if (err)
+			Fail ("setkey enc");
+		err = _gcry_cipher_setkey (hddec, tv[tvi].key, tv[tvi].keysize);
+		if (err)
+			Fail ("setkey dec");
+		/* Set IV. */
+		err = _gcry_cipher_setiv (hdenc, tv[tvi].iv, sizeof tv[tvi].iv);
+		if (err)
+			Fail("setiv enc");
+		err = _gcry_cipher_setiv (hddec, tv[tvi].iv, sizeof tv[tvi].iv);
+		if (err)
+			Fail ("setiv dec");
+
+		/* Enc test */
+		err = _gcry_cipher_encrypt (hdenc,
+					    scratch,
+					    tv[tvi].len,
+					    tv[tvi].plaintext,
+					    tv[tvi].len);
+		if (err)
+			Fail ("xts encrypt");
+		if (memcmp (scratch, tv[tvi].ciphertext, tv[tvi].len))
+			Fail ("xts encrypt mismatch");
+
+		/* Dec test */
+		err = _gcry_cipher_decrypt (hddec,
+					    scratch,
+					    tv[tvi].len,
+					    tv[tvi].ciphertext,
+					    tv[tvi].len);
+		if (err)
+			Fail ("xts decrypt");
+		if (memcmp (scratch, tv[tvi].plaintext, tv[tvi].len))
+			Fail ("xts decrypt mismatch");
+		_gcry_cipher_close (hdenc);
+		hdenc = NULL;
+		_gcry_cipher_close (hddec);
+		hddec = NULL;
+	}
+
+#undef Fail
+	return NULL;
+}
 
 /* SP800-38a.pdf for AES-128.  */
 static const char *
@@ -1919,6 +2059,11 @@ selftest_fips_128 (int extended, selftest_report_func_t report)
 
   if (extended)
     {
+      what = "xts";
+      errtxt = selftest_fips_xts (GCRY_CIPHER_AES128, GCRY_CIPHER_MODE_XTS);
+      if (errtxt)
+        goto failed;
+
       what = "cfb";
       errtxt = selftest_fips_128_38a (GCRY_CIPHER_MODE_CFB);
       if (errtxt)
@@ -1973,6 +2118,11 @@ selftest_fips_256 (int extended, selftest_report_func_t report)
 
   what = "low-level";
   errtxt = selftest_basic_256 ();
+  if (errtxt)
+    goto failed;
+
+  what = "xts";
+  errtxt = selftest_fips_xts (GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_XTS);
   if (errtxt)
     goto failed;
 
