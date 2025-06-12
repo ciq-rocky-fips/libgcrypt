@@ -73,9 +73,9 @@ FILE=.libs/libgcrypt.so
 #
 # Fixup the ELF header to clean up section information
 #
-printf '%b' '\002' > 2.bin
-dd ibs=1 skip=4 count=1 if=$FILE status=none > class-byte.bin
-if cmp class-byte.bin 2.bin; then
+BYTE002=$(printf '%b' '\002')
+CLASS_BYTE=$(dd ibs=1 skip=4 count=1 if=$FILE status=none)
+if test "$CLASS_BYTE" = "$BYTE002"; then
     CLASS=64
     HEADER_SIZE=64
 else
@@ -95,21 +95,29 @@ else
     dd ibs=1         count=6  if=/dev/zero status=none
 fi > header-fixed.bin
 
-# Compute the end of loadable segment.
+#
+# Compute the end of segments, and emit the COUNT to read
+# (For each segment in program headers, calculate the offset
+#  and select the maximum)
 #
 # This require computation in hexadecimal, and GNU awk needs
 # --non-decimal-data option
 #
-OFFSET=$($READELF --wide --program-headers $FILE | \
-         $AWK $AWK_OPTION "/^  LOAD/ { offset=\$2+\$5-$HEADER_SIZE }\
-END { print offset}")
+COUNT=$($READELF --wide --program-headers $FILE | \
+         $AWK $AWK_OPTION \
+"BEGIN { max_offset=0 }
+/^\$/ { if (program_headers_start) program_headers_end=1 }
+(program_headers_start && !program_headers_end) { offset = \$2 + \$5 }
+(max_offset < offset) { max_offset = offset }
+/^  Type/ { program_headers_start=1 }
+END { print max_offset- $HEADER_SIZE }")
 
 #
-# Feed the header fixed and loadable segments to HMAC256
+# Feed the header fixed and all segments to HMAC256
 # to generate hmac hash of the FILE
 #
 (cat header-fixed.bin; \
- dd ibs=1 skip=$HEADER_SIZE count=$OFFSET if=$FILE status=none) \
+ dd ibs=1 skip=$HEADER_SIZE count=$COUNT if=$FILE status=none) \
  | ./hmac256 --stdkey --binary
 
-rm -f 2.bin class-byte.bin header-fixed.bin
+rm -f header-fixed.bin
